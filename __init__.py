@@ -13,7 +13,7 @@ def log(func):
 
         start = time.time()
         result = func(*args, **kwargs)
-        delta = start - time.time()
+        delta = time.time() - start
 
         print('-' * 10)
         print('\'{0}\' has ended. It took {1} seconds.'.format(func.__name__, delta))
