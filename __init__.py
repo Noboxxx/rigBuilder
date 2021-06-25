@@ -3,10 +3,12 @@ from maya import cmds
 import time
 
 
-def clock(func):
+def log(func):
     def wrapper(*args, **kwargs):
         print('-' * 10)
         print('\'{0}\' starts.'.format(func.__name__))
+        print('args: {}.'.format(args))
+        print('kwargs: {}'.format(kwargs))
         print('-' * 10)
 
         start = time.time()
@@ -32,7 +34,7 @@ def reload_module():
     reload(steps)
 
 
-@clock
+@log
 def build(path):
     if os.path.isfile(path):
         execfile(path)

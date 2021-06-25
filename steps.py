@@ -2,22 +2,20 @@ from maya import cmds, mel
 import __init__
 
 
-@__init__.clock
+@__init__.log
 def new_scene():
     cmds.file(new=True, force=True)
 
 
-@__init__.clock
+@__init__.log
 def import_maya_file(path):
-    print(path)
-
     try:
         cmds.file(path, i=True)
     except RuntimeError as e:
         print(e)
 
 
-@__init__.clock
+@__init__.log
 def delete_useless_nodes():
     # Delete unknown nodes
     unknown_nodes = cmds.ls(type='unknown') or list()
@@ -27,7 +25,7 @@ def delete_useless_nodes():
     mel.eval('MLdeleteUnused;')
 
 
-@__init__.clock
+@__init__.log
 def transfer_skin(source, targets):
     def get_skinned_joints(mesh):
         joints_ = list()
