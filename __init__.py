@@ -23,17 +23,6 @@ def log(func):
     return wrapper
 
 
-def reload_module():
-    import rigBuilder
-    reload(rigBuilder)
-
-    from rigBuilder import components
-    reload(components)
-
-    from rigBuilder import steps
-    reload(steps)
-
-
 @log
 def build(path):
     if os.path.isfile(path):
