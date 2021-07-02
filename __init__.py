@@ -32,7 +32,7 @@ def build(path):
     if os.path.isfile(path):
         execfile(path)
     else:
-        cmds.warning('The file \'{0}\' doesnt exist.'.format(path))
+        cmds.warning('The file \'{0}\' does\'nt exist.'.format(path))
 
 
 class Component(object):
@@ -80,7 +80,7 @@ class Component(object):
 
     @classmethod
     def create(cls):
-        raise NotImplementedError
+        pass
 
     def get_folder(self):
         return self.__folder
