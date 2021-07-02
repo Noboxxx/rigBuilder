@@ -5,19 +5,23 @@ import time
 
 def log(func):
     def wrapper(*args, **kwargs):
+        print('')
         print('-' * 10)
         print('\'{0}\' starts.'.format(func.__name__))
-        print('args: {}.'.format(args))
+        print('args: {}'.format(args))
         print('kwargs: {}'.format(kwargs))
         print('-' * 10)
+        print('')
 
         start = time.time()
         result = func(*args, **kwargs)
         delta = time.time() - start
 
+        print ('')
         print('-' * 10)
         print('\'{0}\' has ended. It took {1} seconds.'.format(func.__name__, delta))
         print('-' * 10)
+        print('')
 
         return result
     return wrapper
@@ -61,7 +65,10 @@ class Component(object):
         name = component_type if name is None else str(name)
 
         folder = cmds.group(name=name, empty=True)
-        cmds.addAttr('{0}.{1}'.format(folder, cls.component_type_attr_name), attributeData='string', enumName=component_type)
+        plug = '{}.{}'.format(folder, cls.component_type_attr_name)
+        cmds.addAttr(folder, longName=cls.component_type_attr_name, dataType='string', enumName=component_type)
+        cmds.setAttr(plug, cls.__name__, type='string')
+        cmds.setAttr(plug, lock=True)
 
         if dags:
             cmds.parent(dags, folder)
