@@ -84,3 +84,10 @@ class Component(object):
 
     def get_folder(self):
         return self.__folder
+
+    @classmethod
+    def connect(cls, parent, child):
+        cnstr, = cmds.parentConstraint(parent, child, maintainOffset=True)
+        cmds.setAttr('{}.{}'.format(cnstr, 'interpType'), 2)
+
+        cmds.scaleConstraint(parent, child, maintainOffset=True)
