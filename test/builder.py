@@ -63,6 +63,29 @@ spine_component = rigBuilderComponents.HybridChain.create(
     fk_color=componentUtils.Color.yellow
 )
 
+# Arms
+left_arm_matrices = (
+    guides_matrices['shoulder_guide'],
+    guides_matrices['elbow_guide'],
+    guides_matrices['wrist_guide'],
+)
+
+left_arm_component = rigBuilderComponents.TwoSegmentsLimb.create(
+    id_='arm',
+    side='L',
+    matrices=left_arm_matrices,
+    size=15,
+)
+
+right_arm_matrices = [matrix.get_mirror() for matrix in left_arm_matrices]
+
+right_arm_component = rigBuilderComponents.TwoSegmentsLimb.create(
+    id_='arm',
+    side='R',
+    matrices=right_arm_matrices,
+    size=15,
+)
+
 # Connect components
 connect_map = (
     (world_local_component.get_ends()[0], hips_component.get_roots()[0]),
