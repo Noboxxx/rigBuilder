@@ -30,6 +30,24 @@ for dag in cmds.listRelatives('guides', allDescendents=True, type='transform'):
     guides_matrices[dag] = componentUtils.Matrix.get_from_dag(dag)
 
 # Components
+# World Local
+world_local_component = rigBuilderComponents.WorldLocal.create(
+    size=30,
+    add_joint=True,
+    matrix=guides_matrices['world_guide']
+)
+
+# Hips
+hips_component = rigBuilderComponents.OneCtrl.create(
+    id_='hips',
+    size=30,
+    add_joint=True,
+    matrix=guides_matrices['hips_guide'],
+    color=componentUtils.Color.pink,
+    axis='y'
+)
+
+# Spine
 spine_matrices = (
     guides_matrices['spine1_guide'],
     guides_matrices['spine2_guide'],
@@ -37,13 +55,23 @@ spine_matrices = (
     guides_matrices['spine4_guide'],
     guides_matrices['spine5_guide'],
 )
-spine_component = rigBuilderComponents.HybridChain.create(id_='spine', matrices=spine_matrices, size=25, color=componentUtils.Color.yellow)
+spine_component = rigBuilderComponents.HybridChain.create(
+    id_='spine',
+    matrices=spine_matrices,
+    size=25,
+    ik_color=componentUtils.Color.dark_yellow,
+    fk_color=componentUtils.Color.yellow
+)
 
-hips_component = rigBuilderComponents.OneCtrl.create(id_='hips', size=30, add_joint=True, matrix=guides_matrices['hips_guide'], color=componentUtils.Color.pink, axis='y')
-# hips_component.connect_to_ctrl(spine_component.get_ctrls()[0].get_buffer())
+# Connect components
+connect_map = (
+    (world_local_component.get_ends()[0], hips_component.get_roots()[0]),
+    (hips_component.get_ends()[0], spine_component.get_roots()[0]),
+)
 
-world_local_component = rigBuilderComponents.WorldLocal.create(size=30, add_joint=True, matrix=guides_matrices['world_guide'])
-world_local_component.connect_to_local_ctrl(hips_component.get_ctrl().get_buffer())
+for end, root in connect_map:
+    rigBuilderComponents.MyComponent.connect(end, root)
+
 
 # Skin meshes
 joints = rigBuilderComponents.MyComponent.get_all_skin_joints()
