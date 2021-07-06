@@ -9,8 +9,8 @@ reload(rigBuilderSteps)
 import rigBuilder
 reload(rigBuilder)
 
-from rigBuilderComponents import rigUtils
-reload(rigUtils)
+from rigBuilderComponents import componentUtils
+reload(componentUtils)
 
 # Data path
 data_path_split = __file__.split('\\')
@@ -27,14 +27,9 @@ meshes = ('humanBody',)
 rigBuilderSteps.import_maya_file(data_path + '/guides.ma')
 guides_matrices = dict()
 for dag in cmds.listRelatives('guides', allDescendents=True, type='transform'):
-    guides_matrices[dag] = rigUtils.Matrix.get_from_dag(dag)
+    guides_matrices[dag] = componentUtils.Matrix.get_from_dag(dag)
 
 # Components
-hips_component = rigBuilderComponents.OneCtrl.create(id_='hips', size=30, add_joint=True, matrix=guides_matrices['hips_guide'], color=rigUtils.Color.pink, axis='y')
-
-world_local_component = rigBuilderComponents.WorldLocal.create(size=30, add_joint=True, matrix=guides_matrices['world_guide'])
-world_local_component.connect_to_local_ctrl(hips_component.get_ctrl().get_buffer())
-
 spine_matrices = (
     guides_matrices['spine1_guide'],
     guides_matrices['spine2_guide'],
@@ -42,12 +37,18 @@ spine_matrices = (
     guides_matrices['spine4_guide'],
     guides_matrices['spine5_guide'],
 )
-spine_component = rigBuilderComponents.FkChain.create(id_='spine', matrices=spine_matrices, size=25, color=rigUtils.Color.yellow)
+spine_component = rigBuilderComponents.HybridChain.create(id_='spine', matrices=spine_matrices, size=25, color=componentUtils.Color.yellow)
 
-# Skin mesh
+hips_component = rigBuilderComponents.OneCtrl.create(id_='hips', size=30, add_joint=True, matrix=guides_matrices['hips_guide'], color=componentUtils.Color.pink, axis='y')
+# hips_component.connect_to_ctrl(spine_component.get_ctrls()[0].get_buffer())
+
+world_local_component = rigBuilderComponents.WorldLocal.create(size=30, add_joint=True, matrix=guides_matrices['world_guide'])
+world_local_component.connect_to_local_ctrl(hips_component.get_ctrl().get_buffer())
+
+# Skin meshes
 joints = rigBuilderComponents.MyComponent.get_all_skin_joints()
 for mesh in meshes:
-    cmds.skinCluster(joints, mesh)
+    cmds.skinCluster(joints, mesh, skinMethod=1)
 
 # ngSkinTools
 rigBuilderSteps.import_ng_skin_layers(data_path + '/skin_layers.json', meshes[0])
