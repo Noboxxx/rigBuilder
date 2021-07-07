@@ -74,7 +74,7 @@ left_arm_component = rigBuilderComponents.TwoSegmentsLimb.create(
     id_='arm',
     side='L',
     matrices=left_arm_matrices,
-    size=15,
+    size=10,
 )
 
 right_arm_matrices = [matrix.get_mirror() for matrix in left_arm_matrices]
@@ -83,13 +83,15 @@ right_arm_component = rigBuilderComponents.TwoSegmentsLimb.create(
     id_='arm',
     side='R',
     matrices=right_arm_matrices,
-    size=15,
+    size=10,
 )
 
 # Connect components
 connect_map = (
     (world_local_component.get_ends()[0], hips_component.get_roots()[0]),
     (hips_component.get_ends()[0], spine_component.get_roots()[0]),
+    (spine_component.get_ends()[0], left_arm_component.get_roots()[1]),
+    (spine_component.get_ends()[0], right_arm_component.get_roots()[1]),
 )
 
 for end, root in connect_map:
@@ -109,6 +111,7 @@ components = rigBuilderComponents.MyComponent.get_all()
 rigBuilderSteps.create_asset_folder(meshes=meshes, components=components)
 
 # Test
+print left_arm_component.get_roots()
 print 'components', rigBuilderComponents.MyComponent.get_all()
 print 'ctrls', rigBuilderComponents.MyComponent.get_all_ctrls()
 print 'skin_joints', rigBuilderComponents.MyComponent.get_all_skin_joints()
