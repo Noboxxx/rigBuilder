@@ -68,6 +68,7 @@ left_arm_matrices = (
     guides_matrices['shoulder_guide'],
     guides_matrices['elbow_guide'],
     guides_matrices['wrist_guide'],
+    guides_matrices['hand_end_guide'],
 )
 
 left_arm_component = rigBuilderComponents.TwoSegmentsLimb.create(
@@ -75,6 +76,7 @@ left_arm_component = rigBuilderComponents.TwoSegmentsLimb.create(
     side='L',
     matrices=left_arm_matrices,
     size=10,
+    ik_color=componentUtils.Color.green,
 )
 
 right_arm_matrices = [matrix.get_mirror() for matrix in left_arm_matrices]
@@ -84,6 +86,7 @@ right_arm_component = rigBuilderComponents.TwoSegmentsLimb.create(
     side='R',
     matrices=right_arm_matrices,
     size=10,
+    ik_color=componentUtils.Color.red,
 )
 
 # Connect components
