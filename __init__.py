@@ -110,13 +110,6 @@ class Component(object):
     def get_folder(self):
         return self.__folder
 
-    @classmethod
-    def connect(cls, parent, child):
-        cnstr, = cmds.parentConstraint(parent, child, maintainOffset=True)
-        cmds.setAttr('{}.{}'.format(cnstr, 'interpType'), 2)
-
-        cmds.scaleConstraint(parent, child, maintainOffset=True)
-
     def get_roots(self):
         return cmds.listConnections('{}.{}'.format(self.get_folder(), self.roots_attr_name), source=False, destination=True) or list()
 
@@ -135,6 +128,7 @@ class Component(object):
         for node in cmds.ls(type='transform'):
             if cls.is_one(node):
                 components.append(cls(node))
+        components.sort()
         return components
 
     @classmethod
@@ -142,6 +136,7 @@ class Component(object):
         joints = list()
         for component in cls.get_all():
             joints += component.get_skin_joints()
+        joints.sort()
         return joints
 
     @classmethod
@@ -149,4 +144,5 @@ class Component(object):
         ctrls = list()
         for component in cls.get_all():
             ctrls += component.get_ctrls()
+        ctrls.sort()
         return ctrls
