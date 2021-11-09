@@ -1,42 +1,64 @@
-class Guides(object):
-    pass
+class Mirrorable(object):
+
+    def __init__(self):
+        self.__mirror = None
+
+    def getMirror(self):
+        return self if self.__mirror is None else self.__mirror
+
+    def setMirror(self, obj):
+        self.__mirror = obj
 
 
-class Parameters(object):
-    pass
+class Palette(Mirrorable):
+
+    def __init__(self, primary, secondary, tertiary, bonus):
+        super(Palette, self).__init__()
+
+        self.primary = primary
+        self.secondary = secondary
+        self.tertiary = tertiary
+        self.bonus = bonus
 
 
-class Side(object):
+leftPalette = Palette('lime', 'green', 'green', 'blue')
+rightPalette = Palette('red', 'red', 'red', 'blue')
+centerPalette = Palette('yellow', 'yellow', 'yellow', 'blue')
 
-    def __init__(self, shortName, longName, primaryColor, secondaryColor, tertiaryColor):
-        self.shortName = shortName
-        self.longName = longName
-        self.primaryColor = primaryColor
-        self.secondaryColor = secondaryColor
-        self.tertiaryColor = tertiaryColor
-        self.mirrorSide = None
+leftPalette.setMirror(rightPalette)
+rightPalette.setMirror(leftPalette)
+
+
+class Side(Mirrorable):
+
+    def __init__(self, name):
+        super(Side, self).__init__()
+
+        self.name = name
 
     def __str__(self):
-        return self.shortName
+        return self.name
 
-    def setMirrorSide(self, side):
-        self.mirrorSide = side
+    def __eq__(self, other):
+        if isinstance(other, Side):
+            return other.name == self.name
+        return False
+
+
+leftSide = Side('L')
+rightSide = Side('R')
+centerSide = Side('C')
+
+leftSide.setMirror(rightSide)
+rightSide.setMirror(leftSide)
 
 
 class Component(object):
-    leftSide = Side('L', 'left', 'lime', 'green', 'green')
-    rightSide = Side('R', 'right', 'red', 'red', 'red')
-    centerSide = Side('C', 'center', 'yellow', 'yellow', 'yellow')
 
-    leftSide.setMirrorSide(rightSide)
-    rightSide.setMirrorSide(leftSide)
-
-    def __init__(self, name, side, index, guides=None, parameters=None):
+    def __init__(self, name, side, index):
         self.name = name
         self.side = side
         self.index = index
-        self.guides = guides
-        self.parameters = parameters
 
         self.ctrls = list()
         self.folder = None
@@ -44,8 +66,11 @@ class Component(object):
     def create(self):
         raise NotImplementedError
 
-    def finalizeCreation(self, ctrls):
+    def setCtrls(self, ctrls):
         self.ctrls = ctrls
+
+    def createFolder(self, name):
+        self.folder = name
 
     def formatObjectName(self, type, prefix=None):
         parts = [self.name, self.side, self.index, type]
@@ -56,8 +81,9 @@ class Component(object):
         strParts = [str(part) for part in parts]
         return '_'.join(strParts)
 
-    def mirror(self):
+    def getMirror(self):
         mirrorSide = self.side.mirrorSide
         if mirrorSide is None:
             return None
-        return self.__class__(self.name, mirrorSide, self.index, self.guides.mirror(), self.parameters.mirror())
+        mirrorPalette = None if self.palette is None else self.palette.mirror
+        return self.__class__(self.name, mirrorSide, self.index)
