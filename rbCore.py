@@ -35,24 +35,36 @@ class Component(object):
         - connect components together (inputs, outputs)
         - access to controllers
 
-    Those methods are made to be overwritten but not called from outside:
+    The creation methods are made to be overwritten but not called from outside:
         - _initializeCreation()
         - _doCreation()
         - _finalizeCreation()
 
-    getMirroredDict:
-        This method should be reimplemented to always mirror all arguments (if it makes sense)
-        passed to the __init__ method.
+    This class can be iterated over to have access to its parameters (name, side, index,...).
+
+    asdict() -> dict:
+        This method should be return every arguments that have been passed to the __init__ mathod.
+
+    asmirroreddict() -> dict:
+        This method should mirror values that make sense to be mirrored from asdict().
+
+    __init__:
+        if a given argument's value is not valid, a ValueError should be raised.
     """
 
     def __init__(self, name, side, index):
-        self._name = None
-        self._side = None
-        self._index = None
+        if not isinstance(name, basestring):
+            raise ValueError('name should be \'basestring\' type not \'{}\''.format(type(name)))
 
-        self.setName(name)
-        self.setSide(side)
-        self.setIndex(index)
+        if not isinstance(index, int or long):
+            raise ValueError('index should be \'int\' or \'long\' type not \'{}\''.format(type(index)))
+
+        if not isinstance(side, basestring):
+            raise ValueError('side should be \'basestring\' type not \'{}\''.format(type(side)))
+
+        self._name = name
+        self._side = side
+        self._index = index
 
         self._controllers = list()
         self._outputs = list()
@@ -60,20 +72,14 @@ class Component(object):
 
     def __eq__(self, other):
         """
-        Equality is based on types, names, sides and indices of two components.
+        Equality is based on objects' types and parameters.
         :param other: any
         :return: bool
         """
         if self.__class__ != other.__class__:
             return False
 
-        if self.getName() != other.getName():
-            return False
-
-        if self.getSide() != other.getSide():
-            return False
-
-        if self.getIndex() != other.getIndex():
+        if self.asdict() != other.asdict():
             return False
 
         return True
@@ -81,16 +87,21 @@ class Component(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def __str__(self):
-        """
-        Return the formatted name of the component like so: <name>_<side>_<index>
-        :return: str
-        """
-        return '{}_{}_{}'.format(self.getName(), self.getSide(), self.getIndex())
+    # dict like
 
-    def __dict__(self):
+    def __iter__(self):
         """
-        returns all arguments passed to the __init__ method.
+        Iter over component's parameters.
+        :return:
+        """
+        return iter(self.asdict().items())
+
+    def __getitem__(self, item):
+        return self.asdict()[item]
+
+    def asdict(self):
+        """
+        returns all parameters that define the component.
         :return: dict
         """
         return dict(
@@ -99,31 +110,25 @@ class Component(object):
             index=self.getIndex(),
         )
 
+    def keys(self):
+        return self.asdict().keys()
+
+    def values(self):
+        return self.asdict().values()
+
+    def items(self):
+        return self.asdict().items()
+
     # Getters, Setters , Adders
 
     def getName(self):
         return self._name
 
-    def setName(self, value):
-        if not isinstance(value, basestring):
-            raise ValueError('value should be \'basestring\' type not \'{}\''.format(type(value)))
-        self._name = str(value)
-
     def getIndex(self):
         return self._index
 
-    def setIndex(self, value):
-        if not isinstance(value, int or long):
-            raise ValueError('value should be \'int\' or \'long\' type not \'{}\''.format(type(value)))
-        self._index = int(value)
-
     def getSide(self):
         return self._side
-
-    def setSide(self, value):
-        if not isinstance(value, basestring):
-            raise ValueError('value should be \'basestring\' type not \'{}\''.format(type(value)))
-        self._side = str(value)
 
     def getControllers(self):
         return self._controllers
