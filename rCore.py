@@ -1,4 +1,4 @@
-class Input(object):
+class RInput(object):
 
     def __init__(self, obj):
         self.obj = obj
@@ -8,7 +8,7 @@ class Input(object):
         raise NotImplementedError
 
 
-class Output(object):
+class ROutput(object):
 
     def __init__(self, obj):
         self.obj = obj
@@ -18,7 +18,7 @@ class Output(object):
         raise NotImplementedError
 
 
-class Controller(object):
+class RController(object):
 
     def __init__(self, obj):
         self.obj = obj
@@ -28,7 +28,7 @@ class Controller(object):
         raise NotImplementedError
 
 
-class Component(object):
+class RComponent(object):
     """
     This class is made to harmonize component's creation and facilitate:
         - mirroring
@@ -40,31 +40,61 @@ class Component(object):
         - _doCreation()
         - _finalizeCreation()
 
-    This class can be iterated over to have access to its parameters (name, side, index,...).
+    This class can be iterated over to have access to its parameters.
 
-    asdict() -> dict:
-        This method should be return every arguments that have been passed to the __init__ mathod.
+    parameters = {str: (func or None, func or None)}:
+        parameters contains keys that will be allowed to be passed to the __init__ method as kwargs.
+        Each key contains a tuple containing:
+            - a defaultValue in case the kwarg is not set. If the defaultValue is None then the kwarg is mandatory.
+            - a checkValue function or None if no need to check the value.
+            - a mirrorValue function or None if the value does not need to be checked.
 
-    asmirroreddict() -> dict:
-        This method should mirror values that make sense to be mirrored from asdict().
+        checkValue(value) will be called in the __init__ method to unsure that the given value is valid. If it's not,
+        the function should raise a ValueError.
 
-    __init__:
-        if a given argument's value is not valid, a ValueError should be raised.
+        mirrorValue(value) will be called in asmirroreddict() to mirror the given value and return it.
+
+        Example:
+            >>> def mirrorValueExample(value):
+            >>>     # do something to the value to mirror it
+            >>>     return value
+            >>>
+            >>> def checkValueExample(value):
+            >>>     if not value:  # check something to check if the value is valid
+            >>>         raise ValueError
+            >>>
+            >>> defaultValue = 0.0
+            >>>
+            >>> parameters = {'kwarg': (defaultValue, checkValueExample, mirrorValueExample)}
     """
 
-    def __init__(self, name, side, index):
-        if not isinstance(name, basestring):
-            raise ValueError('name should be \'basestring\' type not \'{}\''.format(type(name)))
+    parameters = dict()
 
-        if not isinstance(index, int or long):
-            raise ValueError('index should be \'int\' or \'long\' type not \'{}\''.format(type(index)))
+    def __init__(self, **kwargs):
 
-        if not isinstance(side, basestring):
-            raise ValueError('side should be \'basestring\' type not \'{}\''.format(type(side)))
+        self._parameters = list()
 
-        self._name = name
-        self._side = side
-        self._index = index
+        for key, value in kwargs.items():
+
+            if key not in self.parameters:
+                raise KeyError('\'{}\' is not a valid key'.format(key))
+
+            _, validator, _ = self.parameters[key]
+            if validator is not None:
+                validator(value)
+
+            self.__setattr__(key, value)
+            self._parameters.append(key)
+
+        for key, (defaultValue, _, _) in self.parameters.items():
+            if key in self._parameters:
+                continue
+
+            if defaultValue is None:
+                raise ValueError('The key \'{}\' is mandatory'.format(key))
+            else:
+                self.__setattr__(key, defaultValue)
+                self._parameters.append(key)
 
         self._controllers = list()
         self._outputs = list()
@@ -101,14 +131,14 @@ class Component(object):
 
     def asdict(self):
         """
-        returns all parameters that define the component.
+        returns all parameters.
         :return: dict
         """
-        return dict(
-            name=self.getName(),
-            side=self.getSide(),
-            index=self.getIndex(),
-        )
+        data = dict()
+        for key in self._parameters:
+            value = self.__getattribute__(key)
+            data[key] = value
+        return data
 
     def keys(self):
         return self.asdict().keys()
@@ -119,22 +149,11 @@ class Component(object):
     def items(self):
         return self.asdict().items()
 
-    # Getters, Setters , Adders
-
-    def getName(self):
-        return self._name
-
-    def getIndex(self):
-        return self._index
-
-    def getSide(self):
-        return self._side
-
     def getControllers(self):
         return self._controllers
 
     def addController(self, value):
-        if not isinstance(value, Controller):
+        if not isinstance(value, RController):
             raise ValueError('value should be \'Controller\' type not \'{}\''.format(type(value)))
         self._controllers = value
 
@@ -142,7 +161,7 @@ class Component(object):
         return self._outputs
 
     def addOutput(self, value):
-        if not isinstance(value, Output):
+        if not isinstance(value, ROutput):
             raise ValueError('value should be \'Output\' type not \'{}\''.format(type(value)))
         self._outputs = value
 
@@ -150,7 +169,7 @@ class Component(object):
         return self._inputs
 
     def addInput(self, value):
-        if not isinstance(value, Input):
+        if not isinstance(value, RInput):
             raise ValueError('value should be \'Input\' type not \'{}\''.format(type(value)))
         self._inputs = value
 
@@ -161,18 +180,25 @@ class Component(object):
         returns a mirrored copy of itself or None if arguments are invalid.
         :return: BaseRigComponent or None
         """
-        mirroredKwargs = self.getMirroredDict()
+        mirroredKwargs = self.asmirroreddict()
         try:
             return self.__class__(**mirroredKwargs)
         except ValueError:
             return None
 
-    def getMirroredDict(self):
+    def asmirroreddict(self):
         """
-        returns all arguments passed to the __init__ method but mirrored.
+        returns all parameters mirrored.
         :return: dict
         """
-        raise NotImplementedError
+        mirroredData = dict()
+        for key, value in self.asdict().items():
+            _, _, mirrorFunc = self.parameters[key]
+            if mirrorFunc is not None:
+                mirroredData[key] = mirrorFunc(value)
+            else:
+                mirroredData[key] = value
+        return mirroredData
 
     # Creation
 
