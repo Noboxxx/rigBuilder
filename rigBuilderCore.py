@@ -204,13 +204,3 @@ class Component(object):
         :return:
         """
         pass
-
-    # Naming
-
-    def composeObjectName(self, name):
-        """
-        compose an object name based on the component's name
-        :param name: str
-        :return: str
-        """
-        raise NotImplementedError
