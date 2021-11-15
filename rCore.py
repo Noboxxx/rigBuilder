@@ -1,3 +1,9 @@
+def mirror(obj):
+    if hasattr(obj, '__mirror__'):
+        return obj.__mirror__()
+    return None
+
+
 class RInput(object):
 
     def __init__(self, obj):
@@ -79,14 +85,14 @@ class RComponent(object):
             if key not in self.parameters:
                 raise KeyError('\'{}\' is not a valid key'.format(key))
 
-            _, validator, _ = self.parameters[key]
-            if validator is not None:
-                validator(value)
+            objectType = self.parameters[key]
+            if not isinstance(value, type(objectType)):
+                raise KeyError('\'{}\' is not of type {}. Got -> {}'.format(key, objectType, type(value)))
 
             self.__setattr__(key, value)
             self._parameters.append(key)
 
-        for key, (defaultValue, _, _) in self.parameters.items():
+        for key, _ in self.parameters.items():
             if key in self._parameters:
                 continue
 
