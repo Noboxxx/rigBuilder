@@ -12,7 +12,8 @@ class ImmutableError(BaseException):
 
 class ImmutableData(object):
     """
-    ImmutableData acts like a dict but is immutable. You can call a key like a field.
+    ImmutableData acts like a dict but is immutable.
+    You can call a key like a field.
 
     Example:
         >>> data = ImmutableData(firstName='firstName', lastName='lastName')
@@ -28,12 +29,12 @@ class ImmutableData(object):
         raise ImmutableError
 
     def __init__(self, **kwargs):
-        
+
         # create fields
-        self.attributes = list()
+        self.dataFields = list()
         for key, value in kwargs.items():
             self.__setattr__(key, value)
-            self.attributes.append(key)
+            self.dataFields.append(key)
 
         # Make class immutable
         self.__delattr__ = self.raiseImmutableError
@@ -61,7 +62,7 @@ class ImmutableData(object):
 
     def _asdict(self):
         data = dict()
-        for attr in self.attributes:
+        for attr in self.dataFields:
             value = self.__getattribute__(attr)
             data[attr] = value
         return data
@@ -79,10 +80,82 @@ class ImmutableData(object):
         return self.__class__(**self._asdict())
 
 
+class ParameterHint(object):
+
+    def __init__(self, types=None, defaultValue=None):
+        self.types = types
+
+        self.checkValue(defaultValue)
+        self.defaultValue = defaultValue
+
+    def checkValue(self, value):
+        if self.types is None:
+            return
+
+        if not isinstance(value, self.types):
+            typesStr = ' or '.join(['\'{}\''.format(type_.__name__) for type_ in self.types])
+            raise TypeError('Unexpected value type. Should have been {} not \'{}\''.format(typesStr, type(value).__name__))
+
+
+class BaseComponent(ImmutableData):
+
+    @classmethod
+    def _getTypeHints(cls):
+        typeHints = dict()
+        for key in dir(cls):
+            value = getattr(cls, key)
+            if isinstance(value, ParameterHint):
+                typeHints[key] = value
+        return typeHints
+
+    @classmethod
+    def _getConformedKwargs(cls, **kwargs):
+        typeHints = cls._getTypeHints()
+        newKwargs = dict()
+
+        for key, typeHint in typeHints.items():
+            if key not in kwargs.keys():
+                if typeHint.defaultValue is None:
+                    raise KeyError('Mandatory key missing -> {}'.format(key))
+                else:
+                    newKwargs[key] = typeHint.defaultValue
+            else:
+                value = kwargs[key]
+                typeHint.checkValue(value)
+                newKwargs[key] = value
+        return newKwargs
+
+    def __init__(self, **kwargs):
+        kwargs = self._getConformedKwargs(**kwargs)
+        super(BaseComponent, self).__init__(**kwargs)
+
+    def __mirror__(self):
+        mirroredDict = dict()
+        for key, value in self.items():
+            mirroredValue = mirror(value)
+            mirroredDict[key] = value if mirroredValue is None else mirroredValue
+
+        return self.__class__(**mirroredDict)
+
+    def create(self):
+        raise NotImplementedError
+
+
+class TestComponent(BaseComponent):
+    name = ParameterHint(basestring, defaultValue='untitled')
+    side = ParameterHint(basestring, defaultValue='C')
+    index = ParameterHint((long, int), defaultValue=0)
+
+
+class SimpleComponent(TestComponent):
+    matrix = ParameterHint(int, defaultValue=0)
+
+
 def test():
-    data = ImmutableData(name='untitled', side='L', index=0)
-    dataCopy = data.copy()
-    print data == dataCopy
-    print dict(data)
+    data = SimpleComponent()
+    print '--- dict like ---'
     for key, value in data.items():
         print key, value
+    print '--- fields ---'
+    print data.name
+    print data.side
