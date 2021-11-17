@@ -4,137 +4,85 @@ def mirror(value):
     return None
 
 
-class PseudoDict(object):
+class ImmutableError(BaseException):
+
+    def __init__(self):
+        super(ImmutableError, self).__init__('Impossible due to immutability.')
+
+
+class ImmutableData(object):
     """
-    Pseudo dict act exactly like a dict but it is possible to get keys as a field:
-        >>> pseudoDict = PseudoDict(firstName='Pierre', lastName='Laurent')
-        >>>
-        >>> # getting
-        >>> print pseudoDict['firstName']
-        >>> print pseudoDict.firstName
+    ImmutableData acts like a dict but is immutable. You can call a key like a field.
+
+    Example:
+        >>> data = ImmutableData(firstName='firstName', lastName='lastName')
+        >>> print data.firstName  # print firstName in a field manner
+        >>> print data['firstName'] # print firstName in a dict manner
 
     Flaws:
-        - auto-completion doesn't work properly
-        - adding a field from outside the class will not be properly handeled:
-            >>> pseudoDict.plop = None
+        - auto-completion on dynamic fields doesnt work.
     """
 
-    def __init__(self, *args, **kwargs):
+    @staticmethod
+    def raiseImmutableError(*_):
+        raise ImmutableError
+
+    def __init__(self, **kwargs):
+        
+        # create fields
         self.attributes = list()
         for key, value in kwargs.items():
             self.__setattr__(key, value)
             self.attributes.append(key)
 
+        # Make class immutable
+        self.__delattr__ = self.raiseImmutableError
+        self.__setattr__ = self.raiseImmutableError
+
     def __iter__(self):
-        return iter(self.asdict())
-
-    def __str__(self):
-        return str(self.asdict())
-
-    def __repr__(self):
-        return repr(self.asdict())
-
-    def __setitem__(self, key, value):
-        self.__setattr__(key, value)
-        if key not in self.attributes:
-            self.attributes.append(key)
-
-    def __getitem__(self, item):
-        return self.asdict()[item]
+        return iter(self._asdict())
 
     def __eq__(self, other):
-        if isinstance(other, PseudoDict):
-            return other.asdict() == self.asdict()
-        return False
+        if not isinstance(other, ImmutableData):
+            return False
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
+        otherKeys = other.keys()
 
-    def __hash__(self):
-        return hash(self.asdict())
+        for key, value in self.items():
+            if key not in otherKeys:
+                return False
 
-    def copy(self):
-        return self.__class__(**self.asdict())
+            if self.__getattribute__(key) != other.__getattribute__(key):
+                return False
+        return True
 
-    def asdict(self):
+    def __getitem__(self, item):
+        return self.__getattribute__(item)
+
+    def _asdict(self):
         data = dict()
-
         for attr in self.attributes:
             value = self.__getattribute__(attr)
             data[attr] = value
-
         return data
 
     def items(self):
-        return self.asdict().items()
+        return self._asdict().items()
 
     def keys(self):
-        return self.asdict().keys()
+        return self._asdict().keys()
 
     def values(self):
-        return self.asdict().keys()
+        return self._asdict().values()
 
-
-class BaseComponent(PseudoDict):
-
-    def __init__(self, **kwargs):
-        super(BaseComponent, self).__init__(**kwargs)
-
-        self.folder = None
-
-        self.inputs = list()
-        self.outputs = list()
-        self.controllers = list()
-
-    def __mirror__(self):
-        mirroredData = dict()
-
-        for key, value in self.items():
-            mirroredValue = mirror(value)
-            mirroredData[key] = value if mirroredValue is None else mirroredValue
-
-        return self.__class__(**mirroredData)
-
-    def create(self):
-        self._initializeCreation()
-        self._doCreation()
-        self._finalizeCreation()
-
-    def _initializeCreation(self):
-        pass
-
-    def _doCreation(self):
-        raise NotImplementedError
-
-    def _finalizeCreation(self):
-        pass
-
-########
-# TEST #
-########
-
-
-from collections import namedtuple
-
-Plop = namedtuple('Plop', ('red', 'fuck'))
-plop = Plop(1, 2)
-print plop.red
-
-
-class Component(BaseComponent):
-
-    # name = basestring
-    # side = basestring
-    # index = long, int
-
-    def _doCreation(self):
-        print '_doCreation', self
+    def copy(self):
+        return self.__class__(**self._asdict())
 
 
 def test():
-    component1 = Component(name='untitled', side='L', index=1)
-    print 'name', component1['name']
-    component1['plop'] = 10
-    component1.plip = 11
-    # print dir(component1)
-    print dict(component1)
+    data = ImmutableData(name='untitled', side='L', index=0)
+    dataCopy = data.copy()
+    print data == dataCopy
+    print dict(data)
+    for key, value in data.items():
+        print key, value
