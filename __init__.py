@@ -11,3 +11,12 @@ def __reload__():
 
         print('Removing Module -> {}'.format(moduleName))
         del modules[moduleName]
+
+
+def test():
+    from .rMaya import rMayaComponents
+    from maya import cmds
+    cmds.file(new=True, force=True)
+    component = rMayaComponents.OneCtrl()
+    component.create()
+    print component
