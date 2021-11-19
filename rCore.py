@@ -4,7 +4,23 @@ def mirror(value):
     return None
 
 
-class ParameterHint(object):
+class Signal(object):
+
+    def __init__(self):
+        self.funcs = list()
+
+    def emit(self, *args, **kwargs):
+        for func in self.funcs:
+            func(*args, **kwargs)
+
+    def connect(self, func):
+        self.funcs.append(func)
+
+    def disconnect(self):
+        self.funcs = list()
+
+
+class RParameterHint(object):
 
     def __init__(self, types=None, defaultValue=None):
         self.types = types
@@ -17,18 +33,19 @@ class ParameterHint(object):
             return
 
         if not isinstance(value, self.types):
-            typesStr = ' or '.join(['\'{}\''.format(type_.__name__) for type_ in self.types])
-            raise TypeError('Unexpected value type. Should have been {} not \'{}\''.format(typesStr, type(value).__name__))
+            raise TypeError(
+                'Unexpected value type. Should have been {} not \'{}\''.format(self.types, type(value).__name__)
+            )
 
 
-class DataStructure(object):
+class RDataStructure(object):
 
     @classmethod
     def _getParameterHints(cls):
         typeHints = dict()
         for key in dir(cls):
             value = getattr(cls, key)
-            if isinstance(value, ParameterHint):
+            if isinstance(value, RParameterHint):
                 typeHints[key] = value
         return typeHints
 
@@ -61,7 +78,7 @@ class DataStructure(object):
         return iter(self._asdict())
 
     def __eq__(self, other):
-        if not isinstance(other, DataStructure):
+        if not isinstance(other, RDataStructure):
             return False
 
         otherKeys = other.keys()
@@ -102,10 +119,10 @@ class DataStructure(object):
         return self.__class__(**self._asdict())
 
 
-class BaseComponent(DataStructure):
+class RBaseComponent(RDataStructure):
 
     def __init__(self, **kwargs):
-        super(BaseComponent, self).__init__(**kwargs)
+        super(RBaseComponent, self).__init__(**kwargs)
 
         self.inputs = list()
         self.outputs = list()
@@ -126,5 +143,21 @@ class BaseComponent(DataStructure):
         pass
 
 
-class BaseRig(object):
+class RBaseObject(object):
+
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return str(self.name)
+
+    def __repr__(self):
+        return repr(self.name)
+
+    @classmethod
+    def create(cls, name=''):
+        raise NotImplementedError
+
+
+class RBaseRig(object):
     pass

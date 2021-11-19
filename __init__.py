@@ -14,9 +14,11 @@ def __reload__():
 
 
 def test():
-    from .rMaya import rMayaComponents
+    from rigBuilder import RComp, RMObj
+    RComp.RObj = RMObj
+
     from maya import cmds
     cmds.file(new=True, force=True)
-    component = rMayaComponents.OneCtrl()
+    component = RComp.OneCtrl()
     component.create()
     print component

@@ -1,3 +1,0 @@
-"""
-Ctrl, ComponentFolder
-"""
