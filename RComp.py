@@ -1,14 +1,7 @@
-from . import RCore, RParam, RObj
-
-RObj = RObj
+from . import RCore, RObj
 
 
 class BaseComponent(RCore.RBaseComponent):
-
-    name = RCore.RParameterHint(RParam.Name, RParam.Name('untitled'))  # type: RParam.Name
-    side = RCore.RParameterHint(RParam.Side, RParam.Side('C'))  # type: RParam.Side
-    index = RCore.RParameterHint(RParam.Index, RParam.Index(0))  # type: RParam.Index
-    software = RCore
 
     namePattern = '{name}_{side}_{index}'
 
