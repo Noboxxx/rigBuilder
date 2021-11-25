@@ -14,7 +14,7 @@ class RBaseComponent(object):
     def asmirroreddict(self, *args, **kwargs):  # type: (...) -> dict
         return self.asdict()
 
-    def mirror(self, *args, **kwargs):  # type: (...) -> RBaseComponent
+    def mirrored(self, *args, **kwargs):  # type: (...) -> RBaseComponent
         return self.__class__(**self.asmirroreddict(*args, **kwargs))
 
     def create(self):  # type: () -> None
