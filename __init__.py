@@ -1,3 +1,25 @@
+class RConnector(object):
+
+    def __init__(self):
+        self.inputs = list()
+        self.outputs = list()
+
+    def connect(self):
+        print self.inputs, '->', self.outputs
+
+
+class RInput(object):
+
+    def __init__(self):
+        self.obj = None
+
+
+class ROutput(object):
+
+    def __init__(self):
+        self.obj = None
+
+
 class RBaseComponent(object):
 
     def __init__(self, *args, **kwargs):
