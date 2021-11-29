@@ -1,23 +1,5 @@
-class RConnector(object):
-
-    def __init__(self):
-        self.inputs = list()
-        self.outputs = list()
-
-    def connect(self):
-        print self.inputs, '->', self.outputs
-
-
-class RInput(object):
-
-    def __init__(self):
-        self.obj = None
-
-
-class ROutput(object):
-
-    def __init__(self):
-        self.obj = None
+import json
+import os
 
 
 class RBaseComponent(object):
@@ -29,18 +11,6 @@ class RBaseComponent(object):
 
     def __repr__(self):
         return '<{}.{}: {}>'.format(self.__class__.__module__, self.__class__.__name__, self.asdict())
-
-    def __iter__(self):
-        return iter(self.asdict())
-
-    def items(self):
-        return self.asdict().items()
-
-    def values(self):
-        return self.asdict().values()
-
-    def keys(self):
-        return self.asdict().keys()
 
     def asdict(self):  # type: () -> dict
         return dict()
@@ -60,9 +30,6 @@ class RBaseRig(object):
     def __init__(self):
         self.components = list()
 
-    def __iter__(self):
-        return iter(self.components)
-
     def __repr__(self):
         return '<{}.{}: {}>'.format(self.__class__.__module__, self.__class__.__name__, self.aslist())
 
@@ -72,3 +39,25 @@ class RBaseRig(object):
     def create(self):
         for component in self.components:
             component.create()
+
+
+class JsonFile(object):
+    """
+    A simple interface to dump and load a json file safely.
+    """
+
+    def __init__(self, path):
+        self.path = str(path)
+
+    def dump(self, data, force=False, indent=4):
+        if os.path.exists(self.path) and force is False:
+            raise RuntimeError('The path already exists. Use -force to override it -> {}'.format(self.path))
+
+        json.dumps(data, indent=indent)  # ensure that the data is dump-able before dumping it.
+
+        with open(self.path, 'w') as f:
+            json.dump(data, f, indent=indent)
+
+    def load(self):
+        with open(self.path, 'r') as f:
+            return json.load(f)
