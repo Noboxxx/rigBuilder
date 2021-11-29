@@ -2,6 +2,12 @@ import json
 import os
 
 
+def get(value, defaultValue):
+    if value is None:
+        return defaultValue
+    return value
+
+
 class RBaseComponent(object):
 
     def __init__(self, *args, **kwargs):
@@ -25,22 +31,6 @@ class RBaseComponent(object):
         pass
 
 
-class RBaseRig(object):
-
-    def __init__(self):
-        self.components = list()
-
-    def __repr__(self):
-        return '<{}.{}: {}>'.format(self.__class__.__module__, self.__class__.__name__, self.aslist())
-
-    def aslist(self):
-        return self.components
-
-    def create(self):
-        for component in self.components:
-            component.create()
-
-
 class JsonFile(object):
     """
     A simple interface to dump and load a json file safely.
@@ -48,6 +38,9 @@ class JsonFile(object):
 
     def __init__(self, path):
         self.path = str(path)
+
+    def __repr__(self):
+        return '<{}.{}: {}>'.format(self.__class__.__module__, self.__class__.__name__, self.path)
 
     def dump(self, data, force=False, indent=4):
         if os.path.exists(self.path) and force is False:
