@@ -76,6 +76,14 @@ class Input(Plug):
     pass
 
 
+class Guide(str):
+
+    def matrix(self):
+        if cmds.objExists(self):
+            return Matrix(*cmds.xform(self, q=True, m=True))
+        return Matrix()
+
+
 class Component(Data):
 
     def __init__(self, name='untitled', side='L', index=0, color=(255, 255, 0), size=1.0, bilateral=False):
@@ -144,8 +152,8 @@ class Component(Data):
                 plugDict[attr] = value
         return plugDict
 
-    def createGuide(self):
-        print 'createGuide'
+    def createGuides(self):
+        pass
 
 
 class ComponentBuilder(Data):

@@ -1,14 +1,16 @@
 from .utils import Controller, createBuffer
 from maya import cmds
-from .core import Component
+from .core import Component, Guide
 from ..types import Matrix
 
 
 class OneCtrl(Component):
 
-    def __init__(self, matrix=None, **kwargs):
+    def __init__(self, guide=str(), **kwargs):
         super(OneCtrl, self).__init__(**kwargs)
-        self.matrix = Matrix() if matrix is None else Matrix(*matrix)
+        self.guide = Guide(guide)
+
+        self.matrix = self.guide.matrix()
 
     def build(self):
         ctrl = Controller.create(name='{}_ctrl'.format(self), color=self.color, size=self.size)
@@ -28,5 +30,6 @@ class OneCtrl(Component):
         super(OneCtrl, self).mirror()
         self.matrix = self.matrix.mirrored(mirrorAxis=mirrorAxis)
 
-    def createGuide(self, key):
-        cmds.spaceLocator(name='{}_guide'.format(key))
+    def createGuides(self, key):
+        guide, = cmds.spaceLocator(name='{}_guide'.format(key))
+        self.guide = Guide(guide)

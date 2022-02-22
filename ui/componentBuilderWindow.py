@@ -76,20 +76,22 @@ class ComponentDictList(DataDictList):
 
     def populateContextMenu(self):
 
-        createGuideAction = QtWidgets.QAction('Create Guide', self)
-        createGuideAction.triggered.connect(self.createGuides)
+        createGuidesAction = QtWidgets.QAction('Create Guides', self)
+        createGuidesAction.triggered.connect(self.createGuides)
         if not self.selectedItems():
-            createGuideAction.setEnabled(False)
+            createGuidesAction.setEnabled(False)
 
         menu = super(ComponentDictList, self).populateContextMenu()
         menu.addSeparator()
-        menu.addAction(createGuideAction)
+        menu.addAction(createGuidesAction)
 
         return menu
 
     def createGuides(self):
         for item in self.selectedItems():
-            item.d.createGuide(item.text(0))
+            item.d.createGuides(item.text(0))
+
+        self.emitCurrentDataChanged(self.currentItem())
 
 
 class ConnectionDictList(DataDictList):
