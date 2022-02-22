@@ -18,12 +18,16 @@ def test():
     componentDict['base'] = base
 
     connection1 = Connection(
-        source=Attribute(key='base', attribute='outputs', index=0),
+        sources=[
+            Attribute(key='base', attribute='outputs', index=0),
+            Attribute(key='base', attribute='outputs', index=1),
+            Attribute(key='base', attribute='outputs', index=2),
+        ],
         destination=Attribute(key='arm', attribute='inputs', index=0),
         bilateral=True
     )
     connection2 = Connection(
-        source=Attribute(key='arm', attribute='outputs', index=0),
+        sources=[Attribute(key='arm', attribute='outputs', index=0)],
         destination=Attribute(key='leg', attribute='inputs', index=0),
         bilateral=True
     )

@@ -3,6 +3,13 @@ from rigBuilder.types import Side, Color, UnsignedInt, UnsignedFloat
 from rigBuilder.core import Data
 
 
+class Attributes(list):
+
+    def __init__(self, seq):  # type: (list or tuple) -> None
+        seq = [Attribute(*i) for i in seq]
+        super(Attributes, self).__init__(seq)
+
+
 class Attribute(list):
 
     def __init__(self, key, attribute, index):
@@ -40,16 +47,21 @@ class Attribute(list):
 
 class Connection(Data):
 
-    def __init__(self, source, destination, bilateral=False):
-        # type: (Attribute, Attribute, bool) -> None
+    def __init__(self, sources, destination, bilateral=False, translate=True, rotate=True, scale=True, shear=True):
+        # type: (List[list], list, bool, bool, bool, bool, bool) -> None
         super(Connection, self).__init__()
 
-        self.source = Attribute(*source)
+        self.sources = Attributes(sources)
         self.destination = Attribute(*destination)
         self.bilateral = bilateral
 
+        self.translate = translate
+        self.rotate = rotate
+        self.scale = scale
+        self.shear = shear
+
     def build(self, componentDict):
-        print 'build: {} -> {}'.format(self.source.get(componentDict), self.destination.get(componentDict))
+        print 'build: {} -> {}'.format(self.sources, self.destination.get(componentDict))
 
 
 class Plug(list):

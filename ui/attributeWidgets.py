@@ -1,12 +1,12 @@
 from PySide2 import QtWidgets, QtGui
 from .utils import size, Signal
-from rigBuilder.components.core import Attribute, Component
+from rigBuilder.components.core import Attribute, Component, Attributes
 
 
 class ColorWidget(QtWidgets.QWidget):
 
-    def __init__(self, parent):
-        super(ColorWidget, self).__init__(parent)
+    def __init__(self):
+        super(ColorWidget, self).__init__()
         self.colorChanged = Signal()
 
         self.redSpinBox = QtWidgets.QSpinBox()
@@ -71,9 +71,40 @@ class ColorWidget(QtWidgets.QWidget):
         return dialog
 
 
+class AttributesWidget(QtWidgets.QWidget):
+
+    def __init__(self):
+        super(AttributesWidget, self).__init__()
+
+        addBtn = QtWidgets.QPushButton('+')
+        addBtn.setFixedSize(size(15), size(15))
+
+        self.mainLayout = QtWidgets.QVBoxLayout()
+        self.mainLayout.setMargin(0)
+        self.mainLayout.addWidget(addBtn)
+
+        self.setLayout(self.mainLayout)
+
+    def setAttrs(self, attributes, componentDict):  # type: (Attributes, dict[str: Component]) -> None
+        for attr in attributes:
+            wid = AttributeWidget(self, componentDict)
+            wid.setAttr(attr)
+
+            removeBtn = QtWidgets.QPushButton('x')
+            # removeBtn.setIcon(QtGui.QIcon(':trash.png'))
+            removeBtn.setFixedSize(size(15), size(15))
+
+            lay = QtWidgets.QHBoxLayout()
+            lay.setMargin(0)
+            lay.addWidget(wid)
+            lay.addWidget(removeBtn)
+
+            self.mainLayout.addLayout(lay)
+
+
 class AttributeWidget(QtWidgets.QWidget):
 
-    def __init__(self, parent, componentDict):  # type: (QtWidgets.QWidget, dict) -> None
+    def __init__(self, parent, componentDict):  # type: (QtWidgets.QWidget, dict[str: Component]) -> None
         super(AttributeWidget, self).__init__(parent)
 
         self.componentDict = componentDict
@@ -90,6 +121,7 @@ class AttributeWidget(QtWidgets.QWidget):
         self.keyChanged(self.keyCombo.currentText())
 
         mainLayout = QtWidgets.QHBoxLayout()
+        mainLayout.setMargin(0)
         mainLayout.addWidget(self.keyCombo)
         mainLayout.addWidget(self.attributeCombo)
         mainLayout.addWidget(self.indexSpin)

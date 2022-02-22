@@ -30,7 +30,15 @@ class DataAttributeEditor(QtWidgets.QTreeWidget):
             parent.addChild(item)
 
         widget = self.getAttributeWidget(key, value)
-        self.setItemWidget(item, 1, widget)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.setMargin(size(6))
+        layout.addWidget(widget)
+
+        itemWidget = QtWidgets.QWidget(self)
+        itemWidget.setLayout(layout)
+
+        self.setItemWidget(item, 1, itemWidget)
 
         item.setExpanded(True)
 
@@ -38,19 +46,19 @@ class DataAttributeEditor(QtWidgets.QTreeWidget):
         t = type(value)
 
         if isinstance(value, bool):
-            check = QtWidgets.QCheckBox(self)
+            check = QtWidgets.QCheckBox()
             check.setChecked(value)
             check.stateChanged.connect(partial(self.attributeValueChanged.emit, key, t))
             return check
 
         elif isinstance(value, basestring):
-            line = QtWidgets.QLineEdit(self)
+            line = QtWidgets.QLineEdit()
             line.setText(value)
             line.textChanged.connect(partial(self.attributeValueChanged.emit, key, t))
             return line
 
         elif isinstance(value, int):
-            spin = QtWidgets.QSpinBox(self)
+            spin = QtWidgets.QSpinBox()
             spin.setMinimum(-10000)
             spin.setMaximum(10000)
             spin.setValue(value)
@@ -58,7 +66,7 @@ class DataAttributeEditor(QtWidgets.QTreeWidget):
             return spin
 
         elif isinstance(value, float):
-            spin = QtWidgets.QDoubleSpinBox(self)
+            spin = QtWidgets.QDoubleSpinBox()
             spin.setMinimum(-10000.0)
             spin.setMaximum(10000.0)
             spin.setValue(value)
@@ -66,7 +74,7 @@ class DataAttributeEditor(QtWidgets.QTreeWidget):
             return spin
 
         else:
-            line = QtWidgets.QLineEdit(self)
+            line = QtWidgets.QLineEdit()
             line.setText(str(value))
             line.setEnabled(False)
             return line

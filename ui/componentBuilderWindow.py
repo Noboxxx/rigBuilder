@@ -1,9 +1,9 @@
 from functools import partial
 from PySide2 import QtWidgets
-from .attributeWidgets import ColorWidget, AttributeWidget
+from .attributeWidgets import ColorWidget, AttributeWidget, AttributesWidget
 from .dataDictEditor import DataDictEditor, DataDictList, DataAttributeEditor
 from .jsonFileWindow import JsonFileWindow
-from ..components.core import ComponentBuilder, Attribute
+from ..components.core import ComponentBuilder, Attribute, Attributes
 from ..types import Color, Side, UnsignedInt, UnsignedFloat
 
 
@@ -23,6 +23,11 @@ class ConnectionAttributeEditor(DataAttributeEditor):
             widget.attributeChanged.connect(partial(self.attributeValueChanged.emit, key, t))
             return widget
 
+        if isinstance(value, Attributes):
+            widget = AttributesWidget()
+            widget.setAttrs(value, self.getComponentDictFunc())
+            return widget
+
         return super(ConnectionAttributeEditor, self).getAttributeWidget(key, value)
 
 
@@ -33,7 +38,7 @@ class ComponentAttributeEditor(DataAttributeEditor):
         t = type(value)
 
         if isinstance(value, Color):
-            widget = ColorWidget(self)
+            widget = ColorWidget()
             widget.setColor(value)
             widget.colorChanged.connect(partial(self.attributeValueChanged.emit, key, t))
             return widget
