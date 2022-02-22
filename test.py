@@ -1,6 +1,7 @@
 import json
 
 from rigBuilder.components.core import Component, ComponentBuilder, Attribute, Connection
+from rigBuilder.core import MyOrderedDict
 from rigBuilder.types import Side
 from rigBuilder.files.core import customEncoder, JsonFile
 
@@ -11,11 +12,10 @@ def test():
     leg = Component(name='leg', side=Side('L'), bilateral=True)
     base = Component(name='base')
 
-    componentDict = {
-        'arm': arm,
-        'leg': leg,
-        'base': base,
-    }
+    componentDict = MyOrderedDict()
+    componentDict['arm'] = arm
+    componentDict['leg'] = leg
+    componentDict['base'] = base
 
     connection1 = Connection(
         source=Attribute(key='base', attribute='outputs', index=0),
@@ -28,12 +28,11 @@ def test():
         bilateral=True
     )
 
-    connectionList = [
-        connection1,
-        connection2,
-    ]
+    connectionDict = MyOrderedDict()
+    connectionDict['connection1'] = connection1
+    connectionDict['connection2'] = connection2
 
-    componentBuilder = ComponentBuilder(componentDict, connectionList)
+    componentBuilder = ComponentBuilder(componentDict, connectionDict)
     # componentBuilder.build()
 
     JsonFile(r'C:\Users\Pierre\Desktop\New folder\componentBuilder.json').dump(componentBuilder, force=True)

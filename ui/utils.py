@@ -55,10 +55,12 @@ class Signal(object):
         if self.held:
             return
         for func in self.funcs:
-            try:
-                func(*args, **kwargs)
-            except TypeError:
-                func()
+            print func, args, kwargs
+            func(*args, **kwargs)
+            # try:
+            #     pass
+            # except TypeError:
+            #     func()
 
     def hold(self, state):
         self.held = bool(state)

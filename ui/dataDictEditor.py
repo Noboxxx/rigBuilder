@@ -1,7 +1,7 @@
 from functools import partial
 from PySide2 import QtWidgets
 from .utils import size, Signal
-from ..core import Data
+from ..core import Data, MyOrderedDict
 
 
 class DataAttributeEditor(QtWidgets.QTreeWidget):
@@ -71,24 +71,11 @@ class DataAttributeEditor(QtWidgets.QTreeWidget):
             line.setEnabled(False)
             return line
 
-    def getDataDict(self):  # type: () -> dict[str: Data]
-        iterator = QtWidgets.QTreeWidgetItemIterator(self)
 
-        dataDict = dict()
-        while True:
-            item = iterator.value()
-            if item is None:
-                break
-            dataDict[item.text(0)] = item.d
-            iterator.next()
-
-        return dataDict
-
-
-class DataList(QtWidgets.QTreeWidget):
+class DataDictList(QtWidgets.QTreeWidget):
 
     def __init__(self):
-        super(DataList, self).__init__()
+        super(DataDictList, self).__init__()
         self.setHeaderLabels(('key', 'type'))
         self.setColumnWidth(2, size(50))
 
@@ -122,17 +109,30 @@ class DataList(QtWidgets.QTreeWidget):
             item.d = data
             self.addTopLevelItem(item)
 
+    def getDataDict(self):  # type: () -> MyOrderedDict[str: Data]
+        iterator = QtWidgets.QTreeWidgetItemIterator(self)
+
+        dataDict = MyOrderedDict()
+        while True:
+            item = iterator.value()
+            if item is None:
+                break
+            dataDict[item.text(0)] = item.d
+            iterator.next()
+
+        return dataDict
+
 
 class DataDictEditor(QtWidgets.QWidget):
 
-    def __init__(self, dataList, dataAttributeEditor):  # type: (DataList, DataAttributeEditor) -> None
+    def __init__(self, dataDictList, dataAttributeEditor):  # type: (DataDictList, DataAttributeEditor) -> None
         super(DataDictEditor, self).__init__()
 
-        self.dataList = dataList
+        self.dataDictList = dataDictList
         self.dataAttributeEditor = dataAttributeEditor
 
         splitter = QtWidgets.QSplitter()
-        splitter.addWidget(self.dataList)
+        splitter.addWidget(self.dataDictList)
         splitter.addWidget(self.dataAttributeEditor)
         splitter.setStretchFactor(0, 4)
         splitter.setStretchFactor(1, 6)
@@ -142,11 +142,11 @@ class DataDictEditor(QtWidgets.QWidget):
 
         self.setLayout(mainLayout)
 
-        self.dataList.currentDataChanged.connect(self.dataAttributeEditor.refresh)
-        self.dataAttributeEditor.attributeValueChanged.connect(self.dataList.setAttributeValue)
+        self.dataDictList.currentDataChanged.connect(self.dataAttributeEditor.refresh)
+        self.dataAttributeEditor.attributeValueChanged.connect(self.dataDictList.setAttributeValue)
 
     def refresh(self, dataDict):  # type: (dict[str: Data]) -> None
-        self.dataList.refresh(dataDict)
+        self.dataDictList.refresh(dataDict)
 
-    def getDataDict(self):  # type: () -> dict[str: Data]
-        return self.dataAttributeEditor.getDataDict()
+    def getDataDict(self):  # type: () -> MyOrderedDict[str: Data]
+        return self.dataDictList.getDataDict()

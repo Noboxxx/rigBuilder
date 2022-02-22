@@ -1,6 +1,9 @@
 import json
 import os
 import importlib
+from collections import OrderedDict
+
+from rigBuilder.core import MyOrderedDict, Data
 
 
 def objectFactory(typeStr, kwargs):  # type: (str, dict) -> any
@@ -10,14 +13,22 @@ def objectFactory(typeStr, kwargs):  # type: (str, dict) -> any
     return t(**kwargs)
 
 
-def customEncoder(o):  # type: (any) -> dict
+def customEncoder(o):
+    if isinstance(o, MyOrderedDict):
+        return {'class': 'MyrOrderedDict', 'content': o.items()}
+
     return {'class': '{}.{}'.format(o.__module__, o.__class__.__name__), 'kwargs': dict(o)}
 
 
-def customDecoder(o):  # type: (any) -> None
+def customDecoder(o):
     if isinstance(o, dict):
         if 'class' in o.keys() and 'kwargs' in o.keys():
             return objectFactory(o['class'], o['kwargs'])
+        elif 'class' in o.keys() and 'content' in o.keys():
+            d = MyOrderedDict()
+            for k, v in o['content']:
+                d[k] = v
+            return d
     return o
 
 

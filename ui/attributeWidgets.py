@@ -1,5 +1,6 @@
 from PySide2 import QtWidgets, QtGui
-from RBuild.ui.utils import size, Signal
+from .utils import size, Signal
+from rigBuilder.components.core import Attribute, Component
 
 
 class ColorWidget(QtWidgets.QWidget):
@@ -68,3 +69,64 @@ class ColorWidget(QtWidgets.QWidget):
             color = qColor.red(), qColor.green(), qColor.blue()
             self.setColor(color)
         return dialog
+
+
+class AttributeWidget(QtWidgets.QWidget):
+
+    def __init__(self, parent, componentDict):  # type: (QtWidgets.QWidget, dict) -> None
+        super(AttributeWidget, self).__init__(parent)
+
+        self.componentDict = componentDict
+
+        self.attributeChanged = Signal()
+
+        self.keyCombo = QtWidgets.QComboBox()
+        for k, v in componentDict.items():
+            self.keyCombo.addItem(k)
+        self.attributeCombo = QtWidgets.QComboBox()
+        self.indexSpin = QtWidgets.QSpinBox()
+
+        self.keyCombo.currentTextChanged.connect(self.keyChanged)
+        self.keyChanged(self.keyCombo.currentText())
+
+        mainLayout = QtWidgets.QHBoxLayout()
+        mainLayout.addWidget(self.keyCombo)
+        mainLayout.addWidget(self.attributeCombo)
+        mainLayout.addWidget(self.indexSpin)
+
+        self.setLayout(mainLayout)
+
+        self.keyCombo.currentTextChanged.connect(self.emitAttributeChanged)
+        self.attributeCombo.currentTextChanged.connect(self.emitAttributeChanged)
+        self.indexSpin.valueChanged.connect(self.emitAttributeChanged)
+
+    def setAttr(self, attribute):  # type: (Attribute) -> None
+
+        index = self.keyCombo.findText(attribute.key)
+        self.keyCombo.setCurrentIndex(index)
+
+        index = self.attributeCombo.findText(attribute.attribute)
+        self.attributeCombo.setCurrentIndex(index)
+
+        self.indexSpin.setValue(attribute.index)
+
+    def keyChanged(self, key):
+        currentComponent = self.componentDict[key]  # type: Component
+
+        self.attributeCombo.clear()
+        for k, v in currentComponent.getPlugDict().items():
+            self.attributeCombo.addItem(k)
+
+        self.indexSpin.setValue(0)
+
+    def getAttr(self):  # type: () -> Attribute
+        key = self.keyCombo.currentText()
+        attribute = self.attributeCombo.currentText()
+        index = self.indexSpin.value()
+
+        return Attribute(key, attribute, index)
+
+    def emitAttributeChanged(self):
+        self.attributeChanged.emit(self.getAttr())
+
+

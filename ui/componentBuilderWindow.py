@@ -1,10 +1,29 @@
 from functools import partial
 from PySide2 import QtWidgets
-from .attributeWidgets import ColorWidget
-from .dataDictEditor import DataDictEditor, DataList, DataAttributeEditor
+from .attributeWidgets import ColorWidget, AttributeWidget
+from .dataDictEditor import DataDictEditor, DataDictList, DataAttributeEditor
 from .jsonFileWindow import JsonFileWindow
-from ..components.core import ComponentBuilder
+from ..components.core import ComponentBuilder, Attribute
 from ..types import Color, Side, UnsignedInt, UnsignedFloat
+
+
+class ConnectionAttributeEditor(DataAttributeEditor):
+
+    def __init__(self, getComponentDictFunc):
+        super(ConnectionAttributeEditor, self).__init__()
+        self.getComponentDictFunc = getComponentDictFunc
+
+    def getAttributeWidget(self, key, value):
+
+        t = type(value)
+
+        if isinstance(value, Attribute):
+            widget = AttributeWidget(self, self.getComponentDictFunc())
+            widget.setAttr(value)
+            widget.attributeChanged.connect(partial(self.attributeValueChanged.emit, key, t))
+            return widget
+
+        return super(ConnectionAttributeEditor, self).getAttributeWidget(key, value)
 
 
 class ComponentAttributeEditor(DataAttributeEditor):
@@ -48,19 +67,26 @@ class ComponentBuilderWindow(JsonFileWindow):
     def __init__(self):
         super(ComponentBuilderWindow, self).__init__(title='Component Builder')
 
-        self.editor = DataDictEditor(dataList=DataList(), dataAttributeEditor=ComponentAttributeEditor())
+        self.componentEditor = DataDictEditor(
+            dataDictList=DataDictList(),
+            dataAttributeEditor=ComponentAttributeEditor()
+        )
+        self.connectionEditor = DataDictEditor(
+            dataDictList=DataDictList(),
+            dataAttributeEditor=ConnectionAttributeEditor(self.componentEditor.getDataDict),
+        )
 
         tab = QtWidgets.QTabWidget()
-        tab.addTab(self.editor, 'components')
-        tab.addTab(QtWidgets.QWidget(), 'connections')
+        tab.addTab(self.componentEditor, 'components')
+        tab.addTab(self.connectionEditor, 'connections')
 
         self.mainLayout.addWidget(tab)
 
     def refresh(self, obj):  # type: (ComponentBuilder) -> None
-        print obj.componentDict
-        self.editor.refresh(obj.componentDict)
+        self.componentEditor.refresh(obj.componentDict)
+        self.connectionEditor.refresh(obj.connectionDict)
 
     def getData(self):  # type: () -> ComponentBuilder
-        componentDict = self.editor.getDataDict()
-        connectionList = list()
-        return ComponentBuilder(componentDict, connectionList)
+        componentDict = self.componentEditor.getDataDict()
+        connectionDict = self.connectionEditor.getDataDict()
+        return ComponentBuilder(componentDict, connectionDict)

@@ -3,31 +3,39 @@ from rigBuilder.types import Side, Color, UnsignedInt, UnsignedFloat
 from rigBuilder.core import Data
 
 
-class Attribute(Data):
+class Attribute(list):
 
     def __init__(self, key, attribute, index):
         # type: (str, str, int) -> None
-        super(Attribute, self).__init__()
-
-        self.key = key
-        self.attribute = attribute
-        self.index = index
+        super(Attribute, self).__init__((key, attribute, index))
 
     def get(self, componentDict):
-        if self.key not in componentDict:
+        if self[0] not in componentDict:
             return None
 
-        component = componentDict[self.key]
+        component = componentDict[self[0]]
 
-        if self.attribute not in dir(component):
+        if self[1] not in dir(component):
             return None
 
-        attribute = getattr(component, self.attribute)
+        attribute = getattr(component, self[1])
 
         try:
-            return attribute[self.index]
+            return attribute[self[2]]
         except IndexError:
             return None
+
+    @property
+    def key(self):
+        return self[0]
+
+    @property
+    def attribute(self):
+        return self[1]
+
+    @property
+    def index(self):
+        return self[2]
 
 
 class Connection(Data):
@@ -36,8 +44,8 @@ class Connection(Data):
         # type: (Attribute, Attribute, bool) -> None
         super(Connection, self).__init__()
 
-        self.source = source
-        self.destination = destination
+        self.source = Attribute(*source)
+        self.destination = Attribute(*destination)
         self.bilateral = bilateral
 
     def build(self, componentDict):
@@ -123,12 +131,12 @@ class Component(Data):
 
 class ComponentBuilder(Data):
 
-    def __init__(self, componentDict=None, connectionList=None):
-        # type: (dict[str: Component], List[Connection]) -> None
+    def __init__(self, componentDict=None, connectionDict=None):
+        # type: (dict[str: Component], dict[str:Connection]) -> None
         super(ComponentBuilder, self).__init__()
 
-        self.componentDict = componentDict
-        self.connectionList = connectionList
+        self.componentDict = componentDict if componentDict is not None else dict()
+        self.connectionDict = connectionDict if connectionDict is not None else dict()
 
     def build(self):
         mirroredComponentDict = dict()
@@ -142,7 +150,7 @@ class ComponentBuilder(Data):
 
             mirroredComponentDict[key] = mirrorComponent or component
 
-        for connection in self.connectionList:
+        for key, connection in self.connectionDict:
             connection.build(self.componentDict)
 
             if connection.bilateral:

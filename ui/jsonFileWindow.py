@@ -99,14 +99,14 @@ class JsonFileWindow(QtWidgets.QMainWindow):
             self.save(self.file, force=True)
 
     def askSaveAs(self):
-        caption = '{}: Save File'.format(self.__class__.__name__)
+        caption = '{}: Save File'.format(self.title)
         path, _ = QtWidgets.QFileDialog.getSaveFileName(self, caption=caption, filter='Json File (*.json)')
         if not path:
             return
         self.save(path, force=True)
 
     def askOpen(self):
-        caption = '{}: Open File'.format(self.__class__.__name__)
+        caption = '{}: Open File'.format(self.title)
         path, _ = QtWidgets.QFileDialog.getOpenFileName(self, caption=caption, filter='Json File (*.json)')
         if not path:
             return
