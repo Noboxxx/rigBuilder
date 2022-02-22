@@ -153,257 +153,87 @@ class Controller(object):
         return cls(name)
 
 
-class Vector(list):
-
-    def __init__(self, *args):
-        args = map(float, args)
-
-        super(Vector, self).__init__(args)
-
-        magnitude = self.magnitude()
-        if magnitude <= 0.0:
-            raise ValueError('magnitude is equal or less than 0.0 -> {}'.format(magnitude))
-
-    def copy(self):
-        return self.__class__(*self)
-
-    def mirrored(self, mirrorAxis='x'):
-        vectorCopy = self.copy()
-        vectorCopy.mirror(mirrorAxis)
-        return vectorCopy
-
-    def mirror(self, mirrorAxis='x'):
-        if mirrorAxis == 'x':
-            self[0] *= -1
-        elif mirrorAxis == 'y':
-            self[1] *= -1
-        elif mirrorAxis == 'z':
-            self[2] *= -1
-        else:
-            raise ValueError('Unrecognized axis -> {}'.format(mirrorAxis))
-
-    def magnitude(self):
-        result = 0
-        for scalar in self:
-            result += scalar ** 2.0
-        return math.sqrt(result)
-
-    def normalized(self):
-        vectorCopy = self.copy()
-        vectorCopy.normalize()
-        return vectorCopy
-
-    def normalize(self):
-        magnitude = self.magnitude()
-        for index in range(len(self)):
-            self[index] /= magnitude
+# class Color(list):
+#
+#     red = (255, 0, 0)
+#     green = (0, 255, 0)
+#     blue = (0, 0, 255)
+#     yellow = (255, 255, 0)
+#
+#     mirrorTable = {
+#         red: green,
+#         green: red,
+#         yellow: None,
+#     }
+#
+#     def __init__(self, r=255, g=255, b=255):
+#         r = int(imath.clamp(int(r), 0, 255))
+#         g = int(imath.clamp(int(g), 0, 255))
+#         b = int(imath.clamp(int(b), 0, 255))
+#         super(Color, self).__init__((r, g, b))
+#
+#     def mirrored(self):
+#         return self.mirrorTable.get(tuple(self), None)
+#
+#     def __add__(self, other):
+#         if isinstance(other, Color):
+#             return self.__class__(
+#                 self[0] + other[0],
+#                 self[1] + other[1],
+#                 self[2] + other[2],
+#             )
+#         elif isinstance(other, int) or isinstance(other, float):
+#             return self.__class__(
+#                 self[0] + other,
+#                 self[1] + other,
+#                 self[2] + other,
+#             )
+#         else:
+#             raise TypeError('Only int, float and Color can be added to Color')
 
 
-class Matrix(list):
-
-    def __init__(
-            self,
-            xx=1.0, xy=0.0, xz=0.0, xw=0.0,
-            yx=0.0, yy=1.0, yz=0.0, yw=0.0,
-            zx=0.0, zy=0.0, zz=1.0, zw=0.0,
-            px=0.0, py=0.0, pz=0.0, pw=1.0,
-    ):
-        super(Matrix, self).__init__(
-            (
-                float(xx), float(xy), float(xz), float(xw),
-                float(yx), float(yy), float(yz), float(yw),
-                float(zx), float(zy), float(zz), float(zw),
-                float(px), float(py), float(pz), float(pw),
-            )
-        )
-
-    def rows(self):
-        return (
-            (self[0], self[1], self[2], self[3]),
-            (self[4], self[5], self[6], self[7]),
-            (self[8], self[9], self[10], self[11]),
-            (self[12], self[13], self[14], self[15]),
-        )
-
-    def columns(self):
-        return (
-            (self[0], self[4], self[8], self[12]),
-            (self[1], self[5], self[9], self[13]),
-            (self[2], self[6], self[10], self[14]),
-            (self[3], self[7], self[11], self[15]),
-        )
-
-    def copy(self):
-        return self.__class__(*self)
-
-    def mirrored(self, mirrorAxis='x'):
-        matrixCopy = self.copy()
-        matrixCopy.mirror(mirrorAxis)
-        return matrixCopy
-
-    def mirror(self, mirrorAxis='x', compensateNegativeScale=True):
-        if mirrorAxis == 'x':
-            self[0] *= -1
-            self[4] *= -1
-            self[8] *= -1
-            self[12] *= -1
-
-        elif mirrorAxis == 'y':
-            self[1] *= -1
-            self[5] *= -1
-            self[9] *= -1
-            self[13] *= -1
-
-        elif mirrorAxis == 'z':
-            self[2] *= -1
-            self[6] *= -1
-            self[10] *= -1
-            self[14] *= -1
-
-        else:
-            raise ValueError('Unrecognized mirror axis -> {}'.format(mirrorAxis))
-
-        if compensateNegativeScale:
-            self[0] *= -1
-            self[1] *= -1
-            self[2] *= -1
-
-            self[4] *= -1
-            self[5] *= -1
-            self[6] *= -1
-
-            self[8] *= -1
-            self[9] *= -1
-            self[10] *= -1
-
-    def normalize(self):
-        vectorX = Vector(self[0], self[1], self[2])
-        vectorX.normalize()
-        self[0] = vectorX[0]
-        self[1] = vectorX[1]
-        self[2] = vectorX[2]
-
-        vectorY = Vector(self[4], self[5], self[6])
-        vectorY.normalize()
-        self[4] = vectorY[0]
-        self[5] = vectorY[1]
-        self[6] = vectorY[2]
-
-        vectorZ = Vector(self[8], self[9], self[10])
-        vectorZ.normalize()
-        self[8] = vectorZ[0]
-        self[9] = vectorZ[1]
-        self[10] = vectorZ[2]
-
-    def normalized(self):
-        matrixCopy = self.copy()
-        matrixCopy.normalize()
-        return matrixCopy
-
-    def __mul__(self, other):
-        if isinstance(other, self.__class__):
-            newMatrix = list()
-            for column in self.rows()[:3]:
-                for row in other.columns()[:3]:
-                    result = 0
-                    for c, r in zip(column, row):
-                        result += c * r
-                    newMatrix.append(result)
-                newMatrix.append(0.0)
-            newMatrix.append(self[12] + other[12])
-            newMatrix.append(self[13] + other[13])
-            newMatrix.append(self[14] + other[14])
-            newMatrix.append(1.0)
-            return self.__class__(*newMatrix)
-        raise TypeError(
-            'cannot do \'{}\' * \'{}\''.format(
-                str(self.__class__),
-                str(type(other)),
-            )
-        )
+# class Name(str):
+#
+#     pattern = r'^[a-z][a-zA-Z0-9]*$'
+#
+#     def __init__(self, name):
+#         name = str(name)
+#         if not re.match(self.pattern, name):
+#             raise ValueError('Name is not valid -> {}'.format(name))
+#         super(Name, self).__init__(name)
 
 
-class Color(list):
-
-    red = (255, 0, 0)
-    green = (0, 255, 0)
-    blue = (0, 0, 255)
-    yellow = (255, 255, 0)
-
-    mirrorTable = {
-        red: green,
-        green: red,
-        yellow: None,
-    }
-
-    def __init__(self, r=255, g=255, b=255):
-        r = int(imath.clamp(int(r), 0, 255))
-        g = int(imath.clamp(int(g), 0, 255))
-        b = int(imath.clamp(int(b), 0, 255))
-        super(Color, self).__init__((r, g, b))
-
-    def mirrored(self):
-        return self.mirrorTable.get(tuple(self), None)
-
-    def __add__(self, other):
-        if isinstance(other, Color):
-            return self.__class__(
-                self[0] + other[0],
-                self[1] + other[1],
-                self[2] + other[2],
-            )
-        elif isinstance(other, int) or isinstance(other, float):
-            return self.__class__(
-                self[0] + other,
-                self[1] + other,
-                self[2] + other,
-            )
-        else:
-            raise TypeError('Only int, float and Color can be added to Color')
+# class Side(str):
+#     left = 'L'
+#     right = 'R'
+#     center = 'C'
+#
+#     mirrorTable = {
+#         left: right,
+#         right: left,
+#         center: None,
+#     }
+#
+#     def __init__(self, side):
+#         side = str(side)
+#         if side not in self.mirrorTable.keys():
+#             raise ValueError('Side not recognized -> {}'.format(side))
+#         super(Side, self).__init__(side)
+#
+#     def mirrored(self):
+#         mirroredSide = self.mirrorTable[str(self)]
+#         if mirroredSide is None:
+#             return None
+#         return self.__class__(mirroredSide)
 
 
-class Name(str):
-
-    pattern = r'^[a-z][a-zA-Z0-9]*$'
-
-    def __init__(self, name):
-        name = str(name)
-        if not re.match(self.pattern, name):
-            raise ValueError('Name is not valid -> {}'.format(name))
-        super(Name, self).__init__(name)
-
-
-class Side(str):
-    left = 'L'
-    right = 'R'
-    center = 'C'
-
-    mirrorTable = {
-        left: right,
-        right: left,
-        center: None,
-    }
-
-    def __init__(self, side):
-        side = str(side)
-        if side not in self.mirrorTable.keys():
-            raise ValueError('Side not recognized -> {}'.format(side))
-        super(Side, self).__init__(side)
-
-    def mirrored(self):
-        mirroredSide = self.mirrorTable[str(self)]
-        if mirroredSide is None:
-            return None
-        return self.__class__(mirroredSide)
-
-
-class Index(int):
-
-    def __init__(self, index):
-        index = int(index)
-        if index < 0:
-            raise ValueError('Index should be positive -> {}'.format(index))
-        super(Index, self).__init__(index)
+# class Index(int):
+#
+#     def __init__(self, index):
+#         index = int(index)
+#         if index < 0:
+#             raise ValueError('Index should be positive -> {}'.format(index))
+#         super(Index, self).__init__(index)
 
 
 def distance(pointA, pointB):

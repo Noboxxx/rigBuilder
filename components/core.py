@@ -1,5 +1,5 @@
 from maya import cmds
-from rigBuilder.types import Side, Color, UnsignedInt, UnsignedFloat
+from rigBuilder.types import Side, Color, UnsignedInt, UnsignedFloat, Matrix
 from rigBuilder.core import Data
 
 
@@ -61,7 +61,7 @@ class Connection(Data):
         self.shear = shear
 
     def build(self, componentDict):
-        print 'build: {} -> {}'.format(self.sources, self.destination.get(componentDict))
+        print 'build', [p.get(componentDict) for p in self.sources], self.destination.get(componentDict)
 
 
 class Plug(list):
@@ -112,6 +112,7 @@ class Component(Data):
         return copy
 
     def build(self):
+        print 'build', self
         self.buildFolder()
 
     def buildFolder(self):
@@ -142,6 +143,9 @@ class Component(Data):
             if isinstance(value, Plug):
                 plugDict[attr] = value
         return plugDict
+
+    def createGuide(self):
+        print 'createGuide'
 
 
 class ComponentBuilder(Data):

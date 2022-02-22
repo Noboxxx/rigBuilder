@@ -82,6 +82,8 @@ class DataAttributeEditor(QtWidgets.QTreeWidget):
 
 class DataDictList(QtWidgets.QTreeWidget):
 
+    types = list()
+
     def __init__(self):
         super(DataDictList, self).__init__()
         self.setHeaderLabels(('key', 'type'))
@@ -129,6 +131,52 @@ class DataDictList(QtWidgets.QTreeWidget):
             iterator.next()
 
         return dataDict
+
+    def populateContextMenu(self):
+        addMenu = QtWidgets.QMenu('Add')
+        for t in self.types:
+            act = QtWidgets.QAction(t.__name__, self)
+            addMenu.addAction(act)
+
+        selectedItems = self.selectedItems()
+
+        removeAction = QtWidgets.QAction('Remove', self)
+        if not selectedItems:
+            removeAction.setEnabled(False)
+
+        duplicateAction = QtWidgets.QAction('Duplicate', self)
+        if not selectedItems:
+            duplicateAction.setEnabled(False)
+
+        moveUpAction = QtWidgets.QAction('Move Up', self)
+        if not len(selectedItems) == 1:
+            moveUpAction.setEnabled(False)
+
+        moveDownAction = QtWidgets.QAction('Move Down', self)
+        if not len(selectedItems) == 1:
+            moveDownAction.setEnabled(False)
+
+        renameAction = QtWidgets.QAction('Rename', self)
+        if not len(selectedItems) == 1:
+            renameAction.setEnabled(False)
+
+        menu = QtWidgets.QMenu()
+        menu.addMenu(addMenu)
+        menu.addAction(duplicateAction)
+        menu.addSeparator()
+        menu.addAction(renameAction)
+        menu.addSeparator()
+        menu.addAction(moveUpAction)
+        menu.addAction(moveDownAction)
+        menu.addSeparator()
+        menu.addAction(removeAction)
+
+        return menu
+
+    def contextMenuEvent(self, event):
+
+        menu = self.populateContextMenu()
+        menu.exec_(self.viewport().mapToGlobal(event.pos()))
 
 
 class DataDictEditor(QtWidgets.QWidget):

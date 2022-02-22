@@ -3,7 +3,8 @@ from PySide2 import QtWidgets
 from .attributeWidgets import ColorWidget, AttributeWidget, AttributesWidget
 from .dataDictEditor import DataDictEditor, DataDictList, DataAttributeEditor
 from .jsonFileWindow import JsonFileWindow
-from ..components.core import ComponentBuilder, Attribute, Attributes
+from ..components.core import ComponentBuilder, Attribute, Attributes, Connection
+from ..components.oneCtrl import OneCtrl
 from ..types import Color, Side, UnsignedInt, UnsignedFloat
 
 
@@ -67,17 +68,49 @@ class ComponentAttributeEditor(DataAttributeEditor):
         return super(ComponentAttributeEditor, self).getAttributeWidget(key, value)
 
 
+class ComponentDictList(DataDictList):
+
+    types = [
+        OneCtrl
+    ]
+
+    def populateContextMenu(self):
+
+        createGuideAction = QtWidgets.QAction('Create Guide', self)
+        createGuideAction.triggered.connect(self.createGuides)
+        if not self.selectedItems():
+            createGuideAction.setEnabled(False)
+
+        menu = super(ComponentDictList, self).populateContextMenu()
+        menu.addSeparator()
+        menu.addAction(createGuideAction)
+
+        return menu
+
+    def createGuides(self):
+        for item in self.selectedItems():
+            item.d.createGuide(item.text(0))
+
+
+class ConnectionDictList(DataDictList):
+
+    types = [
+        Connection
+    ]
+
+
 class ComponentBuilderWindow(JsonFileWindow):
 
     def __init__(self):
         super(ComponentBuilderWindow, self).__init__(title='Component Builder')
 
         self.componentEditor = DataDictEditor(
-            dataDictList=DataDictList(),
+            dataDictList=ComponentDictList(),
             dataAttributeEditor=ComponentAttributeEditor()
         )
+
         self.connectionEditor = DataDictEditor(
-            dataDictList=DataDictList(),
+            dataDictList=ConnectionDictList(),
             dataAttributeEditor=ConnectionAttributeEditor(self.componentEditor.getDataDict),
         )
 
@@ -85,7 +118,14 @@ class ComponentBuilderWindow(JsonFileWindow):
         tab.addTab(self.componentEditor, 'components')
         tab.addTab(self.connectionEditor, 'connections')
 
-        self.mainLayout.addWidget(tab)
+        buildBtn = QtWidgets.QPushButton('Build')
+        buildBtn.clicked.connect(self.build)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(tab)
+        layout.addWidget(buildBtn)
+
+        self.mainLayout.addLayout(layout)
 
     def refresh(self, obj):  # type: (ComponentBuilder) -> None
         self.componentEditor.refresh(obj.componentDict)
@@ -95,3 +135,6 @@ class ComponentBuilderWindow(JsonFileWindow):
         componentDict = self.componentEditor.getDataDict()
         connectionDict = self.connectionEditor.getDataDict()
         return ComponentBuilder(componentDict, connectionDict)
+
+    def build(self):
+        self.getData().build()

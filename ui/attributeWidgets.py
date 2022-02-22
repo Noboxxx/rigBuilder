@@ -116,6 +116,8 @@ class AttributeWidget(QtWidgets.QWidget):
             self.keyCombo.addItem(k)
         self.attributeCombo = QtWidgets.QComboBox()
         self.indexSpin = QtWidgets.QSpinBox()
+        self.indexSpin.setMaximum(10000)
+        self.indexSpin.setMinimum(-10000)
 
         self.keyCombo.currentTextChanged.connect(self.keyChanged)
         self.keyChanged(self.keyCombo.currentText())

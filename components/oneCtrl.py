@@ -1,6 +1,7 @@
-from .utils import Controller, createBuffer, Matrix
+from .utils import Controller, createBuffer
 from maya import cmds
 from .core import Component
+from ..types import Matrix
 
 
 class OneCtrl(Component):
@@ -15,13 +16,17 @@ class OneCtrl(Component):
         ctrlBuffer = createBuffer(ctrl)
         cmds.xform(ctrlBuffer, matrix=list(self.matrix))
 
-        self.influencers += skinJoint
+        self.influencers.append(skinJoint)
         self.inputs.append(ctrlBuffer)
         self.interface = ctrl
-        self.controllers += ctrl
+        self.controllers.append(ctrl)
+        self.children.append(ctrlBuffer)
 
         self.buildFolder()
 
     def mirror(self, mirrorAxis='x'):
         super(OneCtrl, self).mirror()
         self.matrix = self.matrix.mirrored(mirrorAxis=mirrorAxis)
+
+    def createGuide(self, key):
+        cmds.spaceLocator(name='{}_guide'.format(key))
