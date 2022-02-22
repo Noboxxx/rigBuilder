@@ -93,6 +93,9 @@ class Component(Data):
         self.outputs = Output()
         self.children = list()
 
+        self.controllers = list()
+        self.influencers = list()
+
     def __repr__(self):
         return repr(str(self))
 

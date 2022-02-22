@@ -4,13 +4,14 @@ from rigBuilder.components.core import Component, ComponentBuilder, Attribute, C
 from rigBuilder.core import MyOrderedDict
 from rigBuilder.types import Side
 from rigBuilder.files.core import customEncoder, JsonFile
+from rigBuilder.components.oneCtrl import OneCtrl
 
 
 def test():
 
     arm = Component(name='arm', side=Side('L'), bilateral=True, color=(10, 10, 10))
     leg = Component(name='leg', side=Side('L'), bilateral=True)
-    base = Component(name='base')
+    base = OneCtrl(name='base')
 
     componentDict = MyOrderedDict()
     componentDict['arm'] = arm
