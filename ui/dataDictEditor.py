@@ -87,7 +87,7 @@ class DataDictList(QtWidgets.QTreeWidget):
     def __init__(self):
         super(DataDictList, self).__init__()
         self.setHeaderLabels(('key', 'type'))
-        self.setColumnWidth(2, size(50))
+        self.setColumnWidth(1, size(50))
 
         self.currentDataChanged = Signal()
         self.currentItemChanged.connect(self.emitCurrentDataChanged)
@@ -190,8 +190,8 @@ class DataDictEditor(QtWidgets.QWidget):
         splitter = QtWidgets.QSplitter()
         splitter.addWidget(self.dataDictList)
         splitter.addWidget(self.dataAttributeEditor)
-        splitter.setStretchFactor(0, 4)
-        splitter.setStretchFactor(1, 6)
+        splitter.setStretchFactor(0, 3)
+        splitter.setStretchFactor(1, 7)
 
         mainLayout = QtWidgets.QHBoxLayout()
         mainLayout.addWidget(splitter)

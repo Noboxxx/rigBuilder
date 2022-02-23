@@ -17,7 +17,7 @@ class JsonFileWindow(QtWidgets.QMainWindow):
 
         self.updateWindowTitle()
 
-        self.setMinimumSize(size(500), size(500))
+        self.setMinimumSize(size(600), size(500))
 
         # Menu
         newAction = QtWidgets.QAction('New', self)
