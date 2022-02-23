@@ -13,7 +13,6 @@ class JsonFileWindow(QtWidgets.QMainWindow):
 
         self.title = str(title) if title is not None else self.__class__.__name__
         self.file = None
-        self.edited = False
 
         self.updateWindowTitle()
 
@@ -21,12 +20,15 @@ class JsonFileWindow(QtWidgets.QMainWindow):
 
         # Menu
         newAction = QtWidgets.QAction('New', self)
-        newAction.triggered.connect(self.clear)
+        newAction.triggered.connect(self.askNew)
         newAction.setShortcut(QtGui.QKeySequence('ctrl+N'))
 
         openAction = QtWidgets.QAction('Open...', self)
         openAction.triggered.connect(self.askOpen)
         openAction.setShortcut(QtGui.QKeySequence('ctrl+O'))
+
+        recentFilesMenu = QtWidgets.QMenu('Recent Files')
+        recentFilesMenu.setEnabled(False)
 
         saveAction = QtWidgets.QAction('Save', self)
         saveAction.triggered.connect(self.askSave)
@@ -37,12 +39,14 @@ class JsonFileWindow(QtWidgets.QMainWindow):
         saveAsAction.setShortcut(QtGui.QKeySequence('ctrl+shift+S'))
 
         incrementSaveAction = QtWidgets.QAction('Increment and Save', self)
-        incrementSaveAction.triggered.connect(self.incrementSave)
+        incrementSaveAction.setEnabled(False)
         incrementSaveAction.setShortcut(QtGui.QKeySequence('ctrl+alt+S'))
 
         fileMenu = QtWidgets.QMenu('File')
         fileMenu.addAction(newAction)
+        fileMenu.addSeparator()
         fileMenu.addAction(openAction)
+        fileMenu.addMenu(recentFilesMenu)
         fileMenu.addSeparator()
         fileMenu.addAction(saveAction)
         fileMenu.addAction(saveAsAction)
@@ -61,25 +65,22 @@ class JsonFileWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(centralWidget)
 
     def incrementSave(self):
-        raise NotImplementedError
+        pass
 
     def save(self, path, force=False):
         self.file = JsonFile(path)
         self.file.dump(self.getData(), force=force)
-        self.edited = False
         self.updateWindowTitle()
         print('{} -> File saved: {}'.format(self.title, self.file))
 
     def open(self, path):
         self.file = JsonFile(path)
-        self.edited = False
         self.updateWindowTitle()
         self.refresh(self.file.load())
         print('{} -> File opened: {}'.format(self.title, self.file))
 
     def clear(self):
         self.file = None
-        self.edited = False
         self.updateWindowTitle()
         self.refresh()
 
@@ -88,9 +89,21 @@ class JsonFileWindow(QtWidgets.QMainWindow):
 
     def updateWindowTitle(self):
         path = 'untitled' if self.file is None else str(self.file)
-        edited = '*' if self.edited else ''
-        title = '{}: {}{}'.format(self.title, path, edited)
+        title = '{}: {}'.format(self.title, path)
         self.setWindowTitle(title)
+
+    def askNew(self):
+        result = QtWidgets.QMessageBox.question(
+            self,
+            "File Not Saved",
+            "Continue anyways?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+
+        if result == QtWidgets.QMessageBox.No:
+            return
+
+        self.clear()
 
     def askSave(self):
         if self.file is None:
@@ -112,19 +125,13 @@ class JsonFileWindow(QtWidgets.QMainWindow):
             return
         self.open(path)
 
-    def setEdited(self):
-        self.edited = True
-        self.updateWindowTitle()
-
     def closeEvent(self, event):
-        result = QtWidgets.QMessageBox.Yes
-        if self.edited:
-            result = QtWidgets.QMessageBox.question(
-                self,
-                "File Not Saved",
-                "Quit anyways?",
-                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
-            )
+        result = QtWidgets.QMessageBox.question(
+            self,
+            "File Not Saved",
+            "Continue anyways?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
 
         if result == QtWidgets.QMessageBox.No:
             event.ignore()

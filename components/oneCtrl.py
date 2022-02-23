@@ -6,15 +6,15 @@ from ..types import Matrix
 
 class OneCtrl(Component):
 
-    def __init__(self, guide=str(), **kwargs):
+    def __init__(self, guide=None, **kwargs):
         super(OneCtrl, self).__init__(**kwargs)
-        self.guide = Guide(guide)
+        self.guide = Guide(*guide) if guide is not None else Guide()
 
     def build(self):
         ctrl = Controller.create(name='{}_ctrl'.format(self), color=self.color, size=self.size)
         skinJoint = cmds.joint(name='{}_skn'.format(self))
         ctrlBuffer = createBuffer(ctrl)
-        cmds.xform(ctrlBuffer, matrix=list(self.guide.matrix))
+        cmds.xform(ctrlBuffer, matrix=list(self.guide))
 
         self.interface = ctrl
         self.influencers.append(skinJoint)
@@ -29,4 +29,4 @@ class OneCtrl(Component):
         self.guide = self.guide.mirrored(mirrorAxis=mirrorAxis)
 
     def createGuides(self, key):
-        self.guide = Guide.create(key)
+        self.guide.build(key)

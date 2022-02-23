@@ -1,6 +1,7 @@
 from PySide2 import QtWidgets, QtGui, QtCore
 from .utils import size, Signal
-from rigBuilder.components.core import Attribute, Component, Attributes
+from rigBuilder.components.core import Attribute, Component, Attributes, Guide
+from ..types import Matrix
 
 
 class ColorWidget(QtWidgets.QWidget):
@@ -178,3 +179,73 @@ class AttributeWidget(QtWidgets.QWidget):
         self.attributeChanged.emit(self.getAttr())
 
 
+class GuideWidget(QtWidgets.QWidget):
+
+    def __init__(self):
+        super(GuideWidget, self).__init__()
+
+        self.guide = Guide()
+
+        self.guideChanged = Signal()
+
+        self.liveObjectLine = QtWidgets.QLineEdit()
+        self.liveObjectLine.setEnabled(False)
+
+        self.liveObjectBtn = QtWidgets.QPushButton()
+        self.liveObjectBtn.setCheckable(True)
+        self.liveObjectBtn.setFixedSize(size(18), size(18))
+        self.liveObjectBtn.setIcon(QtGui.QIcon(':makeLive.png'))
+        self.liveObjectBtn.clicked.connect(self.live)
+
+        liveObjectLayout = QtWidgets.QHBoxLayout()
+        liveObjectLayout.setMargin(0)
+        liveObjectLayout.addWidget(self.liveObjectLine)
+        liveObjectLayout.addWidget(self.liveObjectBtn)
+
+        self.matrixText = QtWidgets.QTextEdit()
+        self.matrixText.setEnabled(False)
+        self.matrixText.setFixedHeight(size(80))
+
+        pickBtn = QtWidgets.QPushButton('<')
+        pickBtn.setFixedSize(size(18), size(80))
+        pickBtn.clicked.connect(self.pick)
+
+        matrixLayout = QtWidgets.QHBoxLayout()
+        matrixLayout.setMargin(0)
+        matrixLayout.addWidget(self.matrixText)
+        matrixLayout.addWidget(pickBtn)
+
+        mainLayout = QtWidgets.QVBoxLayout()
+        mainLayout.setMargin(0)
+        mainLayout.addLayout(liveObjectLayout)
+        mainLayout.addLayout(matrixLayout)
+
+        self.setLayout(mainLayout)
+
+        self.matrixText.textChanged.connect(self.emitGuideChanged)
+
+    def setGuide(self, guide):  # type: (Guide) -> None
+        self.guide = Guide(*guide)
+        s = '\n'.join([', '.join([str(round(v, 2)) for v in r]) for r in self.guide.rows()])
+        self.matrixText.setText(s)
+
+    def emitGuideChanged(self):
+        self.guideChanged.emit(self.guide)
+
+    def pick(self):
+        from maya import cmds
+        selection = cmds.ls(sl=True)
+
+        if selection:
+            self.setGuide(cmds.xform(selection[0], q=True, matrix=True, worldSpace=True))
+
+    def live(self):
+        from maya import cmds
+        if self.liveObjectBtn.isChecked():
+            selection = cmds.ls(sl=True)
+
+            if selection:
+                self.liveObjectLine.setText(selection[0])
+                self.pick()
+        else:
+            self.liveObjectLine.setText('')

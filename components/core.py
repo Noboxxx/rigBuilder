@@ -76,33 +76,16 @@ class Input(Plug):
     pass
 
 
-class Guide(str):
+class Guide(Matrix):
 
-    def __init__(self, name):
-        super(Guide, self).__init__(name)
-        self.mirrorAxis = None
+    def build(self, name):
+        guidesFolder = 'guides'
+        if not cmds.objExists(guidesFolder):
+            cmds.group(empty=True, name=guidesFolder)
 
-    def mirror(self, mirrorAxis='x'):
-        self.mirrorAxis = mirrorAxis
-
-    def mirrored(self, mirrorAxis='x'):
-        mirroredGuide = self.__class__(self)
-        mirroredGuide.mirror(mirrorAxis)
-        return mirroredGuide
-
-    @property
-    def matrix(self):
-        matrix = Matrix() if not cmds.objExists(self) else Matrix(*cmds.xform(self, q=True, matrix=True))
-
-        if self.mirrorAxis:
-            matrix.mirror(self.mirrorAxis)
-
-        return matrix
-
-    @classmethod
-    def create(cls, name):
         lct, = cmds.spaceLocator(name='{}_guide'.format(name))
-        return cls(lct)
+        cmds.parent(lct, guidesFolder)
+        cmds.xform(lct, matrix=list(self))
 
 
 class Component(Data):
@@ -186,19 +169,29 @@ class ComponentBuilder(Data):
         self.connectionDict = connectionDict if connectionDict is not None else dict()
 
     def build(self):
+
+        folder = cmds.group(empty=True, name='rig')
+
+        componentDict = dict()
         mirroredComponentDict = dict()
         for key, component in self.componentDict.items():
-            component.copy().build()
+            copiedComponent = component.copy()
+            copiedComponent.build()
+
+            cmds.parent(str(copiedComponent), folder)
 
             mirrorComponent = None
             if component.bilateral:
                 mirrorComponent = component.mirrored()
                 mirrorComponent.build()
 
+                cmds.parent(str(mirrorComponent), folder)
+
             mirroredComponentDict[key] = mirrorComponent or component
+            componentDict[key] = component
 
         for key, connection in self.connectionDict:
-            connection.copy().build(self.componentDict)
+            connection.copy().build(componentDict)
 
             if connection.bilateral:
                 connection.build(mirroredComponentDict)

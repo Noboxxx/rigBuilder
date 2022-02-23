@@ -239,8 +239,7 @@ class DataDictList(QtWidgets.QTreeWidget):
             removeAction.setEnabled(False)
 
         duplicateAction = QtWidgets.QAction('Duplicate', self)
-        if not selectedItems:
-            duplicateAction.setEnabled(False)
+        duplicateAction.setEnabled(False)
 
         moveUpAction = QtWidgets.QAction('Move Up', self)
         moveUpAction.triggered.connect(partial(self.moveSelectedSelectedItem, -1))
