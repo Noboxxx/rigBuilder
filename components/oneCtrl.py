@@ -10,17 +10,15 @@ class OneCtrl(Component):
         super(OneCtrl, self).__init__(**kwargs)
         self.guide = Guide(guide)
 
-        self.matrix = self.guide.matrix()
-
     def build(self):
         ctrl = Controller.create(name='{}_ctrl'.format(self), color=self.color, size=self.size)
         skinJoint = cmds.joint(name='{}_skn'.format(self))
         ctrlBuffer = createBuffer(ctrl)
-        cmds.xform(ctrlBuffer, matrix=list(self.matrix))
+        cmds.xform(ctrlBuffer, matrix=list(self.guide.matrix))
 
+        self.interface = ctrl
         self.influencers.append(skinJoint)
         self.inputs.append(ctrlBuffer)
-        self.interface = ctrl
         self.controllers.append(ctrl)
         self.children.append(ctrlBuffer)
 
@@ -28,8 +26,7 @@ class OneCtrl(Component):
 
     def mirror(self, mirrorAxis='x'):
         super(OneCtrl, self).mirror()
-        self.matrix = self.matrix.mirrored(mirrorAxis=mirrorAxis)
+        self.guide = self.guide.mirrored(mirrorAxis=mirrorAxis)
 
     def createGuides(self, key):
-        guide, = cmds.spaceLocator(name='{}_guide'.format(key))
-        self.guide = Guide(guide)
+        self.guide = Guide.create(key)

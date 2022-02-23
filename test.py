@@ -1,3 +1,4 @@
+import os
 import json
 
 from rigBuilder.components.core import Component, ComponentBuilder, Attribute, Connection
@@ -40,6 +41,9 @@ def test():
     componentBuilder = ComponentBuilder(componentDict, connectionDict)
     # componentBuilder.build()
 
-    JsonFile(r'C:\Users\Pierre\Desktop\New folder\componentBuilder.json').dump(componentBuilder, force=True)
+    desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+    path = os.path.join(desktop, 'componentBuilder.json')
+
+    JsonFile(path).dump(componentBuilder, force=True)
 
     print json.dumps(componentBuilder, indent=4, default=customEncoder)

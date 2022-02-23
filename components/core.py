@@ -5,14 +5,14 @@ from rigBuilder.core import Data
 
 class Attributes(list):
 
-    def __init__(self, seq):  # type: (list or tuple) -> None
-        seq = [Attribute(*i) for i in seq]
-        super(Attributes, self).__init__(seq)
+    def __init__(self, attributes=None):  # type: (list or tuple) -> None
+        attributes = [Attribute(*i) for i in attributes] if attributes is not None else list()
+        super(Attributes, self).__init__(attributes)
 
 
 class Attribute(list):
 
-    def __init__(self, key, attribute, index):
+    def __init__(self, key='', attribute='', index=0):
         # type: (str, str, int) -> None
         super(Attribute, self).__init__((key, attribute, index))
 
@@ -47,12 +47,12 @@ class Attribute(list):
 
 class Connection(Data):
 
-    def __init__(self, sources, destination, bilateral=False, translate=True, rotate=True, scale=True, shear=True):
+    def __init__(self, sources=None, destination=None, bilateral=False, translate=True, rotate=True, scale=True, shear=True):
         # type: (List[list], list, bool, bool, bool, bool, bool) -> None
         super(Connection, self).__init__()
 
-        self.sources = Attributes(sources)
-        self.destination = Attribute(*destination)
+        self.sources = Attributes(sources) if sources is not None else Attributes()
+        self.destination = Attribute(*destination) if destination is not None else Attribute()
         self.bilateral = bilateral
 
         self.translate = translate
@@ -78,10 +78,31 @@ class Input(Plug):
 
 class Guide(str):
 
+    def __init__(self, name):
+        super(Guide, self).__init__(name)
+        self.mirrorAxis = None
+
+    def mirror(self, mirrorAxis='x'):
+        self.mirrorAxis = mirrorAxis
+
+    def mirrored(self, mirrorAxis='x'):
+        mirroredGuide = self.__class__(self)
+        mirroredGuide.mirror(mirrorAxis)
+        return mirroredGuide
+
+    @property
     def matrix(self):
-        if cmds.objExists(self):
-            return Matrix(*cmds.xform(self, q=True, m=True))
-        return Matrix()
+        matrix = Matrix() if not cmds.objExists(self) else Matrix(*cmds.xform(self, q=True, matrix=True))
+
+        if self.mirrorAxis:
+            matrix.mirror(self.mirrorAxis)
+
+        return matrix
+
+    @classmethod
+    def create(cls, name):
+        lct, = cmds.spaceLocator(name='{}_guide'.format(name))
+        return cls(lct)
 
 
 class Component(Data):
@@ -120,7 +141,6 @@ class Component(Data):
         return copy
 
     def build(self):
-        print 'build', self
         self.buildFolder()
 
     def buildFolder(self):
@@ -168,7 +188,7 @@ class ComponentBuilder(Data):
     def build(self):
         mirroredComponentDict = dict()
         for key, component in self.componentDict.items():
-            component.build()
+            component.copy().build()
 
             mirrorComponent = None
             if component.bilateral:
@@ -178,7 +198,7 @@ class ComponentBuilder(Data):
             mirroredComponentDict[key] = mirrorComponent or component
 
         for key, connection in self.connectionDict:
-            connection.build(self.componentDict)
+            connection.copy().build(self.componentDict)
 
             if connection.bilateral:
                 connection.build(mirroredComponentDict)

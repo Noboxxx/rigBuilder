@@ -129,9 +129,10 @@ class ComponentBuilderWindow(JsonFileWindow):
 
         self.mainLayout.addLayout(layout)
 
-    def refresh(self, obj):  # type: (ComponentBuilder) -> None
-        self.componentEditor.refresh(obj.componentDict)
-        self.connectionEditor.refresh(obj.connectionDict)
+    def refresh(self, componentBuilder=None):  # type: (ComponentBuilder) -> None
+        componentBuilder = ComponentBuilder() if componentBuilder is None else componentBuilder
+        self.componentEditor.refresh(componentBuilder.componentDict)
+        self.connectionEditor.refresh(componentBuilder.connectionDict)
 
     def getData(self):  # type: () -> ComponentBuilder
         componentDict = self.componentEditor.getDataDict()

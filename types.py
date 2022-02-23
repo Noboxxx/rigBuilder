@@ -22,9 +22,9 @@ class Side(str):
 class Color(list):
 
     def __init__(self, r, g, b):  # type: (int, int, int) -> None
-        r = clamp(int(r), 0, 255)
-        g = clamp(int(g), 0, 255)
-        b = clamp(int(b), 0, 255)
+        r = int(clamp(int(r), 0, 255))
+        g = int(clamp(int(g), 0, 255))
+        b = int(clamp(int(b), 0, 255))
         super(Color, self).__init__((r, g, b))
 
     @property
@@ -33,7 +33,7 @@ class Color(list):
 
     @r.setter
     def r(self, v):
-        self[0] = clamp(int(v), 0, 255)
+        self[0] = int(clamp(int(v), 0, 255))
 
     @property
     def g(self):
@@ -41,7 +41,7 @@ class Color(list):
 
     @g.setter
     def g(self, v):
-        self[0] = clamp(int(v), 0, 255)
+        self[0] = int(clamp(int(v), 0, 255))
 
     @property
     def b(self):
@@ -49,7 +49,7 @@ class Color(list):
 
     @b.setter
     def b(self, v):
-        self[0] = clamp(int(v), 0, 255)
+        self[0] = int(clamp(int(v), 0, 255))
 
     def mirrored(self):
         mirroredColor = list()

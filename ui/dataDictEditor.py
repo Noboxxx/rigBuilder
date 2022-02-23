@@ -1,7 +1,41 @@
 from functools import partial
+
+from imath import clamp
+
 from PySide2 import QtWidgets
 from .utils import size, Signal
 from ..core import Data, MyOrderedDict
+import re
+
+
+class RenamerDialog(QtWidgets.QDialog):
+
+    def __init__(self, name=''):
+        super(RenamerDialog, self).__init__()
+
+        self.setWindowTitle('Rename')
+
+        self.validated = False
+
+        self.line = QtWidgets.QLineEdit()
+        self.line.setText(name)
+        self.line.returnPressed.connect(self.validate)
+
+        applyBtn = QtWidgets.QPushButton('Apply')
+        applyBtn.clicked.connect(self.validate)
+
+        mainLayout = QtWidgets.QHBoxLayout(self)
+        mainLayout.addWidget(QtWidgets.QLabel('New Name'))
+        mainLayout.addWidget(self.line)
+        mainLayout.addWidget(applyBtn)
+
+    def exec_(self):
+        super(RenamerDialog, self).exec_()
+        return self.line.text() if self.validated else ''
+
+    def validate(self):
+        self.validated = True
+        self.close()
 
 
 class DataAttributeEditor(QtWidgets.QTreeWidget):
@@ -14,8 +48,11 @@ class DataAttributeEditor(QtWidgets.QTreeWidget):
 
         self.attributeValueChanged = Signal()
 
-    def refresh(self, data):  # type: (Data) -> None
+    def refresh(self, data=None):  # type: (Data) -> None
         self.clear()
+
+        data = Data() if data is None else data
+
         for k, v in data.items():
             self.addAttribute(k, v)
 
@@ -91,6 +128,7 @@ class DataDictList(QtWidgets.QTreeWidget):
 
         self.currentDataChanged = Signal()
         self.currentItemChanged.connect(self.emitCurrentDataChanged)
+        self.setSelectionMode(self.ExtendedSelection)
 
     def setAttributeValue(self, key, t, value):
         item = self.currentItem()
@@ -109,15 +147,13 @@ class DataDictList(QtWidgets.QTreeWidget):
             print('Pas content')
 
     def emitCurrentDataChanged(self, item):
-        self.currentDataChanged.emit(item.d)
+        self.currentDataChanged.emit(item.d if item is not None else None)
 
     def refresh(self, dataDict):  # type: (dict[str: Data]) -> None
         self.clear()
 
         for key, data in dataDict.items():
-            item = QtWidgets.QTreeWidgetItem((key, data.__class__.__name__))
-            item.d = data
-            self.addTopLevelItem(item)
+            self.addItem(key, data)
 
     def getDataDict(self):  # type: () -> MyOrderedDict[str: Data]
         iterator = QtWidgets.QTreeWidgetItemIterator(self)
@@ -132,15 +168,73 @@ class DataDictList(QtWidgets.QTreeWidget):
 
         return dataDict
 
+    def removeSelectedItems(self):
+        result = QtWidgets.QMessageBox.question(
+            self,
+            "Undoable operation",
+            "Continue anyways?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+
+        if result == QtWidgets.QMessageBox.No:
+            return
+
+        for item in self.selectedItems():
+            index = self.indexOfTopLevelItem(item)
+            self.takeTopLevelItem(index)
+
+    def moveSelectedSelectedItem(self, step):
+        selectedItem = self.selectedItems()[0]
+
+        index = self.indexOfTopLevelItem(selectedItem)
+        item = self.takeTopLevelItem(index)
+
+        newIndex = int(clamp(index + step, 0, self.topLevelItemCount()))
+
+        self.insertTopLevelItem(newIndex, item)
+        self.setItemSelected(item, True)
+        self.setCurrentItem(item)
+
+    def addItem(self, key, data):  # type: (str, Data) -> None
+        if key in self.getDataDict().keys():
+            pattern = re.compile(r'(^[A-Za-z0-9_]*[A-Za-z_]+)(\d*$)')
+            matches = pattern.findall(key)
+
+            if not matches:
+                raise ValueError('Key \'{}\' is not valid'.format(key))
+
+            name, index = matches[0]
+            index = int(index) if index.isdigit() else 0
+            index += 1
+            return self.addItem('{}{}'.format(name, index), data)
+
+        item = QtWidgets.QTreeWidgetItem(
+            (key, data.__class__.__name__)
+        )
+        item.d = data
+        self.addTopLevelItem(item)
+
+    def renameSelectedItem(self):
+        selectedItem = self.selectedItems()[0]
+        name = selectedItem.text(0)
+
+        ui = RenamerDialog(name)
+        newName = ui.exec_()
+        print newName
+        if newName:
+            selectedItem.setText(0, newName)
+
     def populateContextMenu(self):
         addMenu = QtWidgets.QMenu('Add')
         for t in self.types:
-            act = QtWidgets.QAction(t.__name__, self)
-            addMenu.addAction(act)
+            addAction = QtWidgets.QAction(t.__name__, self)
+            addAction.triggered.connect(partial(self.addItem, 'untitled', t()))
+            addMenu.addAction(addAction)
 
         selectedItems = self.selectedItems()
 
         removeAction = QtWidgets.QAction('Remove', self)
+        removeAction.triggered.connect(self.removeSelectedItems)
         if not selectedItems:
             removeAction.setEnabled(False)
 
@@ -149,14 +243,17 @@ class DataDictList(QtWidgets.QTreeWidget):
             duplicateAction.setEnabled(False)
 
         moveUpAction = QtWidgets.QAction('Move Up', self)
+        moveUpAction.triggered.connect(partial(self.moveSelectedSelectedItem, -1))
         if not len(selectedItems) == 1:
             moveUpAction.setEnabled(False)
 
         moveDownAction = QtWidgets.QAction('Move Down', self)
+        moveDownAction.triggered.connect(partial(self.moveSelectedSelectedItem, 1))
         if not len(selectedItems) == 1:
             moveDownAction.setEnabled(False)
 
         renameAction = QtWidgets.QAction('Rename', self)
+        renameAction.triggered.connect(self.renameSelectedItem)
         if not len(selectedItems) == 1:
             renameAction.setEnabled(False)
 

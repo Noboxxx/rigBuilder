@@ -77,7 +77,10 @@ class Data(object):
         args = list()
 
         for cl in list(self.__class__.__bases__) + [self.__class__]:
-            args += getargspec(cl.__init__).args[1:]
+            if cl is object:
+                continue
+            argSpec = getargspec(cl.__init__).args
+            args += argSpec[1:]
 
         return args
 

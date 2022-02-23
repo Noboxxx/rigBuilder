@@ -81,9 +81,9 @@ class JsonFileWindow(QtWidgets.QMainWindow):
         self.file = None
         self.edited = False
         self.updateWindowTitle()
-        self.refresh(Data())
+        self.refresh()
 
-    def refresh(self, data):  # type: (Data) -> None
+    def refresh(self, data=None):  # type: (Data) -> None
         pass
 
     def updateWindowTitle(self):

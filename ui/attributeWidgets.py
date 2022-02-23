@@ -1,4 +1,4 @@
-from PySide2 import QtWidgets, QtGui
+from PySide2 import QtWidgets, QtGui, QtCore
 from .utils import size, Signal
 from rigBuilder.components.core import Attribute, Component, Attributes
 
@@ -91,7 +91,6 @@ class AttributesWidget(QtWidgets.QWidget):
             wid.setAttr(attr)
 
             removeBtn = QtWidgets.QPushButton('x')
-            # removeBtn.setIcon(QtGui.QIcon(':trash.png'))
             removeBtn.setFixedSize(size(15), size(15))
 
             lay = QtWidgets.QHBoxLayout()
@@ -136,22 +135,37 @@ class AttributeWidget(QtWidgets.QWidget):
 
     def setAttr(self, attribute):  # type: (Attribute) -> None
 
-        index = self.keyCombo.findText(attribute.key)
-        self.keyCombo.setCurrentIndex(index)
+        if attribute.key == '':
+            self.keyCombo.setCurrentIndex(-1)
+        else:
+            index = self.keyCombo.findText(attribute.key)
+            if index == -1:
+                self.keyCombo.addItem(attribute.key)
+                index = self.keyCombo.findText(attribute.key)
 
-        index = self.attributeCombo.findText(attribute.attribute)
-        self.attributeCombo.setCurrentIndex(index)
+            self.keyCombo.setCurrentIndex(index)
+
+        if attribute.attribute == '':
+            self.attributeCombo.setCurrentIndex(-1)
+        else:
+            index = self.attributeCombo.findText(attribute.attribute)
+            if index == -1:
+                self.attributeCombo.addItem(attribute.attribute)
+                index = self.attributeCombo.findText(attribute.attribute)
+
+            self.attributeCombo.setCurrentIndex(index)
 
         self.indexSpin.setValue(attribute.index)
 
     def keyChanged(self, key):
-        currentComponent = self.componentDict[key]  # type: Component
+        currentComponent = self.componentDict.get(key)
 
         self.attributeCombo.clear()
+        if not isinstance(currentComponent, Component):
+            return
+
         for k, v in currentComponent.getPlugDict().items():
             self.attributeCombo.addItem(k)
-
-        self.indexSpin.setValue(0)
 
     def getAttr(self):  # type: () -> Attribute
         key = self.keyCombo.currentText()
