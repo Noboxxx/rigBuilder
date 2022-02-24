@@ -136,8 +136,6 @@ class ComponentBuilderWindow(JsonFileWindow):
         self.mainLayout.addLayout(layout)
 
     def refresh(self, data=None):  # type: (ComponentBuilder) -> None
-        if not isinstance(data, ComponentBuilder):
-            raise TypeError
         data = ComponentBuilder() if data is None else data
         self.componentEditor.refresh(data.componentDict)
         self.connectionEditor.refresh(data.connectionDict)

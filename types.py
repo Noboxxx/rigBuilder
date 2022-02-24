@@ -245,20 +245,3 @@ class Matrix(list):
                 str(type(other)),
             )
         )
-
-
-class Path(list):
-
-    def __init__(self, path):
-        super(Path, self).__init__(os.path.split(str(path)))
-
-    def __repr__(self):
-        return repr(str(self))
-
-    def __str__(self):
-        return os.path.join(*self)
-
-    @classmethod
-    def join(cls, *args):
-        path = os.path.join(*args)
-        return cls(path)

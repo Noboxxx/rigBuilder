@@ -5,7 +5,7 @@ from PySide2 import QtWidgets, QtGui, QtCore
 from .attributeWidgets import ScriptWidget, FileWidget, NodeWidget, ComponentBuilderWidget
 from .utils import Signal, size
 from ..files.core import JsonFile
-from ..steps.buildComponents import BuildComponents
+from ..steps.buildComponents import BuildComponents, ComponentBuilderFile
 from ..steps.core import StepBuilder
 from ..steps.customScript import CustomScript, Script
 from ..steps.importMayaFile import ImportMayaFile, MayaFile
@@ -74,7 +74,7 @@ class StepAttributeEditor(DataAttributeEditor):
             widget.nodeChanged.connect(partial(self.attributeValueChanged.emit, key, t))
             return widget
 
-        elif isinstance(value, JsonFile):
+        elif isinstance(value, ComponentBuilderFile):
             widget = ComponentBuilderWidget('Json File (*.json)')
             widget.setPath(value)
             widget.pathChanged.connect(partial(self.attributeValueChanged.emit, key, t))
@@ -126,8 +126,6 @@ class StepBuilderWindow(JsonFileWindow):
         self.getData().build()
 
     def refresh(self, data=None):  # type: (StepBuilder) -> None
-        if not isinstance(data, StepBuilder):
-            raise TypeError
         self.stepEditor.refresh(data.stepDict)
 
 
