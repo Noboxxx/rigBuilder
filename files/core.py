@@ -34,18 +34,28 @@ def customDecoder(o):
 
 class JsonFile(str):
 
+    def __init__(self, path):
+        path = os.path.normpath(path)
+        super(JsonFile, self).__init__(path)
+
     def dump(self, obj, force=False):  # type: (any, bool) -> None
-        if os.path.exists(str(self)) and force is False:
+        if os.path.exists(self.absolutePath) and force is False:
             raise RuntimeError('The path already exists. Use -force to override it -> {}'.format(self))
 
         self.dumps(obj)  # ensure that data is dump-able before dumping it.
 
-        with open(str(self), 'w') as f:
+        with open(str(self.absolutePath), 'w') as f:
             json.dump(obj, f, indent=4, default=customEncoder)
 
     def load(self):  # type: () -> any
-        with open(str(self), 'r') as f:
+        with open(self.absolutePath, 'r') as f:
             return json.load(f, object_hook=customDecoder)
+
+    @property
+    def absolutePath(self):
+        if self.startswith('...'):
+            return os.path.normpath('\\'.join((os.getcwd(), self.replace('...', ''))))
+        return str(self)
 
     @staticmethod
     def dumps(obj):

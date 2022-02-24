@@ -152,6 +152,9 @@ class DataDictList(QtWidgets.QTreeWidget):
     def refresh(self, dataDict):  # type: (dict[str: Data]) -> None
         self.clear()
 
+        if dataDict is None:
+            return
+
         for key, data in dataDict.items():
             self.addItem(key, data)
 
@@ -290,6 +293,7 @@ class DataDictEditor(QtWidgets.QWidget):
         splitter.setStretchFactor(1, 7)
 
         mainLayout = QtWidgets.QHBoxLayout()
+        mainLayout.setMargin(0)
         mainLayout.addWidget(splitter)
 
         self.setLayout(mainLayout)

@@ -76,9 +76,9 @@ class ComponentAttributeEditor(DataAttributeEditor):
 
 class ComponentDictList(DataDictList):
 
-    types = [
+    types = (
         OneCtrl
-    ]
+    )
 
     def populateContextMenu(self):
 
@@ -102,9 +102,9 @@ class ComponentDictList(DataDictList):
 
 class ConnectionDictList(DataDictList):
 
-    types = [
-        Connection
-    ]
+    types = (
+        Connection,
+    )
 
 
 class ComponentBuilderWindow(JsonFileWindow):
@@ -135,10 +135,12 @@ class ComponentBuilderWindow(JsonFileWindow):
 
         self.mainLayout.addLayout(layout)
 
-    def refresh(self, componentBuilder=None):  # type: (ComponentBuilder) -> None
-        componentBuilder = ComponentBuilder() if componentBuilder is None else componentBuilder
-        self.componentEditor.refresh(componentBuilder.componentDict)
-        self.connectionEditor.refresh(componentBuilder.connectionDict)
+    def refresh(self, data=None):  # type: (ComponentBuilder) -> None
+        if not isinstance(data, ComponentBuilder):
+            raise TypeError
+        data = ComponentBuilder() if data is None else data
+        self.componentEditor.refresh(data.componentDict)
+        self.connectionEditor.refresh(data.connectionDict)
 
     def getData(self):  # type: () -> ComponentBuilder
         componentDict = self.componentEditor.getDataDict()

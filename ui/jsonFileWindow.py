@@ -74,10 +74,14 @@ class JsonFileWindow(QtWidgets.QMainWindow):
         print('{} -> File saved: {}'.format(self.title, self.file))
 
     def open(self, path):
-        self.file = JsonFile(path)
-        self.updateWindowTitle()
-        self.refresh(self.file.load())
-        print('{} -> File opened: {}'.format(self.title, self.file))
+        f = JsonFile(path)
+        try:
+            self.refresh(f.load())
+            self.file = f
+            self.updateWindowTitle()
+            print('{} -> File opened: {}'.format(self.title, self.file))
+        except TypeError:
+            print('{} -> File could not be opened: {}'.format(self.title, f))
 
     def clear(self):
         self.file = None
@@ -119,6 +123,16 @@ class JsonFileWindow(QtWidgets.QMainWindow):
         self.save(path, force=True)
 
     def askOpen(self):
+        result = QtWidgets.QMessageBox.question(
+            self,
+            "File Not Saved",
+            "Continue anyways?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+
+        if result == QtWidgets.QMessageBox.No:
+            return
+
         caption = '{}: Open File'.format(self.title)
         path, _ = QtWidgets.QFileDialog.getOpenFileName(self, caption=caption, filter='Json File (*.json)')
         if not path:

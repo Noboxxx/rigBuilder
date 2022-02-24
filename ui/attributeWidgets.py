@@ -1,3 +1,5 @@
+import os
+
 from PySide2 import QtWidgets, QtGui, QtCore
 from .utils import size, Signal
 from rigBuilder.components.core import Attribute, Component, Attributes, Guide
@@ -249,3 +251,122 @@ class GuideWidget(QtWidgets.QWidget):
                 self.pick()
         else:
             self.liveObjectLine.setText('')
+
+
+class ScriptWidget(QtWidgets.QWidget):
+
+    def __init__(self):
+        super(ScriptWidget, self).__init__()
+
+        self.textChanged = Signal()
+
+        self.textEdit = QtWidgets.QTextEdit()
+        self.textEdit.textChanged.connect(self.emitTextChanged)
+
+        mainLayout = QtWidgets.QVBoxLayout(self)
+        mainLayout.setMargin(0)
+        mainLayout.addWidget(self.textEdit)
+
+    def setText(self, text):
+        self.textEdit.setText(text)
+
+    def emitTextChanged(self):
+        self.textChanged.emit(self.textEdit.toPlainText())
+
+
+class FileWidget(QtWidgets.QWidget):
+
+    def __init__(self, flt):
+        super(FileWidget, self).__init__()
+
+        self.filter = flt
+
+        self.pathChanged = Signal()
+
+        self.pathEdit = QtWidgets.QLineEdit()
+        self.pathEdit.textChanged.connect(self.emitPathChanged)
+
+        openBtn = QtWidgets.QPushButton()
+        openBtn.setFixedSize(size(20), size(20))
+        openBtn.setIcon(QtGui.QIcon(':openLoadGeneric.png'))
+        openBtn.clicked.connect(self.askOpen)
+
+        self.mainLayout = QtWidgets.QHBoxLayout()
+        self.mainLayout.setMargin(0)
+        self.mainLayout.addWidget(self.pathEdit)
+        self.mainLayout.addWidget(openBtn)
+
+        self.setLayout(self.mainLayout)
+
+    def setPath(self, path):
+        self.pathEdit.setText(os.path.normpath(path))
+
+    def askOpen(self):
+        path, _ = QtWidgets.QFileDialog.getOpenFileName(self, caption='Open File', filter=self.filter)
+        if not path:
+            return
+
+        path = os.path.normpath(path)
+        workspace = os.getcwd()
+
+        if path.startswith(workspace):
+            path = path.replace(workspace, '...')
+
+        self.setPath(path)
+
+    def emitPathChanged(self):
+        self.pathChanged.emit(os.path.normpath(self.pathEdit.text()))
+
+
+class ComponentBuilderWidget(FileWidget):
+
+    def __init__(self, flt):
+        super(ComponentBuilderWidget, self).__init__(flt)
+
+        editBtn = QtWidgets.QPushButton()
+        editBtn.setFixedSize(size(20), size(20))
+        editBtn.setIcon(QtGui.QIcon(':toolSettings.png'))
+        editBtn.clicked.connect(self.openEdit)
+
+        self.mainLayout.addWidget(editBtn)
+
+    def openEdit(self):
+        from .componentBuilderWindow import ComponentBuilderWindow
+        ui = ComponentBuilderWindow()
+        ui.open(self.pathEdit.text())
+        ui.show()
+
+
+class NodeWidget(QtWidgets.QWidget):
+
+    def __init__(self):
+        super(NodeWidget, self).__init__()
+
+        self.nodeChanged = Signal()
+
+        self.nodeEdit = QtWidgets.QLineEdit()
+        self.nodeEdit.textChanged.connect(self.nodeChanged.emit)
+
+        pickBtn = QtWidgets.QPushButton()
+        pickBtn.setIcon(QtGui.QIcon(':arrowLeft.png'))
+        pickBtn.setFixedSize(size(20), size(20))
+        pickBtn.clicked.connect(self.pick)
+
+        self.mainLayout = QtWidgets.QHBoxLayout()
+        self.mainLayout.setMargin(0)
+        self.mainLayout.addWidget(self.nodeEdit)
+        self.mainLayout.addWidget(pickBtn)
+
+        self.setLayout(self.mainLayout)
+
+    def setNode(self, node):
+        self.nodeEdit.setText(node)
+
+    def pick(self):
+        from maya import cmds
+        selection = cmds.ls(sl=True, long=True)
+
+        if not selection:
+            return
+
+        self.setNode(selection[-1])
