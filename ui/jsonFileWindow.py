@@ -1,8 +1,18 @@
-
+import os
+from functools import partial
 from PySide2 import QtWidgets, QtGui
 from RBuild.ui.utils import getMayaMainWindow, deleteSiblingWidgets, size
 from ..files.core import JsonFile
 from ..core import Data
+
+
+class Settings(Data):
+
+    def __init__(self, recentFiles=None):
+        super(Settings, self).__init__()
+        if recentFiles is None:
+            recentFiles = list()
+        self.recentFiles = [os.path.normpath(path) for path in recentFiles]
 
 
 class JsonFileWindow(QtWidgets.QMainWindow):
@@ -11,11 +21,16 @@ class JsonFileWindow(QtWidgets.QMainWindow):
         super(JsonFileWindow, self).__init__(parent=getMayaMainWindow() if parent is None else parent)
         deleteSiblingWidgets(self)
 
+        # file
+        self._file = None
+
+        # title
         self.title = str(title) if title is not None else self.__class__.__name__
-        self.file = None
 
-        self.updateWindowTitle()
+        # settings
+        self.settings = self.retrieveSettings()
 
+        # size
         self.setMinimumSize(size(600), size(500))
 
         # Menu
@@ -27,8 +42,7 @@ class JsonFileWindow(QtWidgets.QMainWindow):
         openAction.triggered.connect(self.askOpen)
         openAction.setShortcut(QtGui.QKeySequence('ctrl+O'))
 
-        recentFilesMenu = QtWidgets.QMenu('Recent Files')
-        recentFilesMenu.setEnabled(False)
+        self.recentFilesMenu = QtWidgets.QMenu('Recent Files')
 
         saveAction = QtWidgets.QAction('Save', self)
         saveAction.triggered.connect(self.askSave)
@@ -46,7 +60,7 @@ class JsonFileWindow(QtWidgets.QMainWindow):
         fileMenu.addAction(newAction)
         fileMenu.addSeparator()
         fileMenu.addAction(openAction)
-        fileMenu.addMenu(recentFilesMenu)
+        fileMenu.addMenu(self.recentFilesMenu)
         fileMenu.addSeparator()
         fileMenu.addAction(saveAction)
         fileMenu.addAction(saveAsAction)
@@ -57,6 +71,7 @@ class JsonFileWindow(QtWidgets.QMainWindow):
 
         self.setMenuBar(menuBar)
 
+        # main Layout
         self.mainLayout = QtWidgets.QVBoxLayout()
 
         centralWidget = QtWidgets.QWidget()
@@ -64,13 +79,54 @@ class JsonFileWindow(QtWidgets.QMainWindow):
 
         self.setCentralWidget(centralWidget)
 
+        # set file to None
+        self.file = None
+
+    @property
+    def file(self):
+        return self._file
+
+    @file.setter
+    def file(self, value):  # type: (JsonFile) -> None
+        self._file = value
+
+        # Update window title
+        pathRepr = 'untitled' if self._file is None else str(self._file)
+        self.setWindowTitle('{}: {}'.format(self.title, pathRepr))
+
+        # add to recent files
+        if self._file is not None:
+            path = os.path.normpath(self._file)
+
+            if path not in self.settings.recentFiles:
+                self.settings.recentFiles.append(path)
+
+        # Update recent file in menu bar
+        self.recentFilesMenu.clear()
+        for path in self.settings.recentFiles:
+            action = QtWidgets.QAction(path, self)
+            action.triggered.connect(partial(self.askOpenRecent, path))
+            self.recentFilesMenu.addAction(action)
+
+    def askOpenRecent(self, path):
+        result = QtWidgets.QMessageBox.question(
+            self,
+            "File Not Saved",
+            "Continue anyways?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+
+        if result == QtWidgets.QMessageBox.No:
+            return
+
+        self.open(path)
+
     def incrementSave(self):
         pass
 
     def save(self, path, force=False):
         self.file = JsonFile(path)
         self.file.dump(self.getData(), force=force)
-        self.updateWindowTitle()
         print('{} -> File saved: {}'.format(self.title, self.file))
 
     def open(self, path):
@@ -78,23 +134,16 @@ class JsonFileWindow(QtWidgets.QMainWindow):
         try:
             self.refresh(f.load())
             self.file = f
-            self.updateWindowTitle()
             print('{} -> File opened: {}'.format(self.title, self.file))
-        except TypeError:
+        except (TypeError, AttributeError):
             print('{} -> File could not be opened: {}'.format(self.title, f))
 
     def clear(self):
         self.file = None
-        self.updateWindowTitle()
         self.refresh()
 
     def refresh(self, data=None):  # type: (Data) -> None
         pass
-
-    def updateWindowTitle(self):
-        path = 'untitled' if self.file is None else str(self.file)
-        title = '{}: {}'.format(self.title, path)
-        self.setWindowTitle(title)
 
     def askNew(self):
         result = QtWidgets.QMessageBox.question(
@@ -150,7 +199,29 @@ class JsonFileWindow(QtWidgets.QMainWindow):
         if result == QtWidgets.QMessageBox.No:
             event.ignore()
         else:
+            self.saveSettings()
+
             event.accept()
+
+    def saveSettings(self):
+        path = os.path.join(os.path.expanduser('~'), '{}Settings.json'.format(self.__class__.__name__))
+
+        f = JsonFile(path)
+        f.dump(self.settings, force=True)
+
+    def retrieveSettings(self):
+        path = os.path.join(os.path.expanduser('~'), '{}Settings.json'.format(self.__class__.__name__))
+
+        f = JsonFile(path)
+        try:
+            settings = f.load()
+        except:
+            settings = None
+
+        if not isinstance(settings, Settings):
+            return Settings()
+
+        return settings
 
     def getData(self):  # type: () -> Data
         return Data()

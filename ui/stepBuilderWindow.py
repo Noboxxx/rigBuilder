@@ -126,6 +126,7 @@ class StepBuilderWindow(JsonFileWindow):
         self.getData().build()
 
     def refresh(self, data=None):  # type: (StepBuilder) -> None
+        data = StepBuilder() if data is None else data
         self.stepEditor.refresh(data.stepDict)
 
 
