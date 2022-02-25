@@ -16,36 +16,6 @@ from ..ui.dataDictEditor import DataDictEditor, DataAttributeEditor, DataDictLis
 from ..ui.jsonFileWindow import JsonFileWindow
 
 
-class WorkspaceWidget(QtWidgets.QWidget):
-
-    def __init__(self):
-        super(WorkspaceWidget, self).__init__()
-
-        self.pathEdit = QtWidgets.QLineEdit(os.getcwd())
-        self.pathEdit.setEnabled(False)
-
-        openBtn = QtWidgets.QPushButton()
-        openBtn.setIcon(QtGui.QIcon(':openLoadGeneric.png'))
-        openBtn.clicked.connect(self.askOpen)
-        openBtn.setFixedSize(size(20), size(20))
-
-        self.mainLayout = QtWidgets.QHBoxLayout()
-        self.mainLayout.setMargin(0)
-        self.mainLayout.addWidget(QtWidgets.QLabel('workspace'))
-        self.mainLayout.addWidget(self.pathEdit)
-        self.mainLayout.addWidget(openBtn)
-
-        self.setLayout(self.mainLayout)
-
-    def askOpen(self):
-        path = QtWidgets.QFileDialog.getExistingDirectory(self, caption='Open Workspace')
-        if not path:
-            return
-        if os.path.isdir(path):
-            os.chdir(path)
-        self.pathEdit.setText(os.path.normpath(path))
-
-
 class StepDictList(DataDictList):
     types = (
         CustomScript,
@@ -100,8 +70,6 @@ class StepBuilderWindow(JsonFileWindow):
     def __init__(self):
         super(StepBuilderWindow, self).__init__(title='Step Builder')
 
-        self.workspaceWidget = WorkspaceWidget()
-
         self.stepEditor = DataDictEditor(
             dataDictList=StepDictList(),
             dataAttributeEditor=StepAttributeEditor()
@@ -112,7 +80,7 @@ class StepBuilderWindow(JsonFileWindow):
 
         layout = QtWidgets.QVBoxLayout()
         layout.setMargin(0)
-        layout.addWidget(self.workspaceWidget)
+        # layout.addWidget(self.workspaceWidget)
         layout.addWidget(self.stepEditor)
         layout.addWidget(buildBtn)
         layout.setStretch(1, 1)
@@ -123,7 +91,8 @@ class StepBuilderWindow(JsonFileWindow):
         return StepBuilder(self.stepEditor.getDataDict())
 
     def build(self):
-        self.getData().build()
+        stepBuilder = self.getData()
+        stepBuilder.build()
 
     def refresh(self, data=None):  # type: (StepBuilder) -> None
         data = StepBuilder() if data is None else data

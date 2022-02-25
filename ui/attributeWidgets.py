@@ -1,9 +1,9 @@
 import os
 
-from PySide2 import QtWidgets, QtGui, QtCore
+from PySide2 import QtWidgets, QtGui
 from .utils import size, Signal
 from rigBuilder.components.core import Attribute, Component, Attributes, Guide
-from ..types import Matrix
+from ..types import File
 
 
 class ColorWidget(QtWidgets.QWidget):
@@ -306,13 +306,7 @@ class FileWidget(QtWidgets.QWidget):
         if not path:
             return
 
-        path = os.path.normpath(path)
-        workspace = os.getcwd()
-
-        if path.startswith(workspace):
-            path = path.replace(workspace, '...')
-
-        self.setPath(path)
+        self.setPath(File(path))
 
     def emitPathChanged(self):
         self.pathChanged.emit(os.path.normpath(self.pathEdit.text()))

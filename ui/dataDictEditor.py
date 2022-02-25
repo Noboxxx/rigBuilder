@@ -7,6 +7,8 @@ from .utils import size, Signal
 from ..core import Data, MyOrderedDict
 import re
 
+from ..types import File
+
 
 class RenamerDialog(QtWidgets.QDialog):
 
@@ -19,6 +21,7 @@ class RenamerDialog(QtWidgets.QDialog):
 
         self.line = QtWidgets.QLineEdit()
         self.line.setText(name)
+        self.line.selectAll()
         self.line.returnPressed.connect(self.validate)
 
         applyBtn = QtWidgets.QPushButton('Apply')
@@ -46,7 +49,12 @@ class DataAttributeEditor(QtWidgets.QTreeWidget):
         self.setHeaderLabels(('name', 'value', 'type'))
         self.setColumnWidth(1, size(200))
 
+        self.workspaceChanged = Signal()
+
         self.attributeValueChanged = Signal()
+
+    def updateWorkspace(self, workspace):
+        self.workspaceChanged.emit(workspace)
 
     def refresh(self, data=None):  # type: (Data) -> None
         self.clear()

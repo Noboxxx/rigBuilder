@@ -2,7 +2,9 @@ from rigBuilder.core import Data
 
 
 class Step(Data):
-    pass
+
+    def build(self, workspace=''):
+        pass
 
 
 class StepBuilder(Data):

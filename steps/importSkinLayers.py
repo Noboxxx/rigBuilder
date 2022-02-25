@@ -1,5 +1,8 @@
 from ..files.core import JsonFile
 from .core import Step
+from maya import cmds
+from ngSkinTools2.api import InfluenceMappingConfig, VertexTransferMode
+from ngSkinTools2 import api as ngst_api
 
 
 class SkinLayersFile(JsonFile):
@@ -18,10 +21,6 @@ class ImportSkinLayers(Step):
         self.file = SkinLayersFile(file)
 
     def build(self):
-        from maya import cmds
-        from ngSkinTools2.api import InfluenceMappingConfig, VertexTransferMode
-        from ngSkinTools2 import api as ngst_api
-
         cmds.loadPlugin('ngSkinTools2')
 
         config = InfluenceMappingConfig()

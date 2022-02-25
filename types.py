@@ -245,3 +245,21 @@ class Matrix(list):
                 str(type(other)),
             )
         )
+
+
+class File(str):
+
+    def __init__(self, path=''):
+        path = os.path.normpath(path)
+        super(File, self).__init__(path)
+
+    @classmethod
+    def join(cls, *args):
+        path = os.path.normpath('\\'.format(*[str(arg) for arg in args]))
+        return cls(path)
+
+    @property
+    def absolute(self):
+        if self.startswith('...'):
+            return self.__class__.join(os.getcwd(), self.replace('...', ''))
+        return self
