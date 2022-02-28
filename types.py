@@ -28,6 +28,41 @@ class Color(list):
         b = int(clamp(int(b), 0, 255))
         super(Color, self).__init__((r, g, b))
 
+    def __add__(self, other):
+        return self._operation(other, self.add)
+
+    def __div__(self, other):
+        return self._operation(other, self.div)
+
+    def __mul__(self, other):
+        return self._operation(other, self.mul)
+
+    def __sub__(self, other):
+        return self._operation(other, self.sub)
+
+    @staticmethod
+    def add(a, b):
+        return a + b
+
+    @staticmethod
+    def sub(a, b):
+        return a - b
+
+    @staticmethod
+    def div(a, b):
+        return a / b
+
+    @staticmethod
+    def mul(a, b):
+        return a * b
+
+    def _operation(self, other, func):
+        if isinstance(other, list):
+            return Color(*[func(a, b) for a, b in zip(self, other)])
+        elif isinstance(other, (int, float)):
+            return Color(*[func(a, other) for a in self])
+        raise TypeError('Cannot add \'{}\' to Color.'.format(type(self).__name__))
+
     @property
     def r(self):
         return self[0]

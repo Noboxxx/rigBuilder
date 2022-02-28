@@ -2,24 +2,18 @@ import os
 from functools import partial
 from PySide2 import QtWidgets, QtGui
 from RBuild.ui.utils import getMayaMainWindow, deleteSiblingWidgets, size
-from .utils import Signal
 from ..files.core import JsonFile
 from ..core import Data
-from ..types import File
 
 
 class Settings(Data):
 
-    def __init__(self, recentFiles=None, workspace=None, recentWorkspaces=None):
+    def __init__(self, recentFiles=None):
         super(Settings, self).__init__()
-        if recentWorkspaces is None:
-            recentWorkspaces = list()
         if recentFiles is None:
             recentFiles = list()
 
-        self.workspace = File(workspace if workspace else os.path.expanduser('~'))
         self.recentFiles = [os.path.normpath(path) for path in recentFiles]
-        self.recentWorkspaces = [os.path.normpath(path) for path in recentWorkspaces]
 
 
 class JsonFileWindow(QtWidgets.QMainWindow):
@@ -30,14 +24,11 @@ class JsonFileWindow(QtWidgets.QMainWindow):
 
         # file
         self._file = None
-        self._workspace = None
 
         # title
         self.title = str(title) if title is not None else self.__class__.__name__
 
         # settings
-        self.recentFilesMenu = list()
-        self.recentWorkspaces = list()
         self.recentFiles = list()
 
         # size
@@ -66,12 +57,6 @@ class JsonFileWindow(QtWidgets.QMainWindow):
         incrementSaveAction.setEnabled(False)
         incrementSaveAction.setShortcut(QtGui.QKeySequence('ctrl+alt+S'))
 
-        openWorkspaceAction = QtWidgets.QAction('Open Workspace...', self)
-        openWorkspaceAction.triggered.connect(self.askOpenWorkspace)
-
-        self.openRecentWorkspaceMenu = QtWidgets.QMenu('Open Recent Workspace')
-        self.updateRecentWorkspaces()
-
         fileMenu = QtWidgets.QMenu('File')
         fileMenu.addAction(newAction)
         fileMenu.addSeparator()
@@ -81,9 +66,6 @@ class JsonFileWindow(QtWidgets.QMainWindow):
         fileMenu.addAction(saveAction)
         fileMenu.addAction(saveAsAction)
         fileMenu.addAction(incrementSaveAction)
-        fileMenu.addSeparator()
-        fileMenu.addAction(openWorkspaceAction)
-        fileMenu.addMenu(self.openRecentWorkspaceMenu)
 
         menuBar = QtWidgets.QMenuBar()
         menuBar.addMenu(fileMenu)
@@ -100,41 +82,8 @@ class JsonFileWindow(QtWidgets.QMainWindow):
 
         # set file to None
         self.file = None
-        self.workspace = File(os.path.expanduser('~'))
 
         self.loadSettings()
-
-    @property
-    def workspace(self):
-        return self._workspace
-
-    @workspace.setter
-    def workspace(self, value):  # type: (File) -> None
-        if value not in self.recentWorkspaces:
-            self.recentWorkspaces.append(value)
-
-        self.updateWindowTitle()
-        File.workspace = value
-
-    def getWorkspace(self):
-        return self.workspace
-
-    def updateRecentWorkspaces(self):
-        self.openRecentWorkspaceMenu.clear()
-
-        for path in self.recentWorkspaces:
-            action = QtWidgets.QAction(path, self)
-            action.triggered.connect(partial(self.openWorkspace, path))
-            self.openRecentWorkspaceMenu.addAction(action)
-
-    def askOpenWorkspace(self):
-        path = QtWidgets.QFileDialog.getExistingDirectory(self, caption='Open Workspace')
-        if not path:
-            return
-        self.openWorkspace(path)
-
-    def openWorkspace(self, path):
-        self.workspace = File(path)
 
     @property
     def file(self):
@@ -151,10 +100,13 @@ class JsonFileWindow(QtWidgets.QMainWindow):
         if self._file is not None:
             path = os.path.normpath(self._file)
 
-            if path not in self.settings.recentFiles:
-                self.settings.recentFiles.append(path)
+            if path not in self.recentFiles:
+                self.recentFiles.append(path)
 
         # Update recent file in menu bar
+        self.updateRecentFilesMenu()
+
+    def updateRecentFilesMenu(self):
         self.recentFilesMenu.clear()
         for path in self.recentFiles:
             action = QtWidgets.QAction(path, self)
@@ -176,7 +128,7 @@ class JsonFileWindow(QtWidgets.QMainWindow):
 
     def updateWindowTitle(self):
         pathRepr = 'untitled' if self._file is None else str(self._file)
-        self.setWindowTitle('{} ({}) -> {}'.format(self.title, self.workspace, pathRepr))
+        self.setWindowTitle('{} -> {}'.format(self.title, pathRepr))
 
     def incrementSave(self):
         pass
@@ -188,12 +140,16 @@ class JsonFileWindow(QtWidgets.QMainWindow):
 
     def open(self, path):
         f = JsonFile(path)
-        try:
-            self.refresh(f.load())
-            self.file = f
-            print('{} -> File opened: {}'.format(self.title, self.file))
-        except (TypeError, AttributeError):
-            print('{} -> File could not be opened: {}'.format(self.title, f))
+        self.refresh(f.load())
+        self.file = f
+        print('{} -> File opened: {}'.format(self.title, self.file))
+        # try:
+        #     self.refresh(f.load())
+        #     self.file = f
+        #     print('{} -> File opened: {}'.format(self.title, self.file))
+        # except (TypeError, AttributeError) as e:
+        #     print('{} -> File could not be opened: {}'.format(self.title, f))
+        #     print(e)
 
     def clear(self):
         self.file = None
@@ -265,8 +221,6 @@ class JsonFileWindow(QtWidgets.QMainWindow):
 
         settings = Settings(
             recentFiles=self.recentFiles,
-            workspace=self.workspace,
-            recentWorkspaces=self.recentWorkspaces
         )
 
         f = JsonFile(path)
@@ -284,9 +238,8 @@ class JsonFileWindow(QtWidgets.QMainWindow):
         if not isinstance(settings, Settings):
             return Settings()
 
-        self.workspace = settings.workspace
         self.recentFiles = settings.recentFiles
-        self.recentWorkspaces = settings.recentWorkspaces
+        self.updateRecentFilesMenu()
 
     def getData(self):  # type: () -> Data
         return Data()

@@ -3,7 +3,7 @@ from rigBuilder.core import Data
 
 class Step(Data):
 
-    def build(self, workspace=''):
+    def build(self):
         pass
 
 

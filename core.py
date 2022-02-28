@@ -80,7 +80,9 @@ class Data(object):
             if cl is object:
                 continue
             argSpec = getargspec(cl.__init__).args
-            args += argSpec[1:]
+            for arg in argSpec[1:]:
+                if arg not in args:
+                    args.append(arg)
 
         return args
 

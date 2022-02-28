@@ -1,10 +1,13 @@
 from functools import partial
 from PySide2 import QtWidgets
-from .attributeWidgets import ColorWidget, AttributeWidget, AttributesWidget, GuideWidget
+from .attributeWidgets import ColorWidget, AttributeWidget, AttributesWidget, NodeWidget
 from .dataDictEditor import DataDictEditor, DataDictList, DataAttributeEditor
 from .jsonFileWindow import JsonFileWindow
-from ..components.core import ComponentBuilder, Attribute, Attributes, Connection, Guide
+from ..components.base import BaseComponent
+from ..components.core import ComponentBuilder, Attribute, Attributes, Connection, Guide, GuideDict
+from ..components.fkChain import FkChain
 from ..components.oneCtrl import OneCtrl
+from ..core import MyOrderedDict
 from ..types import Color, Side, UnsignedInt, UnsignedFloat
 
 
@@ -45,9 +48,9 @@ class ComponentAttributeEditor(DataAttributeEditor):
             return widget
 
         elif isinstance(value, Guide):
-            widget = GuideWidget()
-            widget.setGuide(value)
-            widget.guideChanged.connect(partial(self.attributeValueChanged.emit, key, t))
+            widget = NodeWidget()
+            widget.setNode(value)
+            widget.nodeChanged.connect(partial(self.attributeValueChanged.emit, key, t))
             return widget
 
         elif isinstance(value, Side):
@@ -77,7 +80,9 @@ class ComponentAttributeEditor(DataAttributeEditor):
 class ComponentDictList(DataDictList):
 
     types = (
-        OneCtrl
+        OneCtrl,
+        BaseComponent,
+        FkChain,
     )
 
     def populateContextMenu(self):

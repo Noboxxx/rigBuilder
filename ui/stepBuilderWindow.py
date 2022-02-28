@@ -1,9 +1,7 @@
-import os
 from functools import partial
 
-from PySide2 import QtWidgets, QtGui, QtCore
+from PySide2 import QtWidgets
 from .attributeWidgets import ScriptWidget, FileWidget, NodeWidget, ComponentBuilderWidget
-from .utils import Signal, size
 from ..files.core import JsonFile
 from ..steps.buildComponents import BuildComponents, ComponentBuilderFile
 from ..steps.core import StepBuilder
@@ -80,7 +78,6 @@ class StepBuilderWindow(JsonFileWindow):
 
         layout = QtWidgets.QVBoxLayout()
         layout.setMargin(0)
-        # layout.addWidget(self.workspaceWidget)
         layout.addWidget(self.stepEditor)
         layout.addWidget(buildBtn)
         layout.setStretch(1, 1)

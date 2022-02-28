@@ -1,6 +1,6 @@
 from maya import cmds
 from rigBuilder.types import Side, Color, UnsignedInt, UnsignedFloat, Matrix
-from rigBuilder.core import Data
+from rigBuilder.core import Data, MyOrderedDict
 
 
 class Attributes(list):
@@ -76,21 +76,9 @@ class Input(Plug):
     pass
 
 
-class Guide(Matrix):
-
-    def build(self, name):
-        guidesFolder = 'guides'
-        if not cmds.objExists(guidesFolder):
-            cmds.group(empty=True, name=guidesFolder)
-
-        lct, = cmds.spaceLocator(name='{}_guide'.format(name))
-        cmds.parent(lct, guidesFolder)
-        cmds.xform(lct, matrix=list(self))
-
-
 class Component(Data):
 
-    def __init__(self, name='untitled', side='L', index=0, color=(255, 255, 0), size=1.0, bilateral=False):
+    def __init__(self, name='untitled', side='C', index=0, color=(255, 255, 0), size=1.0, bilateral=False):
         super(Component, self).__init__()
 
         self.name = str(name)
@@ -162,14 +150,13 @@ class Component(Data):
 class ComponentBuilder(Data):
 
     def __init__(self, componentDict=None, connectionDict=None):
-        # type: (dict[str: Component], dict[str:Connection]) -> None
+        # type: (dict[str: Component], dict[str:Connection], GuideDict) -> None
         super(ComponentBuilder, self).__init__()
 
         self.componentDict = componentDict if componentDict is not None else dict()
         self.connectionDict = connectionDict if connectionDict is not None else dict()
 
     def build(self):
-
         folder = cmds.group(empty=True, name='rig')
 
         componentDict = dict()
@@ -181,17 +168,66 @@ class ComponentBuilder(Data):
             cmds.parent(str(copiedComponent), folder)
 
             mirrorComponent = None
-            if component.bilateral:
-                mirrorComponent = component.mirrored()
+            if copiedComponent.bilateral:
+                mirrorComponent = copiedComponent.mirrored()
                 mirrorComponent.build()
 
                 cmds.parent(str(mirrorComponent), folder)
 
-            mirroredComponentDict[key] = mirrorComponent or component
-            componentDict[key] = component
+            mirroredComponentDict[key] = mirrorComponent or copiedComponent
+            componentDict[key] = copiedComponent
 
         for key, connection in self.connectionDict:
             connection.copy().build(componentDict)
 
             if connection.bilateral:
                 connection.build(mirroredComponentDict)
+
+
+class Guide(str):
+
+    @property
+    def matrix(self):
+        if not cmds.objExists(self):
+            raise RuntimeError('Guide named \'{}\' does not exist.'.format(self))
+        matrix = cmds.xform(self, q=True, matrix=True, worldSpace=True)
+        return Matrix(*matrix)
+
+    @classmethod
+    def create(cls, name):
+        lct, = cmds.spaceLocator(name=name)
+        return cls(lct)
+
+
+class GuideArray(list):
+    pass
+
+
+class GuideDict(MyOrderedDict):
+
+    def build(self):
+        grp = cmds.group(empty=True, name='guides')
+
+        for name, guide in self.items():
+            guide.build(name)
+
+        for name, guide in self.items():
+            if cmds.objExists(guide.parent):
+                cmds.parent(guide, guide.parent)
+            else:
+                cmds.parent(guide, grp)
+
+    def mirrored(self):
+        mirroredGuideDict = MyOrderedDict()
+        for name, guide in self.items():
+            mirroredGuideDict[name] = guide.mirrored()
+        return mirroredGuideDict
+
+    @classmethod
+    def create(cls, grp):
+        guideDict = cls()
+        for transform in cmds.listRelatives(grp, children=True, type='transform'):
+            guide = Guide.create(transform)
+            guideDict[transform] = guide
+
+        return guideDict

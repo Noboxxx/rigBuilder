@@ -13,10 +13,11 @@ def objectFactory(typeStr, kwargs):  # type: (str, dict) -> any
 
 
 def customEncoder(o):
+    cl = '{}.{}'.format(o.__module__, o.__class__.__name__)
     if isinstance(o, MyOrderedDict):
-        return {'class': 'MyrOrderedDict', 'content': o.items()}
+        return {'class': cl, 'content': o.items()}
 
-    return {'class': '{}.{}'.format(o.__module__, o.__class__.__name__), 'kwargs': dict(o)}
+    return {'class': cl, 'kwargs': dict(o)}
 
 
 def customDecoder(o):
@@ -24,7 +25,7 @@ def customDecoder(o):
         if 'class' in o.keys() and 'kwargs' in o.keys():
             return objectFactory(o['class'], o['kwargs'])
         elif 'class' in o.keys() and 'content' in o.keys():
-            d = MyOrderedDict()
+            d = objectFactory(o['class'], dict())
             for k, v in o['content']:
                 d[k] = v
             return d

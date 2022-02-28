@@ -49,12 +49,7 @@ class DataAttributeEditor(QtWidgets.QTreeWidget):
         self.setHeaderLabels(('name', 'value', 'type'))
         self.setColumnWidth(1, size(200))
 
-        self.workspaceChanged = Signal()
-
         self.attributeValueChanged = Signal()
-
-    def updateWorkspace(self, workspace):
-        self.workspaceChanged.emit(workspace)
 
     def refresh(self, data=None):  # type: (Data) -> None
         self.clear()
