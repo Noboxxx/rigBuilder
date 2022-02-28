@@ -13,16 +13,14 @@ class AttributeWidget(QtWidgets.QWidget):
 
         self.valueChanged = Signal()
 
-    @property
-    def value(self):
+    def getValue(self):
         return None
 
-    @value.setter
-    def value(self, value):
+    def setValue(self, value):
         pass
 
 
-class ColorWidget(QtWidgets.QWidget):
+class ColorWidget(AttributeWidget):
 
     def __init__(self):
         super(ColorWidget, self).__init__()
@@ -90,114 +88,114 @@ class ColorWidget(QtWidgets.QWidget):
         return dialog
 
 
-class AttributesWidget(QtWidgets.QWidget):
+# class AttributesWidget(QtWidgets.QWidget):
+#
+#     def __init__(self):
+#         super(AttributesWidget, self).__init__()
+#
+#         addBtn = QtWidgets.QPushButton('+')
+#         addBtn.setFixedSize(size(15), size(15))
+#
+#         self.mainLayout = QtWidgets.QVBoxLayout()
+#         self.mainLayout.setMargin(0)
+#         self.mainLayout.addWidget(addBtn)
+#
+#         self.setLayout(self.mainLayout)
+#
+#     def setAttrs(self, attributes, componentDict):  # type: (Attributes, dict[str: Component]) -> None
+#         for attr in attributes:
+#             wid = AttributeWidget(self, componentDict)
+#             wid.setAttr(attr)
+#
+#             removeBtn = QtWidgets.QPushButton('x')
+#             removeBtn.setFixedSize(size(15), size(15))
+#
+#             lay = QtWidgets.QHBoxLayout()
+#             lay.setMargin(0)
+#             lay.addWidget(wid)
+#             lay.addWidget(removeBtn)
+#
+#             self.mainLayout.addLayout(lay)
+#
+#
+# class AttributeWidget(QtWidgets.QWidget):
+#
+#     def __init__(self, parent, componentDict):  # type: (QtWidgets.QWidget, dict[str: Component]) -> None
+#         super(AttributeWidget, self).__init__(parent)
+#
+#         self.componentDict = componentDict
+#
+#         self.attributeChanged = Signal()
+#
+#         self.keyCombo = QtWidgets.QComboBox()
+#         for k, v in componentDict.items():
+#             self.keyCombo.addItem(k)
+#         self.attributeCombo = QtWidgets.QComboBox()
+#         self.indexSpin = QtWidgets.QSpinBox()
+#         self.indexSpin.setMaximum(10000)
+#         self.indexSpin.setMinimum(-10000)
+#
+#         self.keyCombo.currentTextChanged.connect(self.keyChanged)
+#         self.keyChanged(self.keyCombo.currentText())
+#
+#         mainLayout = QtWidgets.QHBoxLayout()
+#         mainLayout.setMargin(0)
+#         mainLayout.addWidget(self.keyCombo)
+#         mainLayout.addWidget(self.attributeCombo)
+#         mainLayout.addWidget(self.indexSpin)
+#
+#         self.setLayout(mainLayout)
+#
+#         self.keyCombo.currentTextChanged.connect(self.emitAttributeChanged)
+#         self.attributeCombo.currentTextChanged.connect(self.emitAttributeChanged)
+#         self.indexSpin.valueChanged.connect(self.emitAttributeChanged)
+#
+#     def setAttr(self, attribute):  # type: (Attribute) -> None
+#
+#         if attribute.key == '':
+#             self.keyCombo.setCurrentIndex(-1)
+#         else:
+#             index = self.keyCombo.findText(attribute.key)
+#             if index == -1:
+#                 self.keyCombo.addItem(attribute.key)
+#                 index = self.keyCombo.findText(attribute.key)
+#
+#             self.keyCombo.setCurrentIndex(index)
+#
+#         if attribute.attribute == '':
+#             self.attributeCombo.setCurrentIndex(-1)
+#         else:
+#             index = self.attributeCombo.findText(attribute.attribute)
+#             if index == -1:
+#                 self.attributeCombo.addItem(attribute.attribute)
+#                 index = self.attributeCombo.findText(attribute.attribute)
+#
+#             self.attributeCombo.setCurrentIndex(index)
+#
+#         self.indexSpin.setValue(attribute.index)
+#
+#     def keyChanged(self, key):
+#         currentComponent = self.componentDict.get(key)
+#
+#         self.attributeCombo.clear()
+#         if not isinstance(currentComponent, Component):
+#             return
+#
+#         for k, v in currentComponent.getPlugDict().items():
+#             self.attributeCombo.addItem(k)
+#
+#     def getAttr(self):  # type: () -> Attribute
+#         key = self.keyCombo.currentText()
+#         attribute = self.attributeCombo.currentText()
+#         index = self.indexSpin.value()
+#
+#         return Attribute(key, attribute, index)
+#
+#     def emitAttributeChanged(self):
+#         self.attributeChanged.emit(self.getAttr())
 
-    def __init__(self):
-        super(AttributesWidget, self).__init__()
 
-        addBtn = QtWidgets.QPushButton('+')
-        addBtn.setFixedSize(size(15), size(15))
-
-        self.mainLayout = QtWidgets.QVBoxLayout()
-        self.mainLayout.setMargin(0)
-        self.mainLayout.addWidget(addBtn)
-
-        self.setLayout(self.mainLayout)
-
-    def setAttrs(self, attributes, componentDict):  # type: (Attributes, dict[str: Component]) -> None
-        for attr in attributes:
-            wid = AttributeWidget(self, componentDict)
-            wid.setAttr(attr)
-
-            removeBtn = QtWidgets.QPushButton('x')
-            removeBtn.setFixedSize(size(15), size(15))
-
-            lay = QtWidgets.QHBoxLayout()
-            lay.setMargin(0)
-            lay.addWidget(wid)
-            lay.addWidget(removeBtn)
-
-            self.mainLayout.addLayout(lay)
-
-
-class AttributeWidget(QtWidgets.QWidget):
-
-    def __init__(self, parent, componentDict):  # type: (QtWidgets.QWidget, dict[str: Component]) -> None
-        super(AttributeWidget, self).__init__(parent)
-
-        self.componentDict = componentDict
-
-        self.attributeChanged = Signal()
-
-        self.keyCombo = QtWidgets.QComboBox()
-        for k, v in componentDict.items():
-            self.keyCombo.addItem(k)
-        self.attributeCombo = QtWidgets.QComboBox()
-        self.indexSpin = QtWidgets.QSpinBox()
-        self.indexSpin.setMaximum(10000)
-        self.indexSpin.setMinimum(-10000)
-
-        self.keyCombo.currentTextChanged.connect(self.keyChanged)
-        self.keyChanged(self.keyCombo.currentText())
-
-        mainLayout = QtWidgets.QHBoxLayout()
-        mainLayout.setMargin(0)
-        mainLayout.addWidget(self.keyCombo)
-        mainLayout.addWidget(self.attributeCombo)
-        mainLayout.addWidget(self.indexSpin)
-
-        self.setLayout(mainLayout)
-
-        self.keyCombo.currentTextChanged.connect(self.emitAttributeChanged)
-        self.attributeCombo.currentTextChanged.connect(self.emitAttributeChanged)
-        self.indexSpin.valueChanged.connect(self.emitAttributeChanged)
-
-    def setAttr(self, attribute):  # type: (Attribute) -> None
-
-        if attribute.key == '':
-            self.keyCombo.setCurrentIndex(-1)
-        else:
-            index = self.keyCombo.findText(attribute.key)
-            if index == -1:
-                self.keyCombo.addItem(attribute.key)
-                index = self.keyCombo.findText(attribute.key)
-
-            self.keyCombo.setCurrentIndex(index)
-
-        if attribute.attribute == '':
-            self.attributeCombo.setCurrentIndex(-1)
-        else:
-            index = self.attributeCombo.findText(attribute.attribute)
-            if index == -1:
-                self.attributeCombo.addItem(attribute.attribute)
-                index = self.attributeCombo.findText(attribute.attribute)
-
-            self.attributeCombo.setCurrentIndex(index)
-
-        self.indexSpin.setValue(attribute.index)
-
-    def keyChanged(self, key):
-        currentComponent = self.componentDict.get(key)
-
-        self.attributeCombo.clear()
-        if not isinstance(currentComponent, Component):
-            return
-
-        for k, v in currentComponent.getPlugDict().items():
-            self.attributeCombo.addItem(k)
-
-    def getAttr(self):  # type: () -> Attribute
-        key = self.keyCombo.currentText()
-        attribute = self.attributeCombo.currentText()
-        index = self.indexSpin.value()
-
-        return Attribute(key, attribute, index)
-
-    def emitAttributeChanged(self):
-        self.attributeChanged.emit(self.getAttr())
-
-
-class ScriptWidget(QtWidgets.QWidget):
+class ScriptWidget(AttributeWidget):
 
     def __init__(self):
         super(ScriptWidget, self).__init__()
@@ -218,7 +216,7 @@ class ScriptWidget(QtWidgets.QWidget):
         self.textChanged.emit(self.textEdit.toPlainText())
 
 
-class FileWidget(QtWidgets.QWidget):
+class FileWidget(AttributeWidget):
 
     def __init__(self, flt):
         super(FileWidget, self).__init__()
@@ -275,7 +273,7 @@ class ComponentBuilderWidget(FileWidget):
         ui.show()
 
 
-class NodeWidget(QtWidgets.QWidget):
+class NodeWidget(AttributeWidget):
 
     def __init__(self):
         super(NodeWidget, self).__init__()
@@ -310,12 +308,12 @@ class NodeWidget(QtWidgets.QWidget):
         self.setNode(selection[-1])
 
 
-class ListWidget(QtWidgets.QWidget):
+class ListAttributeWidget(AttributeWidget):
 
-    def __init__(self, widgetType):
-        super(ListWidget, self).__init__()
+    def __init__(self, attributeWidgetType):
+        super(ListAttributeWidget, self).__init__()
 
-        self.widgetType = widgetType
+        self.attributeWidgetType = attributeWidgetType
 
         addBtn = QtWidgets.QPushButton('+')
         addBtn.setFixedSize(size(15), size(15))
@@ -326,9 +324,15 @@ class ListWidget(QtWidgets.QWidget):
 
         self.setLayout(self.mainLayout)
 
-    def setValues(self, values):  # type: (list or tuple) -> None
+    @property
+    def value(self):
+        return list()
+
+    @value.setter
+    def value(self, values):  # type: (list or tuple) -> None
         for v in values:
-            wid = self.addItem(v)
+            wid = self.attributeWidgetType(self)
+            wid.setValue(v)
 
             removeBtn = QtWidgets.QPushButton('x')
             removeBtn.setFixedSize(size(15), size(15))
@@ -339,9 +343,3 @@ class ListWidget(QtWidgets.QWidget):
             lay.addWidget(removeBtn)
 
             self.mainLayout.addLayout(lay)
-
-    def addItem(self, value):
-        wid = self.widgetType(self)
-        wid.setAttr(value)
-
-        return wid
