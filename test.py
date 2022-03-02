@@ -12,12 +12,10 @@ def test():
 
     arm = Component(name='arm', side=Side('L'), bilateral=True, color=(10, 10, 10))
     leg = Component(name='leg', side=Side('L'), bilateral=True)
-    base = OneCtrl(name='base')
 
     componentDict = MyOrderedDict()
     componentDict['arm'] = arm
     componentDict['leg'] = leg
-    componentDict['base'] = base
 
     connection1 = Connection(
         sources=[
@@ -39,7 +37,7 @@ def test():
     connectionDict['connection2'] = connection2
 
     componentBuilder = ComponentBuilder(componentDict, connectionDict)
-    # componentBuilder.build()
+    componentBuilder.build()
 
     desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
     path = os.path.join(desktop, 'componentBuilder.json')

@@ -84,7 +84,7 @@ class Component(Data):
         self.name = str(name)
         self.side = Side(side)
         self.index = UnsignedInt(index)
-        self.color = Color(*color)
+        self.color = Color(color)
         self.size = UnsignedFloat(size)
         self.bilateral = bool(bilateral)
 

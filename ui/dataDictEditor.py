@@ -6,7 +6,7 @@ from PySide2 import QtWidgets
 from .utils import size, Signal
 from ..core import Data, MyOrderedDict
 import re
-
+from .attributeWidgets import AttributeWidget, BoolWidget, StringWidget, DefaultWidget, FloatWidget, IntWidget
 from ..types import File
 
 
@@ -46,6 +46,13 @@ class DataAttributeEditor(QtWidgets.QTreeWidget):
     def __init__(self):
         super(DataAttributeEditor, self).__init__()
 
+        self.typeWidgetMap = [
+            (bool, BoolWidget),
+            (basestring, StringWidget),
+            (float, FloatWidget),
+            (int, IntWidget),
+        ]
+
         self.setHeaderLabels(('name', 'value', 'type'))
         self.setColumnWidth(1, size(200))
 
@@ -55,7 +62,7 @@ class DataAttributeEditor(QtWidgets.QTreeWidget):
         self.clear()
 
         data = Data() if data is None else data
-
+        print '--->', 'refresh'
         for k, v in data.items():
             self.addAttribute(k, v)
 
@@ -83,41 +90,17 @@ class DataAttributeEditor(QtWidgets.QTreeWidget):
         item.setExpanded(True)
 
     def getAttributeWidget(self, key, value):
-        t = type(value)
+        print 'getAttributeWidget', key, value, type(value)
+        for t, w in self.typeWidgetMap:
+            if isinstance(value, t):
+                widget = w()
+                widget.setValue(value)
+                widget.valueChanged.connect(partial(self.attributeValueChanged.emit, key, type(value)))
+                return widget
 
-        if isinstance(value, bool):
-            check = QtWidgets.QCheckBox()
-            check.setChecked(value)
-            check.stateChanged.connect(partial(self.attributeValueChanged.emit, key, t))
-            return check
-
-        elif isinstance(value, basestring):
-            line = QtWidgets.QLineEdit()
-            line.setText(value)
-            line.textChanged.connect(partial(self.attributeValueChanged.emit, key, t))
-            return line
-
-        elif isinstance(value, int):
-            spin = QtWidgets.QSpinBox()
-            spin.setMinimum(-10000)
-            spin.setMaximum(10000)
-            spin.setValue(value)
-            spin.valueChanged.connect(partial(self.attributeValueChanged.emit, key, t))
-            return spin
-
-        elif isinstance(value, float):
-            spin = QtWidgets.QDoubleSpinBox()
-            spin.setMinimum(-10000.0)
-            spin.setMaximum(10000.0)
-            spin.setValue(value)
-            spin.valueChanged.connect(partial(self.attributeValueChanged.emit, key, t))
-            return spin
-
-        else:
-            line = QtWidgets.QLineEdit()
-            line.setText(str(value))
-            line.setEnabled(False)
-            return line
+        widget = DefaultWidget()
+        widget.setValue(value)
+        return widget
 
 
 class DataDictList(QtWidgets.QTreeWidget):
@@ -134,11 +117,10 @@ class DataDictList(QtWidgets.QTreeWidget):
         self.setSelectionMode(self.ExtendedSelection)
 
     def setAttributeValue(self, key, t, value):
+        print key, t, value
         item = self.currentItem()
 
-        if isinstance(value, (tuple, list)):
-            value = t(*value)
-        elif isinstance(value, dict):
+        if isinstance(value, dict):
             value = t(**value)
         else:
             value = t(value)

@@ -15,52 +15,27 @@ from ..ui.jsonFileWindow import JsonFileWindow
 
 
 class StepDictList(DataDictList):
-    types = (
+    types = [
         CustomScript,
         NewScene,
         ImportMayaFile,
         ImportSkinLayers,
         BuildComponents,
-    )
+    ]
 
 
 class StepAttributeEditor(DataAttributeEditor):
 
-    def getAttributeWidget(self, key, value):
+    def __init__(self):
+        super(StepAttributeEditor, self).__init__()
 
-        t = type(value)
-
-        if isinstance(value, Script):
-            widget = ScriptWidget()
-            widget.setText(value)
-            widget.textChanged.connect(partial(self.attributeValueChanged.emit, key, t))
-            return widget
-
-        elif isinstance(value, Mesh):
-            widget = NodeWidget()
-            widget.setNode(value)
-            widget.nodeChanged.connect(partial(self.attributeValueChanged.emit, key, t))
-            return widget
-
-        elif isinstance(value, ComponentBuilderFile):
-            widget = ComponentBuilderWidget('Json File (*.json)')
-            widget.setPath(value)
-            widget.pathChanged.connect(partial(self.attributeValueChanged.emit, key, t))
-            return widget
-
-        elif isinstance(value, JsonFile):
-            widget = FileWidget('Json File (*.json)')
-            widget.setPath(value)
-            widget.pathChanged.connect(partial(self.attributeValueChanged.emit, key, t))
-            return widget
-
-        elif isinstance(value, MayaFile):
-            widget = FileWidget('Maya File (*.ma *.mb)')
-            widget.setPath(value)
-            widget.pathChanged.connect(partial(self.attributeValueChanged.emit, key, t))
-            return widget
-
-        return super(StepAttributeEditor, self).getAttributeWidget(key, value)
+        self.typeWidgetMap = [
+            (Script, ScriptWidget),
+            (Mesh, NodeWidget),
+            (ComponentBuilderFile, ComponentBuilderWidget),
+            (JsonFile, FileWidget),
+            (MayaFile, FileWidget),
+        ] + self.typeWidgetMap
 
 
 class StepBuilderWindow(JsonFileWindow):

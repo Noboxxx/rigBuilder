@@ -35,16 +35,16 @@ def customDecoder(o):
 class JsonFile(File):
 
     def dump(self, obj, force=False):  # type: (any, bool) -> None
-        if os.path.exists(self.absolute) and force is False:
+        if os.path.exists(self) and force is False:
             raise RuntimeError('The path already exists. Use -force to override it -> {}'.format(self))
 
         self.dumps(obj)  # ensure that data is dump-able before dumping it.
 
-        with open(str(self.absolute), 'w') as f:
+        with open(str(self), 'w') as f:
             json.dump(obj, f, indent=4, default=customEncoder)
 
     def load(self):  # type: () -> any
-        with open(self.absolute, 'r') as f:
+        with open(str(self), 'r') as f:
             return json.load(f, object_hook=customDecoder)
 
     @staticmethod

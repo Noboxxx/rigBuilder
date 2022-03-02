@@ -1,4 +1,3 @@
-from imath import clamp
 import math
 import os
 
@@ -22,11 +21,13 @@ class Side(str):
 
 class Color(list):
 
-    def __init__(self, r, g, b):  # type: (int, int, int) -> None
-        r = int(clamp(int(r), 0, 255))
-        g = int(clamp(int(g), 0, 255))
-        b = int(clamp(int(b), 0, 255))
-        super(Color, self).__init__((r, g, b))
+    @staticmethod
+    def clampValue(minimum=0, value=0, maximum=255):
+        return int(max(minimum, min(maximum, value)))
+
+    def __init__(self, color):  # type: (List[int, int, int]) -> None
+        color = [self.clampValue(c) for c in color]
+        super(Color, self).__init__(color)
 
     def __add__(self, other):
         return self._operation(other, self.add)
@@ -69,7 +70,7 @@ class Color(list):
 
     @r.setter
     def r(self, v):
-        self[0] = int(clamp(int(v), 0, 255))
+        self[0] = self.clampValue(v)
 
     @property
     def g(self):
@@ -77,7 +78,7 @@ class Color(list):
 
     @g.setter
     def g(self, v):
-        self[0] = int(clamp(int(v), 0, 255))
+        self[0] = self.clampValue(v)
 
     @property
     def b(self):
@@ -85,7 +86,7 @@ class Color(list):
 
     @b.setter
     def b(self, v):
-        self[0] = int(clamp(int(v), 0, 255))
+        self[0] = self.clampValue(v)
 
     def mirrored(self):
         mirroredColor = list()
@@ -114,10 +115,10 @@ class UnsignedFloat(float):
 
 class Vector(list):
 
-    def __init__(self, *args):
-        args = map(float, args)
+    def __init__(self, seq):
+        seq = map(float, seq)
 
-        super(Vector, self).__init__(args)
+        super(Vector, self).__init__(seq)
 
         magnitude = self.magnitude()
         if magnitude <= 0.0:
@@ -236,19 +237,19 @@ class Matrix(list):
             self[10] *= -1
 
     def normalize(self):
-        vectorX = Vector(self[0], self[1], self[2])
+        vectorX = Vector((self[0], self[1], self[2]))
         vectorX.normalize()
         self[0] = vectorX[0]
         self[1] = vectorX[1]
         self[2] = vectorX[2]
 
-        vectorY = Vector(self[4], self[5], self[6])
+        vectorY = Vector((self[4], self[5], self[6]))
         vectorY.normalize()
         self[4] = vectorY[0]
         self[5] = vectorY[1]
         self[6] = vectorY[2]
 
-        vectorZ = Vector(self[8], self[9], self[10])
+        vectorZ = Vector((self[8], self[9], self[10]))
         vectorZ.normalize()
         self[8] = vectorZ[0]
         self[9] = vectorZ[1]
@@ -282,19 +283,30 @@ class Matrix(list):
         )
 
 
-class File(str):
+class Path(str):
 
-    def __init__(self, path=''):
-        path = os.path.normpath(path)
-        super(File, self).__init__(path)
+    def __new__(cls, path):
+        path = os.path.normpath(str(path))  # ensure '\' is the only separator
+        return super(Path, cls).__new__(cls, path)
+
+    def split(self):  # type: () -> (Path, Path)
+        dirName, baseName = os.path.split(self)
+        return self.__class__(dirName), self.__class__(baseName)
 
     @classmethod
-    def join(cls, *args):
-        path = os.path.normpath('\\'.format(*[str(arg) for arg in args]))
-        return cls(path)
+    def join(cls, *paths):  # type: (List[Path]) -> Path
+        return cls('\\'.join([cls(p) for p in paths]))
 
-    @property
-    def absolute(self):
-        if self.startswith('...'):
-            return self.__class__.join(os.getcwd(), self.replace('...', ''))
-        return self
+
+class File(Path):
+
+    def open(self):  # type: () -> str
+        with open(str(self), 'r') as f:
+            return f.read()
+
+    def write(self, string, force=False):  # type: (str, bool) -> None
+        if os.path.exists(self) and force is False:
+            raise RuntimeError('The path already exists. Use -force to override it -> {}'.format(self))
+
+        with open(str(self), 'w') as f:
+            f.write(str(string))

@@ -1,10 +1,10 @@
 from functools import partial
 from PySide2 import QtWidgets
-from .attributeWidgets import ColorWidget, AttributeWidget, AttributesWidget, NodeWidget
+from .attributeWidgets import ColorWidget, AttributeWidget, NodeWidget, ComboWidget, ListAttributeWidget
 from .dataDictEditor import DataDictEditor, DataDictList, DataAttributeEditor
 from .jsonFileWindow import JsonFileWindow
 from ..components.base import BaseComponent
-from ..components.core import ComponentBuilder, Attribute, Attributes, Connection, Guide, GuideDict
+from ..components.core import ComponentBuilder, Attribute, Attributes, Connection, Guide, GuideDict, GuideArray
 from ..components.fkChain import FkChain
 from ..components.oneCtrl import OneCtrl
 from ..core import MyOrderedDict
@@ -17,64 +17,34 @@ class ConnectionAttributeEditor(DataAttributeEditor):
         super(ConnectionAttributeEditor, self).__init__()
         self.getComponentDictFunc = getComponentDictFunc
 
-    def getAttributeWidget(self, key, value):
-
-        t = type(value)
-
-        if isinstance(value, Attribute):
-            widget = AttributeWidget(self, self.getComponentDictFunc())
-            widget.setAttr(value)
-            widget.attributeChanged.connect(partial(self.attributeValueChanged.emit, key, t))
-            return widget
-
-        if isinstance(value, Attributes):
-            widget = AttributesWidget()
-            widget.setAttrs(value, self.getComponentDictFunc())
-            return widget
-
-        return super(ConnectionAttributeEditor, self).getAttributeWidget(key, value)
+    # def getAttributeWidget(self, key, value):
+    #
+    #     t = type(value)
+    #
+    #     if isinstance(value, Attribute):
+    #         widget = AttributeWidget(self, self.getComponentDictFunc())
+    #         widget.setAttr(value)
+    #         widget.attributeChanged.connect(partial(self.attributeValueChanged.emit, key, t))
+    #         return widget
+    #
+    #     if isinstance(value, Attributes):
+    #         widget = AttributesWidget()
+    #         widget.setAttrs(value, self.getComponentDictFunc())
+    #         return widget
+    #
+    #     return super(ConnectionAttributeEditor, self).getAttributeWidget(key, value)
 
 
 class ComponentAttributeEditor(DataAttributeEditor):
 
-    def getAttributeWidget(self, key, value):
-
-        t = type(value)
-
-        if isinstance(value, Color):
-            widget = ColorWidget()
-            widget.setColor(value)
-            widget.colorChanged.connect(partial(self.attributeValueChanged.emit, key, t))
-            return widget
-
-        elif isinstance(value, Guide):
-            widget = NodeWidget()
-            widget.setNode(value)
-            widget.nodeChanged.connect(partial(self.attributeValueChanged.emit, key, t))
-            return widget
-
-        elif isinstance(value, Side):
-            widget = QtWidgets.QComboBox(self)
-            for side in Side.mirrorTable:
-                widget.addItem(side)
-            widget.currentTextChanged.connect(partial(self.attributeValueChanged.emit, key, t))
-            index = widget.findText(value)
-            widget.setCurrentIndex(index)
-            return widget
-
-        elif isinstance(value, UnsignedInt):
-            widget = QtWidgets.QSpinBox(self)
-            widget.setValue(value)
-            widget.valueChanged.connect(partial(self.attributeValueChanged.emit, key, t))
-            return widget
-
-        elif isinstance(value, UnsignedFloat):
-            widget = QtWidgets.QDoubleSpinBox(self)
-            widget.setValue(value)
-            widget.valueChanged.connect(partial(self.attributeValueChanged.emit, key, t))
-            return widget
-
-        return super(ComponentAttributeEditor, self).getAttributeWidget(key, value)
+    def __init__(self):
+        super(ComponentAttributeEditor, self).__init__()
+        self.typeWidgetMap = [
+            (Color, ColorWidget),
+            (Guide, NodeWidget),
+            (Side, partial(ComboWidget, Side.mirrorTable.keys())),
+            (GuideArray, partial(ListAttributeWidget, NodeWidget))
+        ] + self.typeWidgetMap
 
 
 class ComponentDictList(DataDictList):
@@ -107,15 +77,15 @@ class ComponentDictList(DataDictList):
 
 class ConnectionDictList(DataDictList):
 
-    types = (
+    types = [
         Connection,
-    )
+    ]
 
 
 class ComponentBuilderWindow(JsonFileWindow):
 
-    def __init__(self):
-        super(ComponentBuilderWindow, self).__init__(title='Component Builder')
+    def __init__(self, parent=None):
+        super(ComponentBuilderWindow, self).__init__(parent=parent, title='Component Builder')
 
         self.componentEditor = DataDictEditor(
             dataDictList=ComponentDictList(),

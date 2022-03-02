@@ -1,8 +1,7 @@
-import os
+from functools import partial
 
 from PySide2 import QtWidgets, QtGui
 from .utils import size, Signal
-from rigBuilder.components.core import Attribute, Component, Attributes, Guide
 from ..types import File
 
 
@@ -13,18 +12,24 @@ class AttributeWidget(QtWidgets.QWidget):
 
         self.valueChanged = Signal()
 
+        self.mainLayout = QtWidgets.QHBoxLayout()
+        self.mainLayout.setMargin(0)
+        self.setLayout(self.mainLayout)
+
     def getValue(self):
         return None
 
     def setValue(self, value):
         pass
 
+    def emitValueChanged(self):
+        self.valueChanged.emit(self.getValue())
+
 
 class ColorWidget(AttributeWidget):
 
     def __init__(self):
         super(ColorWidget, self).__init__()
-        self.colorChanged = Signal()
 
         self.redSpinBox = QtWidgets.QSpinBox()
         self.redSpinBox.setMaximum(255)
@@ -39,29 +44,22 @@ class ColorWidget(AttributeWidget):
         self.pickerBtn.setFixedSize(size(14), size(14))
         self.pickerBtn.clicked.connect(self.openColorPickerDialog)
 
-        layout = QtWidgets.QHBoxLayout()
-        layout.setMargin(0)
-        layout.addWidget(self.redSpinBox)
-        layout.addWidget(self.greenSpinBox)
-        layout.addWidget(self.blueSpinBox)
-        layout.addWidget(self.pickerBtn)
+        self.mainLayout.addWidget(self.redSpinBox)
+        self.mainLayout.addWidget(self.greenSpinBox)
+        self.mainLayout.addWidget(self.blueSpinBox)
+        self.mainLayout.addWidget(self.pickerBtn)
 
-        self.redSpinBox.valueChanged.connect(self.emitColorChanged)
+        self.redSpinBox.valueChanged.connect(self.emitValueChanged)
         self.redSpinBox.valueChanged.connect(self.updateBtnColor)
 
-        self.greenSpinBox.valueChanged.connect(self.emitColorChanged)
+        self.greenSpinBox.valueChanged.connect(self.emitValueChanged)
         self.greenSpinBox.valueChanged.connect(self.updateBtnColor)
 
-        self.blueSpinBox.valueChanged.connect(self.emitColorChanged)
+        self.blueSpinBox.valueChanged.connect(self.emitValueChanged)
         self.blueSpinBox.valueChanged.connect(self.updateBtnColor)
 
-        self.setLayout(layout)
-
-    def emitColorChanged(self):
-        self.colorChanged.emit(self.color())
-
     def updateBtnColor(self):
-        color = self.color()
+        color = self.getValue()
         pixmap = QtGui.QPixmap(size(32), size(32))
         pixmap.fill(QtGui.QColor(*color))
         self.pickerBtn.setIcon(QtGui.QIcon(pixmap))
@@ -71,20 +69,20 @@ class ColorWidget(AttributeWidget):
         self.greenSpinBox.setValue(color[1])
         self.blueSpinBox.setValue(color[2])
 
-    def setColor(self, color):
-        self.setSpinBoxesColor(color)
+    def setValue(self, color):
+        self.setSpinBoxesColor(list(color))
         self.updateBtnColor()
 
-    def color(self):
+    def getValue(self):
         return self.redSpinBox.value(), self.greenSpinBox.value(), self.blueSpinBox.value()
 
     def openColorPickerDialog(self):
         dialog = QtWidgets.QColorDialog()
-        dialog.setCurrentColor(QtGui.QColor(*self.color()))
+        dialog.setCurrentColor(QtGui.QColor(*self.getValue()))
         if dialog.exec_():
             qColor = dialog.currentColor()
             color = qColor.red(), qColor.green(), qColor.blue()
-            self.setColor(color)
+            self.setValue(color)
         return dialog
 
 
@@ -200,64 +198,57 @@ class ScriptWidget(AttributeWidget):
     def __init__(self):
         super(ScriptWidget, self).__init__()
 
-        self.textChanged = Signal()
-
         self.textEdit = QtWidgets.QTextEdit()
-        self.textEdit.textChanged.connect(self.emitTextChanged)
+        self.textEdit.textChanged.connect(self.emitValueChanged)
 
-        mainLayout = QtWidgets.QVBoxLayout(self)
-        mainLayout.setMargin(0)
-        mainLayout.addWidget(self.textEdit)
+        self.mainLayout.addWidget(self.textEdit)
 
-    def setText(self, text):
-        self.textEdit.setText(text)
+    def setValue(self, value):
+        self.textEdit.setText(str(value))
 
-    def emitTextChanged(self):
-        self.textChanged.emit(self.textEdit.toPlainText())
+    def getValue(self):
+        return self.textEdit.toPlainText()
 
 
 class FileWidget(AttributeWidget):
 
-    def __init__(self, flt):
+    def __init__(self):
+        flt = ''
         super(FileWidget, self).__init__()
 
         self.filter = flt
 
-        self.pathChanged = Signal()
-
         self.pathEdit = QtWidgets.QLineEdit()
-        self.pathEdit.textChanged.connect(self.emitPathChanged)
+        self.pathEdit.textChanged.connect(self.emitValueChanged)
 
         openBtn = QtWidgets.QPushButton()
         openBtn.setFixedSize(size(20), size(20))
         openBtn.setIcon(QtGui.QIcon(':openLoadGeneric.png'))
         openBtn.clicked.connect(self.askOpen)
 
-        self.mainLayout = QtWidgets.QHBoxLayout()
-        self.mainLayout.setMargin(0)
         self.mainLayout.addWidget(self.pathEdit)
         self.mainLayout.addWidget(openBtn)
 
         self.setLayout(self.mainLayout)
 
-    def setPath(self, path):
-        self.pathEdit.setText(os.path.normpath(path))
+    def setValue(self, value):
+        self.pathEdit.setText(File(value))
+
+    def getValue(self):
+        return File(self.pathEdit.text())
 
     def askOpen(self):
         path, _ = QtWidgets.QFileDialog.getOpenFileName(self, caption='Open File', filter=self.filter)
         if not path:
             return
 
-        self.setPath(File(path))
-
-    def emitPathChanged(self):
-        self.pathChanged.emit(os.path.normpath(self.pathEdit.text()))
+        self.setValue(path)
 
 
 class ComponentBuilderWidget(FileWidget):
 
-    def __init__(self, flt):
-        super(ComponentBuilderWidget, self).__init__(flt)
+    def __init__(self):
+        super(ComponentBuilderWidget, self).__init__()
 
         editBtn = QtWidgets.QPushButton()
         editBtn.setFixedSize(size(20), size(20))
@@ -268,7 +259,7 @@ class ComponentBuilderWidget(FileWidget):
 
     def openEdit(self):
         from .componentBuilderWindow import ComponentBuilderWindow
-        ui = ComponentBuilderWindow()
+        ui = ComponentBuilderWindow(self)
         ui.open(self.pathEdit.text())
         ui.show()
 
@@ -278,25 +269,22 @@ class NodeWidget(AttributeWidget):
     def __init__(self):
         super(NodeWidget, self).__init__()
 
-        self.nodeChanged = Signal()
-
         self.nodeEdit = QtWidgets.QLineEdit()
-        self.nodeEdit.textChanged.connect(self.nodeChanged.emit)
+        self.nodeEdit.textChanged.connect(self.emitValueChanged)
 
         pickBtn = QtWidgets.QPushButton()
         pickBtn.setIcon(QtGui.QIcon(':arrowLeft.png'))
         pickBtn.setFixedSize(size(20), size(20))
         pickBtn.clicked.connect(self.pick)
 
-        self.mainLayout = QtWidgets.QHBoxLayout()
-        self.mainLayout.setMargin(0)
         self.mainLayout.addWidget(self.nodeEdit)
         self.mainLayout.addWidget(pickBtn)
 
-        self.setLayout(self.mainLayout)
+    def setValue(self, node):
+        self.nodeEdit.setText(str(node))
 
-    def setNode(self, node):
-        self.nodeEdit.setText(node)
+    def getValue(self):
+        return self.nodeEdit.text()
 
     def pick(self):
         from maya import cmds
@@ -305,41 +293,165 @@ class NodeWidget(AttributeWidget):
         if not selection:
             return
 
-        self.setNode(selection[-1])
+        self.setValue(selection[-1])
+
+
+class BoolWidget(AttributeWidget):
+    def __init__(self):
+        super(BoolWidget, self).__init__()
+
+        self.check = QtWidgets.QCheckBox()
+        self.check.stateChanged.connect(self.emitValueChanged)
+
+        self.mainLayout.addWidget(self.check)
+
+    def getValue(self):
+        return self.check.isChecked()
+
+    def setValue(self, value):
+        self.check.setChecked(bool(value))
+
+
+class StringWidget(AttributeWidget):
+    def __init__(self):
+        super(StringWidget, self).__init__()
+
+        self.line = QtWidgets.QLineEdit()
+        self.line.textChanged.connect(self.emitValueChanged)
+
+        self.mainLayout.addWidget(self.line)
+
+    def getValue(self):
+        return self.line.text()
+
+    def setValue(self, value):
+        self.line.setText(str(value))
+
+
+class DefaultWidget(AttributeWidget):
+
+    def __init__(self):
+        super(DefaultWidget, self).__init__()
+
+        self.line = QtWidgets.QLineEdit()
+        self.line.setEnabled(False)
+
+        self.mainLayout.addWidget(self.line)
+
+    def getValue(self):
+        return self.line.text()
+
+    def setValue(self, value):
+        self.line.setText(str(value))
+
+
+class FloatWidget(AttributeWidget):
+    def __init__(self):
+        super(FloatWidget, self).__init__()
+
+        self.spin = QtWidgets.QDoubleSpinBox()
+        self.spin.setMinimum(-10000.0)
+        self.spin.setMaximum(10000.0)
+        self.spin.valueChanged.connect(self.emitValueChanged)
+
+        self.mainLayout.addWidget(self.spin)
+
+    def getValue(self):
+        return self.spin.value()
+
+    def setValue(self, value):
+        self.spin.setValue(float(value))
+
+
+class IntWidget(AttributeWidget):
+    def __init__(self):
+        super(IntWidget, self).__init__()
+
+        self.spin = QtWidgets.QSpinBox()
+        self.spin.setMinimum(-10000)
+        self.spin.setMaximum(10000)
+        self.spin.valueChanged.connect(self.emitValueChanged)
+
+        self.mainLayout.addWidget(self.spin)
+
+    def getValue(self):
+        return self.spin.value()
+
+    def setValue(self, value):
+        self.spin.setValue(int(value))
+
+
+class ComboWidget(AttributeWidget):
+
+    def __init__(self, choices=None):
+        super(ComboWidget, self).__init__()
+        self.combo = QtWidgets.QComboBox()
+        for choice in choices or list():
+            self.combo.addItem(choice)
+
+        self.combo.currentTextChanged.connect(self.emitValueChanged)
+
+        self.mainLayout.addWidget(self.combo)
+
+    def setValue(self, value):
+        index = self.combo.findText(str(value))
+        self.combo.setCurrentIndex(index)
+
+    def getValue(self):
+        return self.combo.currentText()
 
 
 class ListAttributeWidget(AttributeWidget):
 
-    def __init__(self, attributeWidgetType):
+    def __init__(self, t):
         super(ListAttributeWidget, self).__init__()
 
-        self.attributeWidgetType = attributeWidgetType
+        self.t = t
+
+        self.widgets = list()
 
         addBtn = QtWidgets.QPushButton('+')
         addBtn.setFixedSize(size(15), size(15))
+        addBtn.clicked.connect(self.addItem)
 
-        self.mainLayout = QtWidgets.QVBoxLayout()
-        self.mainLayout.setMargin(0)
-        self.mainLayout.addWidget(addBtn)
+        self.layout = QtWidgets.QVBoxLayout()
+        self.layout.addWidget(addBtn)
 
-        self.setLayout(self.mainLayout)
+        self.mainLayout.addLayout(self.layout)
 
-    @property
-    def value(self):
-        return list()
+    def addItem(self):
+        wid = self.t()  # type: AttributeWidget
+        wid.valueChanged.connect(self.emitValueChanged)
+        self.widgets.append(wid)
 
-    @value.setter
-    def value(self, values):  # type: (list or tuple) -> None
-        for v in values:
-            wid = self.attributeWidgetType(self)
+        self.emitValueChanged()
+
+        removeBtn = QtWidgets.QPushButton('x')
+        removeBtn.setFixedSize(size(20), size(20))
+
+        lay = QtWidgets.QHBoxLayout()
+        lay.setMargin(0)
+        lay.addWidget(wid)
+        lay.addWidget(removeBtn)
+
+        removeBtn.clicked.connect(partial(self.removeItem, lay, wid, removeBtn))
+
+        self.layout.addLayout(lay)
+
+        return wid
+
+    def removeItem(self, layout, widget, removeBtn):
+        self.widgets.remove(widget)
+        self.emitValueChanged()
+        layout.deleteLater()
+        widget.deleteLater()
+        removeBtn.deleteLater()
+
+    def getValue(self):
+        value = [wid.getValue() for wid in self.widgets]
+        return value
+
+    def setValue(self, value):  # type: (list or tuple) -> None
+        for v in value:
+            wid = self.addItem()
             wid.setValue(v)
-
-            removeBtn = QtWidgets.QPushButton('x')
-            removeBtn.setFixedSize(size(15), size(15))
-
-            lay = QtWidgets.QHBoxLayout()
-            lay.setMargin(0)
-            lay.addWidget(wid)
-            lay.addWidget(removeBtn)
-
-            self.mainLayout.addLayout(lay)
