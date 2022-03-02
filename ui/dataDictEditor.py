@@ -90,7 +90,7 @@ class DataAttributeEditor(QtWidgets.QTreeWidget):
         item.setExpanded(True)
 
     def getAttributeWidget(self, key, value):
-        print 'getAttributeWidget', key, value, type(value)
+        # print 'getAttributeWidget', key, value, type(value)
         for t, w in self.typeWidgetMap:
             if isinstance(value, t):
                 widget = w()
@@ -117,7 +117,7 @@ class DataDictList(QtWidgets.QTreeWidget):
         self.setSelectionMode(self.ExtendedSelection)
 
     def setAttributeValue(self, key, t, value):
-        print key, t, value
+        # print key, t, value
         item = self.currentItem()
 
         if isinstance(value, dict):
@@ -208,7 +208,7 @@ class DataDictList(QtWidgets.QTreeWidget):
 
         ui = RenamerDialog(name)
         newName = ui.exec_()
-        print newName
+        # print newName
         if newName:
             selectedItem.setText(0, newName)
 

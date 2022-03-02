@@ -260,7 +260,9 @@ class ComponentBuilderWidget(FileWidget):
     def openEdit(self):
         from .componentBuilderWindow import ComponentBuilderWindow
         ui = ComponentBuilderWindow(self)
-        ui.open(self.pathEdit.text())
+        path = self.getValue()
+        if path:
+            ui.open(path)
         ui.show()
 
 
@@ -411,7 +413,7 @@ class ListAttributeWidget(AttributeWidget):
         self.widgets = list()
 
         addBtn = QtWidgets.QPushButton('+')
-        addBtn.setFixedSize(size(15), size(15))
+        addBtn.setFixedSize(size(20), size(20))
         addBtn.clicked.connect(self.addItem)
 
         self.layout = QtWidgets.QVBoxLayout()

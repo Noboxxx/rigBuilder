@@ -55,7 +55,7 @@ class Signal(object):
         if self.held:
             return
         for func in self.funcs:
-            print func, args, kwargs
+            # print func, args, kwargs
             try:
                 func(*args, **kwargs)
             except TypeError:

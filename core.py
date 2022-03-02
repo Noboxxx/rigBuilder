@@ -1,49 +1,51 @@
+from collections import OrderedDict
 from inspect import getargspec
 
 
-class MyOrderedDict(object):
-    def __init__(self):
-        self._ls = list()
-
-    def keys(self):
-        keys = list()
-        for k, _ in self._ls:
-            keys.append(k)
-        return tuple(keys)
-
-    def values(self):
-        values = list()
-        for k, v in self._ls:
-            values.append(v)
-        return tuple(values)
-
-    def items(self):
-        return tuple(self._ls)
-
-    def get(self, key, default=None):
-        if key in self.keys():
-            return self[key]
-        return default
-
-    def __iter__(self):
-        return iter(self.items())
-
-    def __getitem__(self, item):
-        for k, v in self.items():
-            if item == k:
-                return v
-        raise KeyError('Key \'{}\' not found.'.format(item))
-
-    def __setitem__(self, key, value):
-        if key in self.keys():
-            ls = list()
-            for k, v in self.items():
-                if key == k:
-                    v = value
-                ls.append((k, v))
-            self._ls = ls
-        else:
-            self._ls.append((key, value))
+class MyOrderedDict(OrderedDict):
+    pass
+    # def __init__(self):
+    #     self._ls = list()
+    #
+    # def keys(self):
+    #     keys = list()
+    #     for k, _ in self._ls:
+    #         keys.append(k)
+    #     return tuple(keys)
+    #
+    # def values(self):
+    #     values = list()
+    #     for k, v in self._ls:
+    #         values.append(v)
+    #     return tuple(values)
+    #
+    # def items(self):
+    #     return tuple(self._ls)
+    #
+    # def get(self, key, default=None):
+    #     if key in self.keys():
+    #         return self[key]
+    #     return default
+    #
+    # def __iter__(self):
+    #     return iter(self.items())
+    #
+    # def __getitem__(self, item):
+    #     for k, v in self.items():
+    #         if item == k:
+    #             return v
+    #     raise KeyError('Key \'{}\' not found.'.format(item))
+    #
+    # def __setitem__(self, key, value):
+    #     if key in self.keys():
+    #         ls = list()
+    #         for k, v in self.items():
+    #             if key == k:
+    #                 v = value
+    #             ls.append((k, v))
+    #         self._ls = ls
+    #     else:
+    #         self._ls.append((key, value))
 
 
 class Data(object):

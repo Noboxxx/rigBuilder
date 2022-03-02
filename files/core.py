@@ -14,22 +14,16 @@ def objectFactory(typeStr, kwargs):  # type: (str, dict) -> any
 
 def customEncoder(o):
     cl = '{}.{}'.format(o.__module__, o.__class__.__name__)
-    if isinstance(o, MyOrderedDict):
-        return {'class': cl, 'content': o.items()}
-
     return {'class': cl, 'kwargs': dict(o)}
 
 
-def customDecoder(o):
-    if isinstance(o, dict):
-        if 'class' in o.keys() and 'kwargs' in o.keys():
-            return objectFactory(o['class'], o['kwargs'])
-        elif 'class' in o.keys() and 'content' in o.keys():
-            d = objectFactory(o['class'], dict())
-            for k, v in o['content']:
-                d[k] = v
-            return d
-    return o
+def customDecoder(pairs):
+    d = MyOrderedDict(pairs)
+
+    if 'class' in d.keys() and 'kwargs' in d.keys():
+        return objectFactory(d['class'], d['kwargs'])
+
+    return d
 
 
 class JsonFile(File):
@@ -45,7 +39,7 @@ class JsonFile(File):
 
     def load(self):  # type: () -> any
         with open(str(self), 'r') as f:
-            return json.load(f, object_hook=customDecoder)
+            return json.load(f, object_pairs_hook=customDecoder)
 
     @staticmethod
     def dumps(obj):
@@ -53,4 +47,4 @@ class JsonFile(File):
 
     @staticmethod
     def loads(string):
-        return json.loads(string, object_hook=customDecoder)
+        return json.loads(string, object_pairs_hook=customDecoder)
