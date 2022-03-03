@@ -1,4 +1,15 @@
-# dot appears when fileWidget is empty
-# make sure os.chdir doesnt break anything. If so set workspace path through a file
-# jsonFileWidget edit btn
-# guide system
+# create guides
+
+# constraint:
+# - switch
+
+# arm:
+# - pv parent
+# - stretch
+# - snap
+
+# leg component
+
+# spine component
+
+# hand component or such

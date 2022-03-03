@@ -10,7 +10,7 @@ class OneCtrl(Component):
         self.guide = Guide(guide)
 
     def build(self):
-        ctrl = Controller.create(name='{}_ctrl'.format(self), color=self.color, size=self.size)
+        ctrl = Controller.create(name='{}_ctl'.format(self), color=self.color, size=self.size)
         skinJoint = cmds.joint(name='{}_skn'.format(self))
         ctrlBuffer = createBuffer(ctrl)
         cmds.xform(ctrlBuffer, matrix=list(self.guide.matrix))
