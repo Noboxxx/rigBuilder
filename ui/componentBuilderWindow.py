@@ -1,10 +1,12 @@
 from functools import partial
 from PySide2 import QtWidgets
-from .attributeWidgets import ColorWidget, AttributeWidget, NodeWidget, ComboWidget, ListAttributeWidget
+from .attributeWidgets import ColorWidget, AttributeWidget, NodeWidget, ComboWidget, ListAttributeWidget, \
+    ConnectionPlugWidget
 from .dataDictEditor import DataDictEditor, DataDictList, DataAttributeEditor
 from .jsonFileWindow import JsonFileWindow
-from ..components.base import BaseComponent
-from ..components.core import ComponentBuilder, Attribute, Attributes, Connection, Guide, GuideDict, GuideArray
+from ..components.arm import Arm
+from ..components.base import Base
+from ..components.core import ComponentBuilder, ConnectionPlug, ConnectionPlugArray, Connection, Guide, GuideDict, GuideArray
 from ..components.fkChain import FkChain
 from ..components.oneCtrl import OneCtrl
 from ..core import MyOrderedDict
@@ -17,22 +19,10 @@ class ConnectionAttributeEditor(DataAttributeEditor):
         super(ConnectionAttributeEditor, self).__init__()
         self.getComponentDictFunc = getComponentDictFunc
 
-    # def getAttributeWidget(self, key, value):
-    #
-    #     t = type(value)
-    #
-    #     if isinstance(value, Attribute):
-    #         widget = AttributeWidget(self, self.getComponentDictFunc())
-    #         widget.setAttr(value)
-    #         widget.attributeChanged.connect(partial(self.attributeValueChanged.emit, key, t))
-    #         return widget
-    #
-    #     if isinstance(value, Attributes):
-    #         widget = AttributesWidget()
-    #         widget.setAttrs(value, self.getComponentDictFunc())
-    #         return widget
-    #
-    #     return super(ConnectionAttributeEditor, self).getAttributeWidget(key, value)
+        self.typeWidgetMap = [
+            (ConnectionPlug, partial(ConnectionPlugWidget, self.getComponentDictFunc)),
+            (ConnectionPlugArray, partial(ListAttributeWidget, partial(ConnectionPlugWidget, self.getComponentDictFunc))),
+        ] + self.typeWidgetMap
 
 
 class ComponentAttributeEditor(DataAttributeEditor):
@@ -51,8 +41,9 @@ class ComponentDictList(DataDictList):
 
     types = (
         OneCtrl,
-        BaseComponent,
+        Base,
         FkChain,
+        Arm,
     )
 
     def populateContextMenu(self):

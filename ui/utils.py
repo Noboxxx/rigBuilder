@@ -54,11 +54,12 @@ class Signal(object):
     def emit(self, *args, **kwargs):
         if self.held:
             return
+
         for func in self.funcs:
             # print func, args, kwargs
-            try:
+            if args or kwargs:
                 func(*args, **kwargs)
-            except TypeError:
+            else:
                 func()
 
     def hold(self, state):

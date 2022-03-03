@@ -96,7 +96,7 @@ class Node(object):
 
 
 class MultiplyDivide(Node):
-    
+
     mayaTypeStr = 'multiplyDivide'
 
     def __init__(self, name):
@@ -156,23 +156,23 @@ class DecomposeMatrix(Node):
         self.outputTranslateX = Plug('{}.outputTranslateX'.format(self))
         self.outputTranslateY = Plug('{}.outputTranslateY'.format(self))
         self.outputTranslateZ = Plug('{}.outputTranslateZ'.format(self))
-        
+
         self.outputRotate = Plug('{}.outputRotate'.format(self))
         self.outputRotateX = Plug('{}.outputRotateX'.format(self))
         self.outputRotateY = Plug('{}.outputRotateY'.format(self))
         self.outputRotateZ = Plug('{}.outputRotateZ'.format(self))
-        
+
         self.outputQuat = Plug('{}.outputQuat'.format(self))
         self.outputQuatX = Plug('{}.outputQuatX'.format(self))
         self.outputQuatY = Plug('{}.outputQuatY'.format(self))
         self.outputQuatZ = Plug('{}.outputQuatZ'.format(self))
         self.outputQuatW = Plug('{}.outputQuatW'.format(self))
-        
+
         self.outputScale = Plug('{}.outputScale'.format(self))
         self.outputScaleX = Plug('{}.outputScaleX'.format(self))
         self.outputScaleY = Plug('{}.outputScaleY'.format(self))
         self.outputScaleZ = Plug('{}.outputScaleZ'.format(self))
-        
+
         self.outputShear = Plug('{}.outputShear'.format(self))
         self.outputShearX = Plug('{}.outputShearX'.format(self))
         self.outputShearY = Plug('{}.outputShearY'.format(self))
@@ -250,22 +250,22 @@ class ComposeMatrix(Node):
         self.inputTranslateX = Plug('{}.inputTranslateX'.format(self))
         self.inputTranslateY = Plug('{}.inputTranslateY'.format(self))
         self.inputTranslateZ = Plug('{}.inputTranslateZ'.format(self))
-        
+
         self.inputRotate = Plug('{}.inputRotate'.format(self))
         self.inputRotateX = Plug('{}.inputRotateX'.format(self))
         self.inputRotateY = Plug('{}.inputRotateY'.format(self))
         self.inputRotateZ = Plug('{}.inputRotateZ'.format(self))
-        
+
         self.inputQuat = Plug('{}.inputQuat'.format(self))
         self.inputQuatX = Plug('{}.inputQuatX'.format(self))
         self.inputQuatY = Plug('{}.inputQuatY'.format(self))
         self.inputQuatZ = Plug('{}.inputQuatZ'.format(self))
-        
+
         self.inputScale = Plug('{}.inputScale'.format(self))
         self.inputScaleX = Plug('{}.inputScaleX'.format(self))
         self.inputScaleY = Plug('{}.inputScaleY'.format(self))
         self.inputScaleZ = Plug('{}.inputScaleZ'.format(self))
-        
+
         self.inputShear = Plug('{}.inputShear'.format(self))
         self.inputShearX = Plug('{}.inputShearX'.format(self))
         self.inputShearY = Plug('{}.inputShearY'.format(self))
@@ -279,12 +279,12 @@ class ComposeMatrix(Node):
 
 
 class Transform(Node):
-    
+
     mayaTypeStr = 'transform'
-    
+
     def __init__(self, name):
         super(Transform, self).__init__(name)
-        
+
         self.translate = Plug('{}.translate'.format(self))
         self.translateX = Plug('{}.translateX'.format(self))
         self.translateY = Plug('{}.translateY'.format(self))
@@ -330,7 +330,7 @@ class BlendMatrix(Node):
         self.blender = Plug('{}.blender'.format(self))
         self.resultMatrix = Plug('{}.resultMatrix'.format(self))
         self.matrices = Plug('{}.matrices'.format(self))
-        
+
         self.parentInverseMatrix = Plug('{}.parentInverseMatrix'.format(self))
 
         self.jointOrient = Plug('{}.jointOrient'.format(self))
@@ -339,17 +339,17 @@ class BlendMatrix(Node):
         self.translateX = Plug('{}.translateX'.format(self))
         self.translateY = Plug('{}.translateY'.format(self))
         self.translateZ = Plug('{}.translateZ'.format(self))
-        
+
         self.rotate = Plug('{}.rotate'.format(self))
         self.rotateX = Plug('{}.rotateX'.format(self))
         self.rotateY = Plug('{}.rotateY'.format(self))
         self.rotateZ = Plug('{}.rotateZ'.format(self))
-        
+
         self.scale = Plug('{}.scale'.format(self))
         self.scaleX = Plug('{}.scaleX'.format(self))
         self.scaleY = Plug('{}.scaleY'.format(self))
         self.scaleZ = Plug('{}.scaleZ'.format(self))
-        
+
         self.shear = Plug('{}.shear'.format(self))
         self.shearX = Plug('{}.shearX'.format(self))
         self.shearY = Plug('{}.shearY'.format(self))

@@ -1,5 +1,3 @@
-import os
-
 from .core import Step
 from ..files.core import JsonFile
 

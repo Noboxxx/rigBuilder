@@ -62,7 +62,7 @@ class DataAttributeEditor(QtWidgets.QTreeWidget):
         self.clear()
 
         data = Data() if data is None else data
-        print '--->', 'refresh'
+
         for k, v in data.items():
             self.addAttribute(k, v)
 
@@ -90,7 +90,6 @@ class DataAttributeEditor(QtWidgets.QTreeWidget):
         item.setExpanded(True)
 
     def getAttributeWidget(self, key, value):
-        # print 'getAttributeWidget', key, value, type(value)
         for t, w in self.typeWidgetMap:
             if isinstance(value, t):
                 widget = w()

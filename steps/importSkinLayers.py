@@ -21,6 +21,7 @@ class ImportSkinLayers(Step):
     def build(self):
         from ngSkinTools2.api import InfluenceMappingConfig, VertexTransferMode
         from ngSkinTools2 import api as ngst_api
+
         cmds.loadPlugin('ngSkinTools2')
 
         config = InfluenceMappingConfig()
@@ -28,7 +29,10 @@ class ImportSkinLayers(Step):
         config.use_name_matching = True
 
         data = self.file.load()
-        joints = [d['path'] for d in data.get('influences', list())]
+
+        joints = [d['path'] for d in data.get('influences', list())]  # long names
+        joints = [j.split('|')[-1] for j in joints]  # short names
+
         existingJoints = [j for j in joints if cmds.objExists(j)]
 
         cmds.skinCluster(self.mesh, *existingJoints)

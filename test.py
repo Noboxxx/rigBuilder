@@ -1,7 +1,7 @@
 import os
 import json
 
-from rigBuilder.components.core import Component, ComponentBuilder, Attribute, Connection
+from rigBuilder.components.core import Component, ComponentBuilder, ConnectionPlug, Connection
 from rigBuilder.core import MyOrderedDict
 from rigBuilder.types import Side
 from rigBuilder.files.core import customEncoder, JsonFile
@@ -19,16 +19,16 @@ def test():
 
     connection1 = Connection(
         sources=[
-            Attribute(key='base', attribute='outputs', index=0),
-            Attribute(key='base', attribute='outputs', index=1),
-            Attribute(key='base', attribute='outputs', index=2),
+            ConnectionPlug(key='base', attribute='outputs', index=0),
+            ConnectionPlug(key='base', attribute='outputs', index=1),
+            ConnectionPlug(key='base', attribute='outputs', index=2),
         ],
-        destination=Attribute(key='arm', attribute='inputs', index=0),
+        destination=ConnectionPlug(key='arm', attribute='inputs', index=0),
         bilateral=True
     )
     connection2 = Connection(
-        sources=[Attribute(key='arm', attribute='outputs', index=0)],
-        destination=Attribute(key='leg', attribute='inputs', index=0),
+        sources=[ConnectionPlug(key='arm', attribute='outputs', index=0)],
+        destination=ConnectionPlug(key='leg', attribute='inputs', index=0),
         bilateral=True
     )
 

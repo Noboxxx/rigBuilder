@@ -6,8 +6,7 @@ class FkChain(Component):
 
     def __init__(self, guides=None, **kwargs):
         super(FkChain, self).__init__(**kwargs)
-
-        self.guides = GuideArray() if guides is None else GuideArray(*guides)
+        self.guides = GuideArray() if guides is None else GuideArray(guides)
 
     def build(self):
         matrices = [g.matrix for g in self.guides]

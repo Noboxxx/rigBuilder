@@ -59,9 +59,9 @@ class Color(list):
 
     def _operation(self, other, func):
         if isinstance(other, list):
-            return Color(*[func(a, b) for a, b in zip(self, other)])
+            return Color([func(a, b) for a, b in zip(self, other)])
         elif isinstance(other, (int, float)):
-            return Color(*[func(a, other) for a in self])
+            return Color([func(a, other) for a in self])
         raise TypeError('Cannot add \'{}\' to Color.'.format(type(self).__name__))
 
     @property
@@ -94,7 +94,7 @@ class Color(list):
             distance = 127.5 - v
             r = distance * 2 + v
             mirroredColor.append(int(r))
-        return self.__class__(*mirroredColor)
+        return self.__class__(mirroredColor)
 
 
 class UnsignedInt(int):
@@ -161,21 +161,8 @@ class Vector(list):
 
 class Matrix(list):
 
-    def __init__(
-            self,
-            xx=1.0, xy=0.0, xz=0.0, xw=0.0,
-            yx=0.0, yy=1.0, yz=0.0, yw=0.0,
-            zx=0.0, zy=0.0, zz=1.0, zw=0.0,
-            px=0.0, py=0.0, pz=0.0, pw=1.0,
-    ):
-        super(Matrix, self).__init__(
-            (
-                float(xx), float(xy), float(xz), float(xw),
-                float(yx), float(yy), float(yz), float(yw),
-                float(zx), float(zy), float(zz), float(zw),
-                float(px), float(py), float(pz), float(pw),
-            )
-        )
+    def __init__(self, seq):
+        super(Matrix, self).__init__(map(float, seq))
 
     def rows(self):
         return (
@@ -286,7 +273,7 @@ class Matrix(list):
 class Path(str):
 
     def __new__(cls, path):
-        path = os.path.normpath(str(path))  # ensure '\' is the only separator
+        path = os.path.normpath(path) if path else ''
         return super(Path, cls).__new__(cls, path)
 
     def split(self):  # type: () -> (Path, Path)

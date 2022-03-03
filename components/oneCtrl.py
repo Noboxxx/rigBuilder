@@ -18,7 +18,12 @@ class OneCtrl(Component):
         self.interface = ctrl
         self.influencers.append(skinJoint)
         self.inputs.append(ctrlBuffer)
+        self.outputs.append(ctrl)
         self.controllers.append(ctrl)
         self.children.append(ctrlBuffer)
 
         self.buildFolder()
+
+    def mirror(self):
+        super(OneCtrl, self).mirror()
+        self.guide = self.guide.mirrored()

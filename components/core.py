@@ -3,18 +3,27 @@ from rigBuilder.types import Side, Color, UnsignedInt, UnsignedFloat, Matrix
 from rigBuilder.core import Data, MyOrderedDict
 
 
-class Attributes(list):
+class ConnectionPlugArray(list):
 
-    def __init__(self, attributes=None):  # type: (list or tuple) -> None
-        attributes = [Attribute(*i) for i in attributes] if attributes is not None else list()
-        super(Attributes, self).__init__(attributes)
+    def __init__(self, seq=None):  # type: (list or tuple) -> None
+        attributes = [ConnectionPlug(i) for i in seq] if seq is not None else list()
+        super(ConnectionPlugArray, self).__init__(attributes)
 
 
-class Attribute(list):
+class ConnectionPlug(list):
 
-    def __init__(self, key='', attribute='', index=0):
-        # type: (str, str, int) -> None
-        super(Attribute, self).__init__((key, attribute, index))
+    def __init__(self, seq=None):  # type: (List[str, str, int]) -> None
+        if seq is None:
+            seq = ['', '', 0]
+
+        if len(seq) != 3:
+            raise ValueError('Expect 3 values in the given sequence. Got {}'.format(len(seq)))
+
+        key = str(seq[0])
+        attribute = str(seq[1])
+        index = int(seq[2])
+
+        super(ConnectionPlug, self).__init__((key, attribute, index))
 
     def get(self, componentDict):
         if self[0] not in componentDict:
@@ -47,21 +56,26 @@ class Attribute(list):
 
 class Connection(Data):
 
-    def __init__(self, sources=None, destination=None, bilateral=False, translate=True, rotate=True, scale=True, shear=True):
-        # type: (List[list], list, bool, bool, bool, bool, bool) -> None
+    def __init__(self, sources=None, destination=None, bilateral=False, translate=True, rotate=True, scale=True, shear=True, maintainOffset=True):
+        # type: (List[list], list, bool, bool, bool, bool, bool, bool) -> None
         super(Connection, self).__init__()
 
-        self.sources = Attributes(sources) if sources is not None else Attributes()
-        self.destination = Attribute(*destination) if destination is not None else Attribute()
+        self.sources = ConnectionPlugArray(sources) if sources is not None else ConnectionPlugArray()
+        self.destination = ConnectionPlug(destination) if destination is not None else ConnectionPlug()
         self.bilateral = bilateral
 
-        self.translate = translate
-        self.rotate = rotate
-        self.scale = scale
-        self.shear = shear
+        self.translate = bool(translate)
+        self.rotate = bool(rotate)
+        self.scale = bool(scale)
+        self.shear = bool(shear)
+        self.maintainOffset = bool(maintainOffset)
 
     def build(self, componentDict):
-        print 'build', [p.get(componentDict) for p in self.sources], self.destination.get(componentDict)
+        from rigBuilder.components.utils import matrixConstraint
+
+        sources = [p.get(componentDict) for p in self.sources]
+        destination = self.destination.get(componentDict)
+        matrixConstraint(sources, destination, self.translate, self.rotate, self.scale, self.shear, self.maintainOffset)
 
 
 class Plug(list):
@@ -177,7 +191,7 @@ class ComponentBuilder(Data):
             mirroredComponentDict[key] = mirrorComponent or copiedComponent
             componentDict[key] = copiedComponent
 
-        for key, connection in self.connectionDict:
+        for key, connection in self.connectionDict.items():
             connection.copy().build(componentDict)
 
             if connection.bilateral:
@@ -186,12 +200,27 @@ class ComponentBuilder(Data):
 
 class Guide(str):
 
+    def __init__(self, name):
+        super(Guide, self).__init__(name)
+
+        self._mirror = False
+
+    def mirror(self):
+        self._mirror = not self._mirror
+
+    def mirrored(self):
+        guide = self.__class__(self)
+        guide.mirror()
+        return guide
+
     @property
     def matrix(self):
         if not cmds.objExists(self):
             raise RuntimeError('Guide named \'{}\' does not exist.'.format(self))
-        matrix = cmds.xform(self, q=True, matrix=True, worldSpace=True)
-        return Matrix(*matrix)
+        matrix = Matrix(cmds.xform(self, q=True, matrix=True, worldSpace=True))
+        if self._mirror:
+            matrix.mirror()
+        return matrix
 
     @classmethod
     def create(cls, name):
@@ -200,7 +229,10 @@ class Guide(str):
 
 
 class GuideArray(list):
-    pass
+
+    def __init__(self, seq=None):
+        seq = [Guide(i) for i in seq] if seq is not None else list()
+        super(GuideArray, self).__init__(seq)
 
 
 class GuideDict(MyOrderedDict):

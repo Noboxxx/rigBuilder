@@ -3,7 +3,7 @@ from maya import cmds
 from .core import Component
 
 
-class BaseComponent(Component):
+class Base(Component):
 
     def build(self):
         # World Ctrl
