@@ -207,9 +207,13 @@ class DataDictList(QtWidgets.QTreeWidget):
 
         ui = RenamerDialog(name)
         newName = ui.exec_()
-        # print newName
+
         if newName:
             selectedItem.setText(0, newName)
+
+    def duplicateSelectedItem(self):
+        selectedItem = self.selectedItems()[0]
+        self.addItem(selectedItem.text(0), selectedItem.d.copy())
 
     def populateContextMenu(self):
         addMenu = QtWidgets.QMenu('Add')
@@ -226,7 +230,9 @@ class DataDictList(QtWidgets.QTreeWidget):
             removeAction.setEnabled(False)
 
         duplicateAction = QtWidgets.QAction('Duplicate', self)
-        duplicateAction.setEnabled(False)
+        duplicateAction.triggered.connect(self.duplicateSelectedItem)
+        if not len(selectedItems) == 1:
+            duplicateAction.setEnabled(False)
 
         moveUpAction = QtWidgets.QAction('Move Up', self)
         moveUpAction.triggered.connect(partial(self.moveSelectedSelectedItem, -1))
