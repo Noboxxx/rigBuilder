@@ -13,3 +13,8 @@
 # spine component
 
 # hand component or such
+
+# attrs on component folder
+
+
+# verify all components and names ans plugs

@@ -114,6 +114,7 @@ class DataDictList(QtWidgets.QTreeWidget):
         self.currentDataChanged = Signal()
         self.currentItemChanged.connect(self.emitCurrentDataChanged)
         self.setSelectionMode(self.ExtendedSelection)
+        self.itemDoubleClicked.connect(self.renameSelectedItem)
 
     def setAttributeValue(self, key, t, value):
         # print key, t, value

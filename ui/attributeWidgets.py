@@ -345,9 +345,7 @@ class ListAttributeWidget(AttributeWidget):
         removeBtn.deleteLater()
 
     def getValue(self):
-        value = [wid.getValue() for wid in self.widgets]
-        print 'getValue', value
-        return value
+        return [wid.getValue() for wid in self.widgets]
 
     def setValue(self, value):  # type: (list or tuple) -> None
         for v in value:
