@@ -26,10 +26,7 @@ class ConnectionPlug(list):
         super(ConnectionPlug, self).__init__((key, attribute, index))
 
     def get(self, componentDict):
-        if self[0] not in componentDict:
-            return None
-
-        component = componentDict[self[0]]
+        component = self.getComponent(componentDict)
 
         if self[1] not in dir(component):
             return None
@@ -40,6 +37,12 @@ class ConnectionPlug(list):
             return attribute[self[2]]
         except IndexError:
             return None
+
+    def getComponent(self, componentDict):
+        if self[0] not in componentDict:
+            return None
+
+        return componentDict[self[0]]
 
     @property
     def key(self):
@@ -75,7 +78,28 @@ class Connection(Data):
 
         sources = [p.get(componentDict) for p in self.sources]
         destination = self.destination.get(componentDict)
-        matrixConstraint(sources, destination, self.translate, self.rotate, self.scale, self.shear, self.maintainOffset)
+
+        interface = self.destination.getComponent(componentDict).interface
+
+        attrs = '_'.join([attr for attr, state in zip(
+            ('t', 'r', 's', 'sh'),
+            (self.translate, self.rotate, self.scale, self.shear),
+        ) if state])
+
+        attr = '{}_space_{}'.format(destination, attrs)
+        plug = '{}.{}'.format(interface, attr)
+        cmds.addAttr(
+            interface,
+            longName=attr,
+            attributeType='enum',
+            enumName=':'.join(map(str, sources)),
+            keyable=True,
+        )
+
+        constr = matrixConstraint(sources, destination, self.translate, self.rotate, self.scale, self.shear, self.maintainOffset)
+        cmds.connectAttr(
+            plug, '{}.blender'.format(constr)
+        )
 
 
 class Plug(list):
