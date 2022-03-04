@@ -79,7 +79,7 @@ class Connection(Data):
         sources = [p.get(componentDict) for p in self.sources]
         destination = self.destination.get(componentDict)
 
-        interface = self.destination.getComponent(componentDict).interface
+        interface = self.destination.getComponent(componentDict).interfaces[0]
 
         attrs = '_'.join([attr for attr, state in zip(
             ('t', 'r', 's', 'sh'),
@@ -102,7 +102,11 @@ class Connection(Data):
         )
 
 
-class Plug(list):
+class Storage(list):
+    pass
+
+
+class Plug(Storage):
     pass
 
 
@@ -126,13 +130,13 @@ class Component(Data):
         self.size = UnsignedFloat(size)
         self.bilateral = bool(bilateral)
 
-        self.interface = None
+        self.interfaces = Storage()
         self.inputs = Input()
         self.outputs = Output()
         self.children = list()
 
-        self.controllers = list()
-        self.influencers = list()
+        self.controllers = Storage()
+        self.influencers = Storage()
 
     def __repr__(self):
         return repr(str(self))
@@ -161,7 +165,7 @@ class Component(Data):
         if self.children:
             cmds.parent(self.children, folder)
 
-        for attr, plug in self.getPlugDict().items():
+        for attr, plug in self.getStorageDict().items():
             cmds.addAttr(str(self), longName=attr, attributeType='message', multi=True)
             for index, node in enumerate(plug):
 
@@ -173,13 +177,13 @@ class Component(Data):
                 indexedPlug = '{}.{}[{}]'.format(self, attr, index)
                 cmds.connectAttr(indexedPlug, objPlug, nextAvailable=True)
 
-    def getPlugDict(self):
-        plugDict = dict()
+    def getStorageDict(self):
+        d = dict()
         for attr in dir(self):
             value = getattr(self, attr)
-            if isinstance(value, Plug):
-                plugDict[attr] = value
-        return plugDict
+            if isinstance(value, Storage):
+                d[attr] = value
+        return d
 
     def createGuides(self):
         pass
@@ -257,6 +261,15 @@ class GuideArray(list):
     def __init__(self, seq=None):
         seq = [Guide(i) for i in seq] if seq is not None else list()
         super(GuideArray, self).__init__(seq)
+
+    def mirror(self):
+        for index, guide in enumerate(self):
+            self[index] = guide.mirrored()
+
+    def mirrored(self):
+        copy = self.__class__(self)
+        copy.mirror()
+        return copy
 
 
 class GuideDict(MyOrderedDict):

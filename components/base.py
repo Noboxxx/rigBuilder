@@ -30,9 +30,10 @@ class Base(Component):
         cmds.parent(localCtrlBuffer, worldCtrl)
 
         # fill up
-        self.interface = worldCtrl
-        self.children.append(worldCtrlBuffer)
+        self.interfaces.append(worldCtrl)
+        self.controllers += worldCtrl, localCtrl
         self.influencers += [worldSkinJoint, localSkinJoint]
+        self.children.append(worldCtrlBuffer)
         self.outputs += [localCtrl, worldCtrl]
 
         self.buildFolder()

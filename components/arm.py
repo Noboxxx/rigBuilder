@@ -657,7 +657,7 @@ class Arm(Component):
         cmds.xform(mainCtrlBuffer, matrix=list(self.shoulderGuide.matrix))
 
         self.controllers.append(mainCtrl)
-        self.interface = mainCtrl
+        self.interfaces.append(mainCtrl)
         self.children.append(mainCtrlBuffer)
         self.inputs.append(mainCtrlBuffer)
 

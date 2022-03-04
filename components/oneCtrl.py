@@ -15,7 +15,7 @@ class OneCtrl(Component):
         ctrlBuffer = createBuffer(ctrl)
         cmds.xform(ctrlBuffer, matrix=list(self.guide.matrix))
 
-        self.interface = ctrl
+        self.interfaces.append(ctrl)
         self.influencers.append(skinJoint)
         self.inputs.append(ctrlBuffer)
         self.outputs.append(ctrl)

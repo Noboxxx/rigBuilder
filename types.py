@@ -181,7 +181,7 @@ class Matrix(list):
         )
 
     def copy(self):
-        return self.__class__(*self)
+        return self.__class__(self)
 
     def mirrored(self, mirrorAxis='x'):
         matrixCopy = self.copy()

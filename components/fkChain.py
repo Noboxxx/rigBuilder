@@ -24,6 +24,6 @@ class FkChain(Component):
         self.inputs.append(ctrls[0][0])
         self.outputs.append(ctrls[-1][-1])
         self.influencers += skinJoints
-        self.interface = ctrls[0][1]
+        self.interfaces.append(ctrls[0][1])
 
         self.buildFolder()

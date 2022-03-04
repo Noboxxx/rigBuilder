@@ -414,7 +414,7 @@ class ConnectionPlugWidget(AttributeWidget):
         if not isinstance(currentComponent, Component):
             return
 
-        for k, v in currentComponent.getPlugDict().items():
+        for k, v in currentComponent.getStorageDict().items():
             self.attributeCombo.addItem(k)
 
     def getValue(self):  # type: () -> ConnectionPlug
