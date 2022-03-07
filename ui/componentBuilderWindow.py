@@ -9,6 +9,7 @@ from ..components.base import Base
 from ..components.core import ComponentBuilder, ConnectionPlug, ConnectionPlugArray, Connection, Guide, GuideDict, GuideArray
 from ..components.fkChain import FkChain
 from ..components.hand import Hand
+from ..components.leg import Leg
 from ..components.oneCtrl import OneCtrl
 from ..core import MyOrderedDict
 from ..types import Color, Side, UnsignedInt, UnsignedFloat
@@ -46,6 +47,7 @@ class ComponentDictList(DataDictList):
         FkChain,
         Arm,
         Hand,
+        Leg,
     )
 
     def populateContextMenu(self):

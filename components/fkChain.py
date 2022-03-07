@@ -9,7 +9,7 @@ class FkChain(Component):
         self.guides = GuideArray() if guides is None else GuideArray(guides)
 
     def build(self):
-        matrices = [g.matrix for g in self.guides]
+        matrices = [g.matrix.normalized() for g in self.guides]
 
         skinJoints = jointChain(matrices, namePattern='part{index}_' + str(self) + '_skn')
         ctrls = ctrlChain(

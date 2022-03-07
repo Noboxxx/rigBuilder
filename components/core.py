@@ -248,7 +248,7 @@ class Guide(str):
         matrix = Matrix(cmds.xform(self, q=True, matrix=True, worldSpace=True))
         if self._mirror:
             matrix.mirror()
-        return matrix
+        return matrix.normalized()
 
     @classmethod
     def create(cls, name):
