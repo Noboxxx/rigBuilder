@@ -2,31 +2,15 @@ from maya import cmds
 from maya.api import OpenMaya
 from rigBuilder.components.core import Component, Guide
 from rigBuilder.components.nodeUtils import MultMatrix, DecomposeMatrix, QuatToEuler, RotateOrder, ComposeMatrix, \
-    Transform, BlendMatrix
+    BlendMatrix
 from rigBuilder.components.utils import matrixConstraint
 from rigBuilder.types import UnsignedInt
 
 
 class Leg(Component):
 
-    def __init__(
-            self,
-            hipGuide='',
-            kneeGuide='',
-            ankleGuide='',
-
-            toesGuide='',
-
-            legSection=4,
-            forelegSection=4,
-
-            footTipGuide='',
-            footBackGuide='',
-            footInGuide='',
-            footOutGuide='',
-
-            **kwargs
-    ):
+    def __init__(self, hipGuide='', kneeGuide='', ankleGuide='', toesGuide='', legSection=4, forelegSection=4,
+                 footTipGuide='', footBackGuide='', footInGuide='', footOutGuide='', **kwargs):
         super(Leg, self).__init__(**kwargs)
 
         self.hipGuide = Guide(hipGuide)
@@ -57,14 +41,6 @@ class Leg(Component):
     def buildForelegSkinJointsSetup(self, elbowTransform, wristTransform):
         elbowTransform = BlendMatrix(elbowTransform)
         wristTransform = BlendMatrix(wristTransform)
-
-        # # Create joints
-        # joints = jointChainBetweenTwoMatrices(
-        #     elbowTransform.worldMatrix.get(),
-        #     wristTransform.worldMatrix.get(),
-        #     sections=sections,
-        #     namePattern=jointNamePattern
-        # )
 
         inverseMatrix = cmds.createNode('inverseMatrix')
         cmds.connectAttr(elbowTransform.resultMatrix, '{}.inputMatrix'.format(inverseMatrix))
@@ -113,81 +89,86 @@ class Leg(Component):
             blendMatrix = matrixConstraint((elbowTransform.resultMatrix, wristResultMatrix.matrixSum), joint)
             blendMatrix.blender.set(float(index) / float(self.forelegSection))
 
+            joints.append(joint)
+
+        return joints
+
+    def buildLegSkinJointsSetup(self, parentTransform, startTransform, endTransform):
+        parentTransform = BlendMatrix(parentTransform)
+        startTransform = BlendMatrix(startTransform)
+        endTransform = BlendMatrix(endTransform)
+
+        startWorldMatrix = OpenMaya.MMatrix(startTransform.resultMatrix.get())
+        parentWorldInverseMatrix = OpenMaya.MMatrix(parentTransform.resultMatrix.get()).inverse()
+        localStartMatrix = startWorldMatrix * parentWorldInverseMatrix  # type: OpenMaya.MMatrix
+        localStartMatrix.setElement(3, 0, 0.0)
+        localStartMatrix.setElement(3, 1, 0.0)
+        localStartMatrix.setElement(3, 2, 0.0)
+
+        resultMatrices = list()
+        for parent, child, offset, x, y, z, rotateOrder in (
+                (parentTransform, startTransform, localStartMatrix, False, True, True, RotateOrder.xyz),
+                (startTransform, endTransform, OpenMaya.MMatrix(), True, False, False, RotateOrder.yzx)
+        ):
+            inverseLocalStartMatrix = offset.inverse()
+
+            inverseMatrix = cmds.createNode('inverseMatrix')
+            cmds.connectAttr(parent.resultMatrix, '{}.inputMatrix'.format(inverseMatrix))
+
+            localStartMatrixNode = MultMatrix.create('localStartMatrix#')
+            localStartMatrixNode.matrixIn.index(0).connectIn(child.resultMatrix)
+            localStartMatrixNode.matrixIn.index(1).connectIn('{}.outputMatrix'.format(inverseMatrix))
+
+            localStartRotateMatrix = MultMatrix.create('localStartRotateMatrix#')
+            localStartRotateMatrix.matrixIn.index(0).connectIn(localStartMatrixNode.matrixSum)
+            localStartRotateMatrix.matrixIn.index(1).set(list(inverseLocalStartMatrix))
+
+            localStartRotateMatrixDecomposed = DecomposeMatrix.create('localStartMatrixDecomposed#')
+            localStartRotateMatrixDecomposed.inputMatrix.connectIn(localStartRotateMatrix.matrixSum)
+
+            localStartQuatToEuler = QuatToEuler.create('localStartQuatToEuler#')
+            localStartQuatToEuler.inputRotateOrder.set(rotateOrder)
+            localStartQuatToEuler.inputQuat.connectIn(localStartRotateMatrixDecomposed.outputQuat)
+
+            localStartRotation = ComposeMatrix.create('localStartRotation#')
+            if x:
+                localStartRotation.inputRotateX.connectIn(localStartQuatToEuler.outputRotateX)
+            if y:
+                localStartRotation.inputRotateY.connectIn(localStartQuatToEuler.outputRotateY)
+            if z:
+                localStartRotation.inputRotateZ.connectIn(localStartQuatToEuler.outputRotateZ)
+
+            localStartMatrixDecomposed = DecomposeMatrix.create('localStartMatrixDecomposed#')
+            localStartMatrixDecomposed.inputMatrix.connectIn(localStartMatrixNode.matrixSum)
+
+            localStartTranslateMatrix = ComposeMatrix.create('localStartTranslateMatrix#')
+            localStartTranslateMatrix.inputTranslate.connectIn(localStartMatrixDecomposed.outputTranslate)
+
+            startResultMatrix = MultMatrix.create('startResultMatrix#')
+            startResultMatrix.matrixIn.index(0).connectIn(localStartRotation.outputMatrix)
+            startResultMatrix.matrixIn.index(1).set(list(offset))
+            startResultMatrix.matrixIn.index(2).connectIn(localStartTranslateMatrix.outputMatrix)
+            startResultMatrix.matrixIn.index(3).connectIn(parent.resultMatrix)
+
+            resultMatrices.append(startResultMatrix)
+
+        # Constraint joints
+        joints = list()
+        for index in range(self.forelegSection + 1):
+            if joints:
+                cmds.select(joints[-1])
+
+            joint = cmds.joint(name='leg{}_{}_skn'.format(index, self))
+            self.influencers.append(joint)
+            blendMatrix = matrixConstraint((resultMatrices[0].matrixSum, resultMatrices[1].matrixSum), joint)
+            blendMatrix.blender.set(float(index) / float(self.forelegSection))
+
             if index == 0:
                 self.children.append(joint)
 
             joints.append(joint)
 
         return joints
-
-    # def buildLegSkinJointsSetup(self, parentTransform, startTransform, endTransform, sections=4, jointNamePattern='twist#'):
-    #     parentTransform = Transform(parentTransform)
-    #     startTransform = Transform(startTransform)
-    #     endTransform = Transform(endTransform)
-    #
-    #     startWorldMatrix = OpenMaya.MMatrix(startTransform.worldMatrix.get())
-    #     parentWorldInverseMatrix = OpenMaya.MMatrix(parentTransform.worldInverseMatrix.get())
-    #     localStartMatrix = startWorldMatrix * parentWorldInverseMatrix  # type: OpenMaya.MMatrix
-    #     localStartMatrix.setElement(3, 0, 0.0)
-    #     localStartMatrix.setElement(3, 1, 0.0)
-    #     localStartMatrix.setElement(3, 2, 0.0)
-    #
-    #     resultMatrices = list()
-    #     for parent, child, offset, x, y, z, rotateOrder in (
-    #             (parentTransform, startTransform, localStartMatrix, False, True, True, RotateOrder.xyz),
-    #             (startTransform, endTransform, OpenMaya.MMatrix(), True, False, False, RotateOrder.yzx)
-    #     ):
-    #         inverseLocalStartMatrix = offset.inverse()
-    #
-    #         localStartMatrixNode = MultMatrix.create('localStartMatrix#')
-    #         localStartMatrixNode.matrixIn.index(0).connectIn(child.worldMatrix)
-    #         localStartMatrixNode.matrixIn.index(1).connectIn(parent.worldInverseMatrix)
-    #
-    #         localStartRotateMatrix = MultMatrix.create('localStartRotateMatrix#')
-    #         localStartRotateMatrix.matrixIn.index(0).connectIn(localStartMatrixNode.matrixSum)
-    #         localStartRotateMatrix.matrixIn.index(1).set(list(inverseLocalStartMatrix))
-    #
-    #         localStartRotateMatrixDecomposed = DecomposeMatrix.create('localStartMatrixDecomposed#')
-    #         localStartRotateMatrixDecomposed.inputMatrix.connectIn(localStartRotateMatrix.matrixSum)
-    #
-    #         localStartQuatToEuler = QuatToEuler.create('localStartQuatToEuler#')
-    #         localStartQuatToEuler.inputRotateOrder.set(rotateOrder)
-    #         localStartQuatToEuler.inputQuat.connectIn(localStartRotateMatrixDecomposed.outputQuat)
-    #
-    #         localStartRotation = ComposeMatrix.create('localStartRotation#')
-    #         if x:
-    #             localStartRotation.inputRotateX.connectIn(localStartQuatToEuler.outputRotateX)
-    #         if y:
-    #             localStartRotation.inputRotateY.connectIn(localStartQuatToEuler.outputRotateY)
-    #         if z:
-    #             localStartRotation.inputRotateZ.connectIn(localStartQuatToEuler.outputRotateZ)
-    #
-    #         localStartMatrixDecomposed = DecomposeMatrix.create('localStartMatrixDecomposed#')
-    #         localStartMatrixDecomposed.inputMatrix.connectIn(localStartMatrixNode.matrixSum)
-    #
-    #         localStartTranslateMatrix = ComposeMatrix.create('localStartTranslateMatrix#')
-    #         localStartTranslateMatrix.inputTranslate.connectIn(localStartMatrixDecomposed.outputTranslate)
-    #
-    #         startResultMatrix = MultMatrix.create('startResultMatrix#')
-    #         startResultMatrix.matrixIn.index(0).connectIn(localStartRotation.outputMatrix)
-    #         startResultMatrix.matrixIn.index(1).set(list(offset))
-    #         startResultMatrix.matrixIn.index(2).connectIn(localStartTranslateMatrix.outputMatrix)
-    #         startResultMatrix.matrixIn.index(3).connectIn(parent.worldMatrix)
-    #
-    #         resultMatrices.append(startResultMatrix)
-    #
-    #     joints = jointChainBetweenTwoMatrices(
-    #         startTransform.worldMatrix.get(),
-    #         endTransform.worldMatrix.get(),
-    #         namePattern=jointNamePattern
-    #     )
-    #
-    #     for index, joint in enumerate(joints):
-    #         blender = index / sections
-    #         blendMatrix = matrixConstraint((resultMatrices[0].matrixSum, resultMatrices[1].matrixSum), joint)
-    #         blendMatrix.blender.set(blender)
-    #
-    #     return joints
 
     def build(self):
         # settings ctrl
@@ -306,28 +287,19 @@ class Leg(Component):
             cmds.connectAttr('{}.worldMatrix'.format(ik), '{}.matrices[1].matrix'.format(resultMatrix))
             cmds.connectAttr(switchPlug, '{}.blender'.format(resultMatrix))
 
-            lct, = cmds.spaceLocator()
-            for attr in ('t', 'r', 's'):
-                cmds.connectAttr('{}.{}'.format(resultMatrix, attr), '{}.{}'.format(lct, attr))
-
         # skin joints
-        for x in range(self.legSection):
-            joint = cmds.joint(name='leg{}_{}_skn'.format(x, self))
-            self.influencers.append(joint)
-            const = matrixConstraint((ikJoints[0], ikJoints[1]), joint)
-            cmds.setAttr('{}.blender'.format(const), float(x) / float(self.legSection))
-
-            if x == 0:
-                self.children.append(joint)
-
+        legJoints = self.buildLegSkinJointsSetup(resultMatrices[0], resultMatrices[0], resultMatrices[1])
         forelegJoints = self.buildForelegSkinJointsSetup(resultMatrices[1], resultMatrices[2])
+
+        ankleMatrix = cmds.createNode('blendMatrix')
+        cmds.connectAttr('{}.resultMatrix'.format(resultMatrices[2]), '{}.matrices[0].matrix'.format(ankleMatrix))
 
         ankleJnt = cmds.joint(name='ankle_{}_skn'.format(self))
         self.influencers.append(ankleJnt)
         for attr in ('translate', 'rotate', 'scale', 'shear'):
-            cmds.connectAttr('{}.{}'.format(resultMatrices[2], attr), '{}.{}'.format(ankleJnt, attr))
-        cmds.connectAttr('{}.parentInverseMatrix'.format(ankleJnt), '{}.parentInverseMatrix'.format(resultMatrices[2]))
-        cmds.connectAttr('{}.jointOrient'.format(ankleJnt), '{}.jointOrient'.format(resultMatrices[2]))
+            cmds.connectAttr('{}.{}'.format(ankleMatrix, attr), '{}.{}'.format(ankleJnt, attr))
+        cmds.connectAttr('{}.parentInverseMatrix'.format(ankleJnt), '{}.parentInverseMatrix'.format(ankleMatrix))
+        cmds.connectAttr('{}.jointOrient'.format(ankleJnt), '{}.jointOrient'.format(ankleMatrix))
 
         toesJnt = cmds.joint(name='toes_{}_skn'.format(self))
         self.influencers.append(toesJnt)
@@ -336,7 +308,7 @@ class Leg(Component):
         cmds.connectAttr('{}.parentInverseMatrix'.format(toesJnt), '{}.parentInverseMatrix'.format(resultMatrices[3]))
         cmds.connectAttr('{}.jointOrient'.format(toesJnt), '{}.jointOrient'.format(resultMatrices[3]))
 
-        # cmds.parent(toesJnt, ankleJnt)
         cmds.parent(ankleJnt, forelegJoints[-1])
+        cmds.parent(forelegJoints[0], legJoints[-1])
 
         self.buildFolder()

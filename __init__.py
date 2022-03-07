@@ -1,20 +1,28 @@
 # create guides
 
-# constraint:
-# - switch
+# ctrl class
 
 # arm:
 # - pv parent
 # - stretch
 # - snap
 
-# leg component
+# leg component:
+# - pv
+# - stretch
+# - main ctrl or such
 
-# spine component
+# spine component:
+# - ik / fk
 
-# hand component or such
+# hand component:
+# - attributes grab and such
 
-# attrs on component folder
+# verify all components and names and plugs
 
+# quad leg
+# tail
+# eyes
+# clav ik fk
 
-# verify all components and names ans plugs
+# rbf test
