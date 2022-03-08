@@ -1,6 +1,7 @@
-from .utils import Controller, createBuffer
+from .utils import Controller, createBuffer, matrixConstraint
 from maya import cmds
 from .core import Component, Guide
+from .utils2 import controller
 
 
 class OneCtrl(Component):
@@ -10,17 +11,16 @@ class OneCtrl(Component):
         self.guide = Guide(guide)
 
     def build(self):
-        ctrl = Controller.create(name='{}_ctl'.format(self), color=self.color, size=self.size)
+        bfr, ctrl = controller('{}_ctl'.format(self), color=self.color, size=self.size, matrix=self.guide.matrix)
         skinJoint = cmds.joint(name='{}_skn'.format(self))
-        ctrlBuffer = createBuffer(ctrl)
-        cmds.xform(ctrlBuffer, matrix=list(self.guide.matrix))
+        matrixConstraint((ctrl,), skinJoint)
 
         self.interfaces.append(ctrl)
         self.influencers.append(skinJoint)
-        self.inputs.append(ctrlBuffer)
+        self.inputs.append(bfr)
         self.outputs.append(ctrl)
         self.controllers.append(ctrl)
-        self.children.append(ctrlBuffer)
+        self.children.append(bfr)
 
         self.buildFolder()
 

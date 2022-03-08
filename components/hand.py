@@ -1,6 +1,7 @@
 from maya import cmds
 from rigBuilder.components.core import Component, GuideArray, Guide
 from rigBuilder.components.utils import matrixConstraint
+from rigBuilder.components.utils2 import controller
 
 
 class Hand(Component):
@@ -37,15 +38,14 @@ class Hand(Component):
         self.thumbGuides = self.thumbGuides.mirrored()
 
     def fingerChain(self, fingerName, guideArray, ctrlParent, jointParent):
-
         latestCtrl = None
         latestJoint = None
         for index, guide in enumerate(guideArray):
-            # create objects
-            bufferGrp = cmds.group(name='{}{}_{}_bfr'.format(fingerName, index, self), empty=True)
-            offsetGrp = cmds.group(name='{}{}_{}_off'.format(fingerName, index, self), empty=True)
+            parent = ctrlParent if index == 0 else latestCtrl
+            bfr, ctrl = controller('{}{}_{}_ctl'.format(fingerName, index, self), size=self.size * 0.5,
+                                   color=self.color, ctrlParent=parent, matrix=guide.matrix)
             joint = cmds.joint(name='{}{}_{}_skn'.format(fingerName, index, self))
-            ctrl, = cmds.circle(name='{}{}_{}_ctl'.format(fingerName, index, self), ch=False, radius=self.size * .5, normal=(1, 0, 0))
+            cmds.setAttr('{}.segmentScaleCompensate'.format(joint), False)
 
             # add to self
             self.influencers.append(joint)
@@ -57,31 +57,22 @@ class Hand(Component):
             latestJoint = joint
 
             # place and constraint ctrl
-            cmds.parent(offsetGrp, bufferGrp)
-            cmds.parent(ctrl, offsetGrp)
-
-            cmds.xform(bufferGrp, matrix=list(guide.matrix.normalized()))
             matrixConstraint((ctrl,), joint)
 
-            # parent ctrls
             parent = ctrlParent if index == 0 else latestCtrl
-            cmds.parent(bufferGrp, parent)
+            cmds.parent(bfr, parent)
             latestCtrl = ctrl
 
     def build(self):
         # main ctrl
-        mainBufferGrp = cmds.group(name='main_{}_bfr'.format(self), empty=True)
-        mainCtrl, = cmds.circle(name='main_{}_ctl'.format(self), ch=False, radius=self.size, normal=(1, 0, 0))
+        mainBuffer, mainCtrl = controller('main_{}_ctl'.format(self), size=self.size, matrix=self.handGuide.matrix,
+                                          color=self.color)
         mainJoint = cmds.joint(name='main_{}_skn'.format(self))
 
-        cmds.parent(mainCtrl, mainBufferGrp)
-
-        cmds.xform(mainBufferGrp, matrix=list(self.handGuide.matrix))
-
-        self.children.append(mainBufferGrp)
+        self.children.append(mainBuffer)
         self.interfaces.append(mainCtrl)
 
-        self.inputs.append(mainBufferGrp)
+        self.inputs.append(mainBuffer)
         self.outputs.append(mainCtrl)
 
         # fingers

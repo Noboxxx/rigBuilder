@@ -161,8 +161,14 @@ class Vector(list):
 
 class Matrix(list):
 
-    def __init__(self, seq):
-        super(Matrix, self).__init__(map(float, seq))
+    def __init__(self, seq=None):
+        seq = map(float, seq) if seq is not None else (
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1,
+        )
+        super(Matrix, self).__init__(seq)
 
     def rows(self):
         return (
