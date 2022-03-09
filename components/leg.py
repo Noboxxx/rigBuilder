@@ -237,15 +237,15 @@ class Leg(Component):
 
         legIkCtrlBuffer, legIkCtrl = controller(
             'ikLeg_{}_ctl'.format(self), size=self.size, matrix=self.ankleGuide.matrix, color=self.color - 100,
-            ctrlParent=mainCtrl, visParent=switchPlug)
+            ctrlParent=mainCtrl, visParent=switchPlug, shape='cube')
         self.controllers.append(legIkCtrl)
 
         legIkHandle, _ = cmds.ikHandle(startJoint=joints[0], endEffector=joints[2], solver='ikRPsolver')
         self.children.append(legIkHandle)
 
         footIkCtrlBuffer, footIkCtrl = controller(
-            'ikFoot_{}_ctl'.format(self), size=self.size * 0.75, matrix=self.toesGuide.matrix, color=self.color - 100,
-            ctrlParent=legIkCtrl, visParent=switchPlug)
+            'ikFoot_{}_ctl'.format(self), size=self.size, matrix=self.toesGuide.matrix, color=self.color - 100,
+            ctrlParent=legIkCtrl, visParent=switchPlug, normal=(0, 1, 0))
         self.controllers.append(footIkCtrl)
         cmds.scaleConstraint(footIkCtrl, joints[2])
 
@@ -265,23 +265,23 @@ class Leg(Component):
 
         # reverseFoot setup
         footInIkCtrlBuffer, footInIkCtrl = controller(
-            'ikFootIn_{}_ctl'.format(self), size=self.size * 0.5, matrix=self.footInGuide.matrix,
-            color=self.color - 100, ctrlParent=legIkCtrl, visParent=switchPlug)
+            'ikFootIn_{}_ctl'.format(self), size=self.size * 0.25, matrix=self.footInGuide.matrix,
+            color=self.color - 100, ctrlParent=legIkCtrl, visParent=switchPlug, shape='sphere')
         self.controllers.append(footInIkCtrl)
 
         footOutIkCtrlBuffer, footOutIkCtrl = controller(
-            'ikFootOut_{}_ctl'.format(self), size=self.size * 0.5, matrix=self.footOutGuide.matrix,
-            color=self.color - 100, ctrlParent=footInIkCtrl, visParent=switchPlug)
+            'ikFootOut_{}_ctl'.format(self), size=self.size * 0.25, matrix=self.footOutGuide.matrix,
+            color=self.color - 100, ctrlParent=footInIkCtrl, visParent=switchPlug, shape='sphere')
         self.controllers.append(footOutIkCtrl)
 
         footTipIkCtrlBuffer, footTipIkCtrl = controller(
-            'ikFootTip_{}_ctl'.format(self), size=self.size * 0.5, matrix=self.footTipGuide.matrix,
-            color=self.color - 100, ctrlParent=footOutIkCtrl, visParent=switchPlug)
+            'ikFootTip_{}_ctl'.format(self), size=self.size * 0.25, matrix=self.footTipGuide.matrix,
+            color=self.color - 100, ctrlParent=footOutIkCtrl, visParent=switchPlug, shape='sphere')
         self.controllers.append(footTipIkCtrl)
 
         footBackIkCtrlBuffer, footBackIkCtrl = controller(
-            'ikFootBack_{}_ctl'.format(self), size=self.size * 0.5, matrix=self.footBackGuide.matrix,
-            color=self.color - 100, ctrlParent=footTipIkCtrl, visParent=switchPlug)
+            'ikFootBack_{}_ctl'.format(self), size=self.size * 0.25, matrix=self.footBackGuide.matrix,
+            color=self.color - 100, ctrlParent=footTipIkCtrl, visParent=switchPlug, shape='sphere')
         self.controllers.append(footBackIkCtrl)
 
         cmds.parent(footInIkCtrlBuffer, legIkCtrl)
@@ -295,7 +295,8 @@ class Leg(Component):
         # pv
         pvMatrix = poleVectorMatrix(
             self.hipGuide.matrix, self.kneeGuide.matrix, self.ankleGuide.matrix, offset=self.size * 5)
-        pvCtrlBuffer, pvCtrl = controller('pv_{}_ctl'.format(self), color=self.color, matrix=pvMatrix, size=self.size * 0.5)
+        pvCtrlBuffer, pvCtrl = controller('pv_{}_ctl'.format(self), color=self.color - 100, matrix=pvMatrix,
+                                          size=self.size * 0.5, visParent=switchPlug, ctrlParent=mainCtrl)
         cmds.poleVectorConstraint(pvCtrl, legIkHandle)
         self.controllers.append(pvCtrl)
         self.inputs.append(pvCtrlBuffer)

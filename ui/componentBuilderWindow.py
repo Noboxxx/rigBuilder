@@ -6,6 +6,7 @@ from .dataDictEditor import DataDictEditor, DataDictList, DataAttributeEditor
 from .jsonFileWindow import JsonFileWindow
 from ..components.arm import Arm
 from ..components.base import Base
+from ..components.clavicle import Clavicle
 from ..components.core import ComponentBuilder, ConnectionPlug, ConnectionPlugArray, Connection, Guide, GuideDict, GuideArray
 from ..components.fkChain import FkChain
 from ..components.hand import Hand
@@ -48,6 +49,7 @@ class ComponentDictList(DataDictList):
         Arm,
         Hand,
         Leg,
+        Clavicle,
     )
 
     def populateContextMenu(self):
