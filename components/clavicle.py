@@ -28,8 +28,9 @@ class Clavicle(Component):
 
         ikBfr, ikCtrl = controller(
             'ik_{}_ctl'.format(self), size=self.size, color=self.color, matrix=shoulderMatrix, shape='cube')
-        cmds.setAttr('{}.r'.format(ikCtrl), lock=True, keyable=False)
-        cmds.setAttr('{}.s'.format(ikCtrl), lock=True, keyable=False)
+        for axis in ('x', 'y', 'z'):
+            cmds.setAttr('{}.r{}'.format(ikCtrl, axis), lock=True, keyable=False)
+            cmds.setAttr('{}.s{}'.format(ikCtrl, axis), lock=True, keyable=False)
         self.controllers.append(ikCtrl)
 
         cmds.parent(ikBfr, fkCtrl)

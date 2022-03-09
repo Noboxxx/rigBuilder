@@ -1,13 +1,45 @@
 import math
 from maya import cmds
+from math import cos, sin
+
+
+def rotatePoints(points, axis, angle):
+
+    if axis == 'x':
+        a, b, c = 0, 1, 2
+    elif axis == 'y':
+        a, b, c = 1, 0, 2
+    elif axis == 'z':
+        a, b, c = 2, 0, 1
+    else:
+        raise ValueError('Axis not right')
+
+    newPoints = list()
+    for p in points:
+        newB = p[b] * cos(angle) - p[c] * sin(angle)
+        newC = p[c] * cos(angle) + p[b] * sin(angle)
+        newPoints.append((p[a], newB, newC))
+
+    return newPoints
 
 
 def controller(name, normal=(1, 0, 0), size=1.0, matrix=None, color=(0, 255, 255), ctrlParent=None, visParent=None,
-               shape='circle'):
+               shape=None):
     bfr = cmds.group(empty=True, name='{}Bfr'.format(name))
 
     if shape == 'circle':
-        ctrl, = cmds.circle(ch=False, name=name, normal=normal, radius=size)
+        points = (
+            (0, 0, 1),
+            (-0.707107, 0, 0.707107),
+            (-1, 0, 0),
+            (-0.707107, 0, -0.707107),
+            (0, 0, -1),
+            (0.707107, 0, -0.707107),
+            (1, 0, 0),
+            (0.707107, 0, 0.707107),
+            (0, 0, 1),
+        )
+        knots = range(9)
     elif shape == 'cube':
         points = (
             (-0.75, 0.75, 0.75),
@@ -27,10 +59,8 @@ def controller(name, normal=(1, 0, 0), size=1.0, matrix=None, color=(0, 255, 255
             (0.75, -0.75, 0.75),
             (-0.75, -0.75, 0.75),
         )
-        pointsScaled = [[x * size for x in p] for p in points]
-        ctrl = cmds.curve(d=1, p=pointsScaled, k=range(16))
+        knots = range(16)
     elif shape == 'sphere':
-        # curve -d 1 -p -1 0 0 -p -0.707107 0 0.707107 -p 0 0 1 -p 0.707107 0 0.707107 -p 1 0 0 -p 0.707107 0 -0.707107 -p 0 0 -1 -p -0.707107 0 -0.707107 -p -1 0 0 -p -0.923879 0.382683 0 -p -0.707107 0.707107 0 -p -0.382683 0.92388 0 -p 0 1 0 -p 0 0.92388 -0.382683 -p 0 0.707107 -0.707107 -p 0 0.382683 -0.923879 -p 0 0 -1 -p 0 -0.382683 -0.923879 -p 0 -0.707107 -0.707107 -p 0 -0.92388 -0.382683 -p 0 -1 0 -p 0.382683 -0.92388 0 -p 0.707107 -0.707107 0 -p 0.92388 -0.382683 0 -p 1 0 0 -p 0.92388 0.382683 0 -p 0.707107 0.707107 0 -p 0.382683 0.92388 0 -p 0 1 0 -p 0 0.92388 0.382683 -p 0 0.707107 0.707107 -p 0 0.382683 0.923879 -p 0 0 1 -p 0 -0.382683 0.923879 -p 0 -0.707107 0.707107 -p 0 -0.92388 0.382683 -p 0 -1 0 -p -0.382683 -0.92388 0 -p -0.707107 -0.707107 0 -p -0.923879 -0.382683 0 -p -1 0 0 -k 0 -k 1 -k 2 -k 3 -k 4 -k 5 -k 6 -k 7 -k 8 -k 9 -k 10 -k 11 -k 12 -k 13 -k 14 -k 15 -k 16 -k 17 -k 18 -k 19 -k 20 -k 21 -k 22 -k 23 -k 24 -k 25 -k 26 -k 27 -k 28 -k 29 -k 30 -k 31 -k 32 -k 33 -k 34 -k 35 -k 36 -k 37 -k 38 -k 39 -k 40 ;
         points = (
             (-0.707107, 0, 0.707107),
             (0, 0, 1),
@@ -74,10 +104,59 @@ def controller(name, normal=(1, 0, 0), size=1.0, matrix=None, color=(0, 255, 255
             (-1, 0, 0),
             (-0.707107, 0, 0.707107),
         )
-        pointsScaled = [[x * size for x in p] for p in points]
-        ctrl = cmds.curve(d=1, p=pointsScaled, k=range(41))
+        knots = range(41)
+    elif shape == 'diamond':
+        points = (
+            (0, 0.75, 0),
+            (0.75, 0, 0),
+            (0, 0, 0.75),
+            (0, 0.75, 0),
+            (-0.75, 0, 0),
+            (0, 0, 0.75),
+            (0, -0.75, 0),
+            (-0.75, 0, 0),
+            (0, 0, -0.75),
+            (0, 0.75, 0),
+            (0.75, 0, 0),
+            (0, 0, -0.75),
+            (0, -0.75, 0),
+            (0.75, 0, 0),
+        )
+        knots = range(14)
     else:
-        ctrl, = cmds.circle(ch=False, name=name, normal=normal, radius=size)
+        points = (
+            (1.397655, 0, 3.57628e-07),
+            (0.92388, 0, 0.382683),
+            (0.707107, 0, 0.707107),
+            (0.382683, 0, 0.92388),
+            (-1.49012e-07, 0, 1),
+            (-0.382684, 0, 0.923879),
+            (-0.707107, 0, 0.707107),
+            (-0.92388, 0, 0.382683),
+            (-1, 0, 0),
+            (-0.923879, 0, -0.382684),
+            (-0.707106, 0, -0.707107),
+            (-0.382683, 0, -0.92388),
+            (5.06639e-07, 0, -1),
+            (0.382684, 0, -0.923879),
+            (0.707107, 0, -0.707106),
+            (0.92388, 0, -0.382683),
+            (1.397655, 0, 3.57628e-07),
+        )
+        knots = range(17)
+
+    if normal == (1, 0, 0):
+        points = rotatePoints(points, 'y', 1.5708)
+    elif normal == (0, 1, 0):
+        pass
+    elif normal == (0, 0, 1):
+        pass
+        points = rotatePoints(points, 'x', 1.5708)
+    else:
+        raise ValueError('Not valid normal')
+
+    points = [[x * size for x in p] for p in points]
+    ctrl = cmds.curve(name=name, d=1, p=points, k=knots)
 
     cmds.parent(ctrl, bfr)
 

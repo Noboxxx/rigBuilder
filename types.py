@@ -89,12 +89,13 @@ class Color(list):
         self[0] = self.clampValue(v)
 
     def mirrored(self):
-        mirroredColor = list()
-        for v in self:
-            distance = 127.5 - v
-            r = distance * 2 + v
-            mirroredColor.append(int(r))
-        return self.__class__(mirroredColor)
+        # mirroredColor = list()
+        # for v in self:
+        #     distance = 127.5 - v
+        #     r = distance * 2 + v
+        #     mirroredColor.append(int(r))
+        # return self.__class__(mirroredColor)
+        return self.__class__((self[1], self[2], self[0]))
 
 
 class UnsignedInt(int):

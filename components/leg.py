@@ -296,7 +296,7 @@ class Leg(Component):
         pvMatrix = poleVectorMatrix(
             self.hipGuide.matrix, self.kneeGuide.matrix, self.ankleGuide.matrix, offset=self.size * 5)
         pvCtrlBuffer, pvCtrl = controller('pv_{}_ctl'.format(self), color=self.color - 100, matrix=pvMatrix,
-                                          size=self.size * 0.5, visParent=switchPlug, ctrlParent=mainCtrl)
+                                          size=self.size * 0.5, visParent=switchPlug, ctrlParent=mainCtrl, shape='diamond')
         cmds.poleVectorConstraint(pvCtrl, legIkHandle)
         self.controllers.append(pvCtrl)
         self.inputs.append(pvCtrlBuffer)
