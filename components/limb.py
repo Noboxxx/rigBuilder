@@ -1,6 +1,6 @@
 from maya import cmds
 from maya.api import OpenMaya
-from rigBuilder.components.core import Component, Guide
+from rigBuilder.components.core import Component, Guide, Storage
 from rigBuilder.components.nodeUtils import MultMatrix, DecomposeMatrix, QuatToEuler, RotateOrder, ComposeMatrix, \
     BlendMatrix
 from rigBuilder.components.utils import matrixConstraint
@@ -55,38 +55,35 @@ def poleVectorMatrix(matrixA, matrixB, matrixC, offset=10.0):
     return offsetMatrix * matrix
 
 
-class Leg(Component):
+class Limb(Component):
 
-    def __init__(self, hipGuide='', kneeGuide='', ankleGuide='', toesGuide='', legSection=4, forelegSection=4,
-                 footTipGuide='', footBackGuide='', footInGuide='', footOutGuide='', **kwargs):
-        super(Leg, self).__init__(**kwargs)
+    aName = str()
+    bName = str()
+    cName = str()
 
-        self.hipGuide = Guide(hipGuide)
-        self.kneeGuide = Guide(kneeGuide)
-        self.ankleGuide = Guide(ankleGuide)
-        self.toesGuide = Guide(toesGuide)
+    abName = str()
+    bcName = str()
 
-        self.legSection = UnsignedInt(legSection)
-        self.forelegSection = UnsignedInt(forelegSection)
+    def __init__(self, aGuide='', bGuide='', cGuide='', firstSection=4, secondSection=4, **kwargs):
+        super(Limb, self).__init__(**kwargs)
 
-        self.footTipGuide = Guide(footTipGuide)
-        self.footBackGuide = Guide(footBackGuide)
-        self.footInGuide = Guide(footInGuide)
-        self.footOutGuide = Guide(footOutGuide)
+        self.aGuide = Guide(aGuide)
+        self.bGuide = Guide(bGuide)
+        self.cGuide = Guide(cGuide)
+
+        self.firstSection = UnsignedInt(firstSection)
+        self.secondSection = UnsignedInt(secondSection)
+
+        self.ikInputs = Storage()
+        self.pvInputs = Storage()
 
     def mirror(self):
-        super(Leg, self).mirror()
-        self.hipGuide = self.hipGuide.mirrored()
-        self.kneeGuide = self.kneeGuide.mirrored()
-        self.ankleGuide = self.ankleGuide.mirrored()
-        self.toesGuide = self.toesGuide.mirrored()
+        super(Limb, self).mirror()
+        self.aGuide = self.aGuide.mirrored()
+        self.bGuide = self.bGuide.mirrored()
+        self.cGuide = self.cGuide.mirrored()
 
-        self.footTipGuide = self.footTipGuide.mirrored()
-        self.footBackGuide = self.footBackGuide.mirrored()
-        self.footInGuide = self.footInGuide.mirrored()
-        self.footOutGuide = self.footOutGuide.mirrored()
-
-    def buildForelegSkinJointsSetup(self, elbowTransform, wristTransform):
+    def buildSecondSegmentSkinJointsSetup(self, elbowTransform, wristTransform):
         elbowTransform = BlendMatrix(elbowTransform)
         wristTransform = BlendMatrix(wristTransform)
 
@@ -128,22 +125,22 @@ class Leg(Component):
 
         # Constraint joints
         joints = list()
-        for index in range(self.forelegSection + 1):
+        for index in range(self.secondSection + 1):
             if joints:
                 cmds.select(joints[-1])
 
-            joint = cmds.joint(name='foreleg{}_{}_skn'.format(index, self))
+            joint = cmds.joint(name='{}{}_{}_skn'.format(self.bcName, index, self))
             cmds.setAttr('{}.segmentScaleCompensate'.format(joint), False)
 
             self.influencers.append(joint)
             blendMatrix = matrixConstraint((elbowTransform.resultMatrix, wristResultMatrix.matrixSum), joint)
-            blendMatrix.blender.set(float(index) / float(self.forelegSection))
+            blendMatrix.blender.set(float(index) / float(self.secondSection))
 
             joints.append(joint)
 
         return joints
 
-    def buildLegSkinJointsSetup(self, parentMatrixPlug, startMatrixPlug, endMatrixPlug):
+    def buildFirstSegmentSkinJointsSetup(self, parentMatrixPlug, startMatrixPlug, endMatrixPlug):
         startWorldMatrix = OpenMaya.MMatrix(cmds.getAttr(startMatrixPlug))
         parentWorldInverseMatrix = OpenMaya.MMatrix(cmds.getAttr(parentMatrixPlug)).inverse()
         localStartMatrix = startWorldMatrix * parentWorldInverseMatrix  # type: OpenMaya.MMatrix
@@ -200,15 +197,15 @@ class Leg(Component):
 
         # Constraint joints
         joints = list()
-        for index in range(self.legSection + 1):
+        for index in range(self.firstSection + 1):
             if joints:
                 cmds.select(joints[-1])
 
-            joint = cmds.joint(name='leg{}_{}_skn'.format(index, self))
+            joint = cmds.joint(name='{}{}_{}_skn'.format(self.abName, index, self))
             cmds.setAttr('{}.segmentScaleCompensate'.format(joint), False)
             self.influencers.append(joint)
             blendMatrix = matrixConstraint((resultMatrices[0].matrixSum, resultMatrices[1].matrixSum), joint)
-            blendMatrix.blender.set(float(index) / float(self.legSection))
+            blendMatrix.blender.set(float(index) / float(self.firstSection))
 
             if index == 0:
                 self.children.append(joint)
@@ -220,7 +217,7 @@ class Leg(Component):
     def ikSetup(self, mainCtrl, switchPlug):
         # joints
         joints = list()
-        for index, guide in enumerate((self.hipGuide, self.kneeGuide, self.ankleGuide, self.toesGuide)):
+        for index, guide in enumerate((self.aGuide, self.bGuide, self.cGuide)):
             if index == 0:
                 cmds.select(mainCtrl)
 
@@ -236,71 +233,29 @@ class Leg(Component):
             cmds.setAttr('{}.segmentScaleCompensate'.format(joint), False)
 
         legIkCtrlBuffer, legIkCtrl = controller(
-            'ikLeg_{}_ctl'.format(self), size=self.size, matrix=self.ankleGuide.matrix, color=self.color - 100,
+            'ik_{}_ctl'.format(self), size=self.size, matrix=self.cGuide.matrix, color=self.color - 100,
             ctrlParent=mainCtrl, visParent=switchPlug, shape='cube')
         self.controllers.append(legIkCtrl)
+        self.ikInputs.append(legIkCtrlBuffer)
 
         legIkHandle, _ = cmds.ikHandle(startJoint=joints[0], endEffector=joints[2], solver='ikRPsolver')
         self.children.append(legIkHandle)
 
-        footIkCtrlBuffer, footIkCtrl = controller(
-            'ikFoot_{}_ctl'.format(self), size=self.size, matrix=self.toesGuide.matrix, color=self.color - 100,
-            ctrlParent=legIkCtrl, visParent=switchPlug, normal=(0, 0, 1))
-        self.controllers.append(footIkCtrl)
-        cmds.scaleConstraint(footIkCtrl, joints[2])
-
-        footIkHandle, _ = cmds.ikHandle(startJoint=joints[2], endEffector=joints[3], solver='ikSCsolver')
-        self.children.append(footIkHandle)
-
-        toesIkCtrlBuffer, toesIkCtrl = controller(
-            'ikToes_{}_ctl'.format(self), size=self.size, matrix=self.toesGuide.matrix, color=self.color - 100,
-            ctrlParent=footIkCtrl, visParent=switchPlug)
-        self.controllers.append(toesIkCtrl)
-
-        cmds.parentConstraint(footIkCtrl, legIkHandle, maintainOffset=True)
-        cmds.parentConstraint(footIkCtrl, footIkHandle)
-        matrixConstraint((toesIkCtrl,), joints[3], translate=False, rotate=True, scale=True, shear=True)
+        matrixConstraint((legIkCtrl,), joints[2], translate=False, rotate=True, scale=True, shear=True)
+        cmds.parentConstraint(legIkCtrl, legIkHandle)
 
         self.children.append(legIkCtrlBuffer)
 
-        # reverseFoot setup
-        footInIkCtrlBuffer, footInIkCtrl = controller(
-            'ikFootIn_{}_ctl'.format(self), size=self.size * 0.25, matrix=self.footInGuide.matrix,
-            color=self.color - 100, ctrlParent=legIkCtrl, visParent=switchPlug, shape='sphere')
-        self.controllers.append(footInIkCtrl)
-
-        footOutIkCtrlBuffer, footOutIkCtrl = controller(
-            'ikFootOut_{}_ctl'.format(self), size=self.size * 0.25, matrix=self.footOutGuide.matrix,
-            color=self.color - 100, ctrlParent=footInIkCtrl, visParent=switchPlug, shape='sphere')
-        self.controllers.append(footOutIkCtrl)
-
-        footTipIkCtrlBuffer, footTipIkCtrl = controller(
-            'ikFootTip_{}_ctl'.format(self), size=self.size * 0.25, matrix=self.footTipGuide.matrix,
-            color=self.color - 100, ctrlParent=footOutIkCtrl, visParent=switchPlug, shape='sphere')
-        self.controllers.append(footTipIkCtrl)
-
-        footBackIkCtrlBuffer, footBackIkCtrl = controller(
-            'ikFootBack_{}_ctl'.format(self), size=self.size * 0.25, matrix=self.footBackGuide.matrix,
-            color=self.color - 100, ctrlParent=footTipIkCtrl, visParent=switchPlug, shape='sphere')
-        self.controllers.append(footBackIkCtrl)
-
-        cmds.parent(footInIkCtrlBuffer, legIkCtrl)
-        cmds.parent(footOutIkCtrlBuffer, footInIkCtrl)
-        cmds.parent(footTipIkCtrlBuffer, footOutIkCtrl)
-        cmds.parent(footBackIkCtrlBuffer, footTipIkCtrl)
-
-        cmds.parent(footIkCtrlBuffer, footBackIkCtrl)
-        cmds.parent(toesIkCtrlBuffer, footBackIkCtrl)
-
         # pv
         pvMatrix = poleVectorMatrix(
-            self.hipGuide.matrix, self.kneeGuide.matrix, self.ankleGuide.matrix, offset=self.size * 5)
+            self.aGuide.matrix, self.bGuide.matrix, self.cGuide.matrix, offset=self.size * 5)
         pvCtrlBuffer, pvCtrl = controller('pv_{}_ctl'.format(self), color=self.color - 100, matrix=pvMatrix,
                                           size=self.size * 0.5, visParent=switchPlug, ctrlParent=mainCtrl, shape='diamond')
         cmds.poleVectorConstraint(pvCtrl, legIkHandle)
         self.controllers.append(pvCtrl)
         self.inputs.append(pvCtrlBuffer)
         self.children.append(pvCtrlBuffer)
+        self.pvInputs.append(pvCtrlBuffer)
 
         return joints
 
@@ -310,7 +265,7 @@ class Leg(Component):
 
         ctrls = list()
         latestCtrl = None
-        for index, guide in enumerate((self.hipGuide, self.kneeGuide, self.ankleGuide, self.toesGuide)):
+        for index, guide in enumerate((self.aGuide, self.bGuide, self.cGuide)):
             ctrlParent = mainCtrl if index == 0 else latestCtrl
             ctrlBuffer, ctrl = controller(
                 'fk{}_{}_ctl'.format(index, self), size=self.size, matrix=list(guide.matrix.normalized()),
@@ -339,10 +294,10 @@ class Leg(Component):
         return resultMatrices
 
     def skinSetup(self, mainCtrl, resultMatrices):
-        legJoints = self.buildLegSkinJointsSetup(
+        legJoints = self.buildFirstSegmentSkinJointsSetup(
             '{}.worldMatrix'.format(mainCtrl), '{}.resultMatrix'.format(resultMatrices[0]),
             '{}.resultMatrix'.format(resultMatrices[1]))
-        forelegJoints = self.buildForelegSkinJointsSetup(resultMatrices[1], resultMatrices[2])
+        forelegJoints = self.buildSecondSegmentSkinJointsSetup(resultMatrices[1], resultMatrices[2])
 
         ankleMatrix = cmds.createNode('blendMatrix')
         cmds.connectAttr('{}.resultMatrix'.format(resultMatrices[2]), '{}.matrices[0].matrix'.format(ankleMatrix))
@@ -355,21 +310,14 @@ class Leg(Component):
         cmds.connectAttr('{}.parentInverseMatrix'.format(ankleJnt), '{}.parentInverseMatrix'.format(ankleMatrix))
         cmds.connectAttr('{}.jointOrient'.format(ankleJnt), '{}.jointOrient'.format(ankleMatrix))
 
-        toesJnt = cmds.joint(name='toes_{}_skn'.format(self))
-        cmds.setAttr('{}.segmentScaleCompensate'.format(toesJnt), False)
-        self.influencers.append(toesJnt)
-        for attr in ('translate', 'rotate', 'scale', 'shear'):
-            cmds.connectAttr('{}.{}'.format(resultMatrices[3], attr), '{}.{}'.format(toesJnt, attr))
-        cmds.connectAttr('{}.parentInverseMatrix'.format(toesJnt), '{}.parentInverseMatrix'.format(resultMatrices[3]))
-        cmds.connectAttr('{}.jointOrient'.format(toesJnt), '{}.jointOrient'.format(resultMatrices[3]))
-
         cmds.parent(ankleJnt, forelegJoints[-1])
         cmds.parent(forelegJoints[0], legJoints[-1])
 
     def build(self):
+        print self.items()
         # settings ctrl
         mainCtrlBuffer, mainCtrl = controller(
-            'main_{}_ctl'.format(self), size=self.size * 1.25, color=self.color + 100, matrix=self.hipGuide.matrix)
+            'main_{}_ctl'.format(self), size=self.size * 1.25, color=self.color + 100, matrix=self.aGuide.matrix)
         self.interfaces.append(mainCtrl)
         self.controllers.append(mainCtrl)
         self.children.append(mainCtrlBuffer)

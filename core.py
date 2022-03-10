@@ -1,51 +1,15 @@
-from collections import OrderedDict
 from inspect import getargspec
 
 
-class MyOrderedDict(OrderedDict):
-    pass
-    # def __init__(self):
-    #     self._ls = list()
-    #
-    # def keys(self):
-    #     keys = list()
-    #     for k, _ in self._ls:
-    #         keys.append(k)
-    #     return tuple(keys)
-    #
-    # def values(self):
-    #     values = list()
-    #     for k, v in self._ls:
-    #         values.append(v)
-    #     return tuple(values)
-    #
-    # def items(self):
-    #     return tuple(self._ls)
-    #
-    # def get(self, key, default=None):
-    #     if key in self.keys():
-    #         return self[key]
-    #     return default
-    #
-    # def __iter__(self):
-    #     return iter(self.items())
-    #
-    # def __getitem__(self, item):
-    #     for k, v in self.items():
-    #         if item == k:
-    #             return v
-    #     raise KeyError('Key \'{}\' not found.'.format(item))
-    #
-    # def __setitem__(self, key, value):
-    #     if key in self.keys():
-    #         ls = list()
-    #         for k, v in self.items():
-    #             if key == k:
-    #                 v = value
-    #             ls.append((k, v))
-    #         self._ls = ls
-    #     else:
-    #         self._ls.append((key, value))
+def getAllAncestors(cl, data=None):
+    data = list() if data is None else data
+
+    parents = cl.__bases__
+    for parent in parents:
+        data.append(parent)
+        getAllAncestors(parent, data)
+
+    return data
 
 
 class Data(object):
@@ -78,7 +42,7 @@ class Data(object):
     def keys(self):
         args = list()
 
-        for cl in list(self.__class__.__bases__) + [self.__class__]:
+        for cl in getAllAncestors(self.__class__) + [self.__class__]:
             if cl is object:
                 continue
             argSpec = getargspec(cl.__init__).args

@@ -161,7 +161,6 @@ def controller(name, normal=(1, 0, 0), size=1.0, matrix=None, color=(0, 255, 255
     elif normal == (0, 1, 0):
         pass
     elif normal == (0, 0, 1):
-        pass
         points = rotatePoints(points, 'x', 1.5708)
     else:
         raise ValueError('Not valid normal')

@@ -1,6 +1,7 @@
 from maya import cmds
 from rigBuilder.types import Side, Color, UnsignedInt, UnsignedFloat, Matrix
-from rigBuilder.core import Data, MyOrderedDict
+from rigBuilder.core import Data
+from collections import OrderedDict
 
 
 class ConnectionPlugArray(list):
@@ -95,7 +96,6 @@ class Connection(Data):
             enumName=':'.join(map(str, sources)),
             keyable=True,
         )
-
         constr = matrixConstraint(sources, destination, self.translate, self.rotate, self.scale, self.shear, self.maintainOffset)
         cmds.connectAttr(
             plug, '{}.blender'.format(constr)
@@ -272,7 +272,7 @@ class GuideArray(list):
         return copy
 
 
-class GuideDict(MyOrderedDict):
+class GuideDict(OrderedDict):
 
     def build(self):
         grp = cmds.group(empty=True, name='guides')
@@ -287,7 +287,7 @@ class GuideDict(MyOrderedDict):
                 cmds.parent(guide, grp)
 
     def mirrored(self):
-        mirroredGuideDict = MyOrderedDict()
+        mirroredGuideDict = OrderedDict()
         for name, guide in self.items():
             mirroredGuideDict[name] = guide.mirrored()
         return mirroredGuideDict

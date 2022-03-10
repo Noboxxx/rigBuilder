@@ -1,8 +1,8 @@
 import json
 import os
 import importlib
-from rigBuilder.core import MyOrderedDict, Data
 from rigBuilder.types import File
+from collections import OrderedDict
 
 
 def objectFactory(typeStr, kwargs):  # type: (str, dict) -> any
@@ -18,7 +18,7 @@ def customEncoder(o):
 
 
 def customDecoder(pairs):
-    d = MyOrderedDict(pairs)
+    d = OrderedDict(pairs)
 
     if 'class' in d.keys() and 'kwargs' in d.keys():
         return objectFactory(d['class'], d['kwargs'])
