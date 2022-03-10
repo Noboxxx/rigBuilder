@@ -108,7 +108,7 @@ class Leg(Component):
         zeroedWristMatrixDecomposed.inputMatrix.connectIn(zeroedWristMatrix.matrixSum)
 
         zeroedWristRotate = QuatToEuler.create('zeroedWristRotate#')
-        zeroedWristRotate.inputRotateOrder.set(RotateOrder.zxy)
+        zeroedWristRotate.inputRotateOrder.set(RotateOrder.xzy)
         zeroedWristRotate.inputQuat.connectIn(zeroedWristMatrixDecomposed.outputQuat)
 
         wristXRotationMatrix = ComposeMatrix.create('wristXRotationMatrix#')
@@ -154,7 +154,7 @@ class Leg(Component):
         resultMatrices = list()
         for parent, child, offset, x, y, z, rotateOrder in (
                 (parentMatrixPlug, startMatrixPlug, localStartMatrix, False, True, True, RotateOrder.xyz),
-                (startMatrixPlug, endMatrixPlug, OpenMaya.MMatrix(), True, False, False, RotateOrder.yzx)
+                (startMatrixPlug, endMatrixPlug, OpenMaya.MMatrix(), True, False, False, RotateOrder.zyx)
         ):
             inverseLocalStartMatrix = offset.inverse()
 
@@ -200,7 +200,7 @@ class Leg(Component):
 
         # Constraint joints
         joints = list()
-        for index in range(self.forelegSection + 1):
+        for index in range(self.legSection + 1):
             if joints:
                 cmds.select(joints[-1])
 
@@ -208,7 +208,7 @@ class Leg(Component):
             cmds.setAttr('{}.segmentScaleCompensate'.format(joint), False)
             self.influencers.append(joint)
             blendMatrix = matrixConstraint((resultMatrices[0].matrixSum, resultMatrices[1].matrixSum), joint)
-            blendMatrix.blender.set(float(index) / float(self.forelegSection))
+            blendMatrix.blender.set(float(index) / float(self.legSection))
 
             if index == 0:
                 self.children.append(joint)

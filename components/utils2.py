@@ -23,12 +23,9 @@ def rotatePoints(points, axis, angle):
     return newPoints
 
 
-def controller(name, normal=(1, 0, 0), size=1.0, matrix=None, color=(0, 255, 255), ctrlParent=None, visParent=None,
-               shape=None):
-    bfr = cmds.group(empty=True, name='{}Bfr'.format(name))
-
-    if shape == 'circle':
-        points = (
+shapes = {
+    'circle': {
+        'points': (
             (0, 0, 1),
             (-0.707107, 0, 0.707107),
             (-1, 0, 0),
@@ -38,10 +35,11 @@ def controller(name, normal=(1, 0, 0), size=1.0, matrix=None, color=(0, 255, 255
             (1, 0, 0),
             (0.707107, 0, 0.707107),
             (0, 0, 1),
-        )
-        knots = range(9)
-    elif shape == 'cube':
-        points = (
+        ),
+        'knots': range(9)
+        },
+    'cube': {
+        'points': (
             (-0.75, 0.75, 0.75),
             (0.75, 0.75, 0.75),
             (0.75, -0.75, 0.75),
@@ -58,10 +56,11 @@ def controller(name, normal=(1, 0, 0), size=1.0, matrix=None, color=(0, 255, 255
             (0.75, 0.75, 0.75),
             (0.75, -0.75, 0.75),
             (-0.75, -0.75, 0.75),
-        )
-        knots = range(16)
-    elif shape == 'sphere':
-        points = (
+        ),
+        'knots': range(16)
+    },
+    'sphere': {
+        'points': (
             (-0.707107, 0, 0.707107),
             (0, 0, 1),
             (0.707107, 0, 0.707107),
@@ -103,10 +102,11 @@ def controller(name, normal=(1, 0, 0), size=1.0, matrix=None, color=(0, 255, 255
             (-0.923879, -0.382683, 0),
             (-1, 0, 0),
             (-0.707107, 0, 0.707107),
-        )
-        knots = range(41)
-    elif shape == 'diamond':
-        points = (
+        ),
+        'knots': range(41)
+    },
+    'diamond': {
+        'points': (
             (0, 0.75, 0),
             (0.75, 0, 0),
             (0, 0, 0.75),
@@ -121,10 +121,11 @@ def controller(name, normal=(1, 0, 0), size=1.0, matrix=None, color=(0, 255, 255
             (0, 0, -0.75),
             (0, -0.75, 0),
             (0.75, 0, 0),
-        )
-        knots = range(14)
-    else:
-        points = (
+        ),
+        'knots': range(14)
+    },
+    'ring': {
+        'points': (
             (1.397655, 0, 3.57628e-07),
             (0.92388, 0, 0.382683),
             (0.707107, 0, 0.707107),
@@ -142,8 +143,18 @@ def controller(name, normal=(1, 0, 0), size=1.0, matrix=None, color=(0, 255, 255
             (0.707107, 0, -0.707106),
             (0.92388, 0, -0.382683),
             (1.397655, 0, 3.57628e-07),
-        )
-        knots = range(17)
+        ),
+        'knots': range(17)
+    }
+}
+
+
+def controller(name, normal=(1, 0, 0), size=1.0, matrix=None, color=(0, 255, 255), ctrlParent=None, visParent=None,
+               shape=None):
+    bfr = cmds.group(empty=True, name='{}Bfr'.format(name))
+
+    shapeInfo = shapes.get(shape, shapes['circle'])
+    points = shapeInfo['points']
 
     if normal == (1, 0, 0):
         points = rotatePoints(points, 'y', 1.5708)
@@ -156,7 +167,7 @@ def controller(name, normal=(1, 0, 0), size=1.0, matrix=None, color=(0, 255, 255
         raise ValueError('Not valid normal')
 
     points = [[x * size for x in p] for p in points]
-    ctrl = cmds.curve(name=name, d=1, p=points, k=knots)
+    ctrl = cmds.curve(name=name, d=1, p=points, k=shapeInfo['knots'])
 
     cmds.parent(ctrl, bfr)
 
