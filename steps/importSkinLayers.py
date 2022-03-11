@@ -19,6 +19,21 @@ class ImportSkinLayers(Step):
         self.file = SkinLayersFile(file)
 
     def build(self):
+        from maya import OpenMayaUI
+
+        class Duck(object):
+            @staticmethod
+            def mainWindow(*args, **kwargs):
+                return 0
+
+            @staticmethod
+            def dpiScale(*args, **kwargs):
+                return 1
+
+        store = OpenMayaUI.MQtUtil
+        OpenMayaUI.MQtUtil = Duck
+
+        ###
         from ngSkinTools2.api import InfluenceMappingConfig, VertexTransferMode
         from ngSkinTools2 import api as ngst_api
 
@@ -43,3 +58,6 @@ class ImportSkinLayers(Step):
             vertex_transfer_mode=VertexTransferMode.vertexId,
             influences_mapping_config=config,
         )
+        ###
+
+        OpenMayaUI.MQtUtil = store

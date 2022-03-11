@@ -165,9 +165,10 @@ class Component(Data):
         if self.children:
             cmds.parent(self.children, folder)
 
-        for attr, plug in self.getStorageDict().items():
+        for attr, storage in self.getStorageDict().items():
             cmds.addAttr(str(self), longName=attr, attributeType='message', multi=True)
-            for index, node in enumerate(plug):
+            for index, obj in enumerate(storage):
+                node = obj.split('.')[0] if '.' in obj else obj
 
                 objAttr = 'receiver'
                 objPlug = '{}.{}'.format(node, objAttr)

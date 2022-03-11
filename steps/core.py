@@ -1,4 +1,5 @@
 from rigBuilder.core import Data
+import time
 
 
 class Step(Data):
@@ -16,5 +17,8 @@ class StepBuilder(Data):
         self.stepDict = stepDict if stepDict is not None else dict()
 
     def build(self):
+        start = time.time()
+        print('---> Build starts')
         for step in self.stepDict.values():
             step.build()
+        print('---> Build stops [{} sec]'.format(time.time() - start))

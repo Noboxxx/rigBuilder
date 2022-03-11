@@ -290,6 +290,7 @@ class Limb(Component):
             cmds.connectAttr('{}.worldMatrix'.format(fk), '{}.matrices[0].matrix'.format(resultMatrix))
             cmds.connectAttr('{}.worldMatrix'.format(ik), '{}.matrices[1].matrix'.format(resultMatrix))
             cmds.connectAttr(switchPlug, '{}.blender'.format(resultMatrix))
+            self.outputs.insert(0, '{}.resultMatrix'.format(resultMatrix))
 
         return resultMatrices
 
@@ -314,7 +315,6 @@ class Limb(Component):
         cmds.parent(forelegJoints[0], legJoints[-1])
 
     def build(self):
-        print self.items()
         # settings ctrl
         mainCtrlBuffer, mainCtrl = controller(
             'main_{}_ctl'.format(self), size=self.size * 1.25, color=self.color + 100, matrix=self.aGuide.matrix)
