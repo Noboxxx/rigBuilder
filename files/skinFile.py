@@ -1,12 +1,18 @@
+import math
+
 from maya import cmds
 from rigBuilder.files.core import JsonFile
 
 
 class SkinFile(JsonFile):
 
-    def export(self, meshes, force=False):
-        data = dict()
+    def export(self, meshes=None, force=False):
 
+        meshes = meshes if meshes is not None else cmds.listRelatives(
+            cmds.ls(sl=True, type='transform'), type='mesh', allDescendents=True
+        )
+
+        data = dict()
         for mesh in meshes:
             for skinCluster in cmds.listHistory(mesh):
                 if not cmds.objectType(skinCluster, isAType='skinCluster') or skinCluster in data:
@@ -32,13 +38,38 @@ class SkinFile(JsonFile):
 
         self.dump(data, force=force)
 
+    @staticmethod
+    def distance(pointA, pointB):
+        result = 0
+        for r in [(b - a) ** 2 for a, b in zip(pointA, pointB)]:
+            result += r
+        return abs(math.sqrt(result))
+
+    @staticmethod
+    def getClosestJoint(position):
+        distance = -1
+        joint = None
+        for j in cmds.ls(type='joint'):
+            p = cmds.xform(j, q=True, translation=True, worldSpace=True)
+            d = SkinFile.distance(position, p)
+            if distance == -1 or d < distance:
+                distance = d
+                joint = j
+
+        return joint
+
     def import_(self):
+
         data = self.load()
         for skinClusterName, info in data.items():
 
             influences = list()
             for influenceName, position in info['influences']:
-                influences.append(influenceName)
+                if cmds.objExists(influenceName):
+                    influences.append(influenceName)
+                else:
+                    closestJoint = self.getClosestJoint(position)
+                    influences.append(closestJoint)
 
             skinCluster, = cmds.skinCluster(influences + info['targets'], name=skinClusterName)
 

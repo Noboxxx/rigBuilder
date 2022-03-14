@@ -1,5 +1,5 @@
 from maya import cmds
-from .core import Component, GuideArray
+from .core import Component, GuideArray, Guide
 from .utils import matrixConstraint
 from .utils2 import controller
 
@@ -43,3 +43,12 @@ class FkChain(Component):
     def mirror(self):
         super(FkChain, self).mirror()
         self.guides = self.guides.mirrored()
+
+    def createGuides(self, name='untitled', number=3):
+        self.guides = GuideArray()
+        for index in range(number):
+            guide = Guide.create('{}{}'.format(name, index))
+            cmds.xform(guide, translation=(index * 10, 0, 0))
+            if self.guides:
+                cmds.parent(guide, self.guides[-1])
+            self.guides.append(guide)

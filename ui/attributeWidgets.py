@@ -160,6 +160,27 @@ class ComponentBuilderWidget(FileWidget):
         ui.show()
 
 
+class SkinFileWidget(FileWidget):
+    def __init__(self):
+        super(SkinFileWidget, self).__init__()
+
+        saveAsBtn = QtWidgets.QPushButton()
+        saveAsBtn.setFixedSize(size(20), size(20))
+        saveAsBtn.setIcon(QtGui.QIcon(':save.png'))
+        saveAsBtn.clicked.connect(self.saveAs)
+        self.mainLayout.addWidget(saveAsBtn)
+
+    def saveAs(self):
+        from rigBuilder.files.skinFile import SkinFile
+
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(self, caption='Save Skin File', filter='Json File (*.json)')
+        if not path:
+            return
+        f = SkinFile(path)
+        f.export(force=True)
+        self.pathEdit.setText(f)
+
+
 class NodeWidget(AttributeWidget):
 
     def __init__(self):

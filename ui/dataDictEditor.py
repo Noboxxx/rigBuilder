@@ -1,13 +1,13 @@
+from collections import OrderedDict
 from functools import partial
 
 from imath import clamp
 
 from PySide2 import QtWidgets
 from .utils import size, Signal
-from ..core import Data, MyOrderedDict
+from ..core import Data
 import re
-from .attributeWidgets import AttributeWidget, BoolWidget, StringWidget, DefaultWidget, FloatWidget, IntWidget
-from ..types import File
+from .attributeWidgets import BoolWidget, StringWidget, DefaultWidget, FloatWidget, IntWidget
 
 
 class RenamerDialog(QtWidgets.QDialog):
@@ -143,10 +143,10 @@ class DataDictList(QtWidgets.QTreeWidget):
         for key, data in dataDict.items():
             self.addItem(key, data)
 
-    def getDataDict(self):  # type: () -> MyOrderedDict[str: Data]
+    def getDataDict(self):  # type: () -> OrderedDict[str: Data]
         iterator = QtWidgets.QTreeWidgetItemIterator(self)
 
-        dataDict = MyOrderedDict()
+        dataDict = OrderedDict()
         while True:
             item = iterator.value()
             if item is None:

@@ -1,3 +1,5 @@
+import re
+
 from maya import cmds
 from rigBuilder.types import Side, Color, UnsignedInt, UnsignedFloat, Matrix
 from rigBuilder.core import Data
@@ -186,7 +188,7 @@ class Component(Data):
                 d[attr] = value
         return d
 
-    def createGuides(self):
+    def createGuides(self, name):
         pass
 
 
@@ -253,6 +255,18 @@ class Guide(str):
 
     @classmethod
     def create(cls, name):
+        if cmds.objExists(name):
+            pattern = re.compile(r'(^[A-Za-z0-9_]*[A-Za-z_]+)(\d*$)')
+            matches = pattern.findall(name)
+
+            if not matches:
+                raise ValueError('Key \'{}\' is not valid'.format(name))
+
+            name, index = matches[0]
+            index = int(index) if index.isdigit() else 0
+            index += 1
+            return cls.create('{}{}'.format(name, index))
+
         lct, = cmds.spaceLocator(name=name)
         return cls(lct)
 

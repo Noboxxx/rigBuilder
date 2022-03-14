@@ -12,8 +12,7 @@ from ..components.fkChain import FkChain
 from ..components.hand import Hand
 from ..components.leg import Leg
 from ..components.oneCtrl import OneCtrl
-from ..core import MyOrderedDict
-from ..types import Color, Side, UnsignedInt, UnsignedFloat
+from ..types import Color, Side
 
 
 class ConnectionAttributeEditor(DataAttributeEditor):
