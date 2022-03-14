@@ -257,7 +257,7 @@ class Limb(Component):
         self.children.append(pvCtrlBuffer)
         self.pvInputs.append(pvCtrlBuffer)
 
-        return joints
+        return joints, legIkCtrlBuffer, legIkCtrl, legIkHandle
 
     def fkSetup(self, mainCtrl, switchPlug):
         reverseNode = cmds.createNode('reverse')
@@ -329,7 +329,7 @@ class Limb(Component):
         cmds.addAttr(mainCtrl, longName=switchAttr, min=0, max=1, keyable=True)
 
         # ik setup
-        ikJoints = self.ikSetup(mainCtrl, switchPlug)
+        ikJoints = self.ikSetup(mainCtrl, switchPlug)[0]
 
         # fk ctrls
         fkCtrls = self.fkSetup(mainCtrl, switchPlug)

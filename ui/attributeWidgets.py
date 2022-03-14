@@ -106,11 +106,10 @@ class ScriptWidget(AttributeWidget):
 
 class FileWidget(AttributeWidget):
 
-    def __init__(self):
-        flt = ''
-        super(FileWidget, self).__init__()
+    filter = ''
 
-        self.filter = flt
+    def __init__(self):
+        super(FileWidget, self).__init__()
 
         self.pathEdit = QtWidgets.QLineEdit()
         self.pathEdit.textChanged.connect(self.emitValueChanged)
@@ -153,7 +152,7 @@ class ComponentBuilderWidget(FileWidget):
 
     def openEdit(self):
         from .componentBuilderWindow import ComponentBuilderWindow
-        ui = ComponentBuilderWindow(self)
+        ui = ComponentBuilderWindow()
         path = self.getValue()
         if path:
             ui.open(path)
@@ -161,6 +160,9 @@ class ComponentBuilderWidget(FileWidget):
 
 
 class SkinFileWidget(FileWidget):
+
+    filter = 'Json File (*.json)'
+
     def __init__(self):
         super(SkinFileWidget, self).__init__()
 
@@ -173,12 +175,16 @@ class SkinFileWidget(FileWidget):
     def saveAs(self):
         from rigBuilder.files.skinFile import SkinFile
 
-        path, _ = QtWidgets.QFileDialog.getSaveFileName(self, caption='Save Skin File', filter='Json File (*.json)')
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(self, caption='Save Skin File', filter=self.filter)
         if not path:
             return
         f = SkinFile(path)
         f.export(force=True)
         self.pathEdit.setText(f)
+
+
+class PythonFileWidget(FileWidget):
+    filter = 'Python File (*.py)'
 
 
 class NodeWidget(AttributeWidget):
