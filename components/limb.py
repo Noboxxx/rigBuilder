@@ -279,7 +279,7 @@ class Limb(Component):
                 cmds.parent(ctrlBuffer, latestCtrl)
             latestCtrl = ctrl
 
-        return ctrls
+        return ctrls, reverseNode
 
     def resultSetup(self, fkCtrls, ikJoints, switchPlug):
         resultMatrices = list()
@@ -332,7 +332,7 @@ class Limb(Component):
         ikJoints = self.ikSetup(mainCtrl, switchPlug)[0]
 
         # fk ctrls
-        fkCtrls = self.fkSetup(mainCtrl, switchPlug)
+        fkCtrls = self.fkSetup(mainCtrl, switchPlug)[0]
 
         # Result Matrices and switch
         resultMatrices = self.resultSetup(fkCtrls, ikJoints, switchPlug)
