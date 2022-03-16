@@ -144,7 +144,7 @@ class Component(Data):
         return repr(str(self))
 
     def __str__(self):
-        return '{}_{}_{}'.format(self.name, self.side, self.index)
+        return '{}_{}{}'.format(self.name, self.side, self.index)
 
     def mirror(self):
         self.side = self.side.mirrored()
@@ -180,6 +180,17 @@ class Component(Data):
                 indexedPlug = '{}.{}[{}]'.format(self, attr, index)
                 cmds.connectAttr(indexedPlug, objPlug, nextAvailable=True)
 
+    def buildControlSet(self):
+        controlSet = 'ControlSet'
+        if not cmds.objExists(controlSet):
+            cmds.select(clear=True)
+            cmds.sets(name=controlSet)
+
+        cmds.select(self.controllers)
+        s = cmds.sets(name='set_{}'.format(self))
+
+        cmds.sets(s, addElement=controlSet)
+
     def getStorageDict(self):
         d = dict()
         for attr in dir(self):
@@ -201,14 +212,16 @@ class ComponentBuilder(Data):
         self.componentDict = componentDict if componentDict is not None else dict()
         self.connectionDict = connectionDict if connectionDict is not None else dict()
 
-    def build(self):
-        folder = cmds.group(empty=True, name='rig')
+    def build(self, controlSet=False):
+        folder = cmds.group(empty=True, name='setup')
 
         componentDict = dict()
         mirroredComponentDict = dict()
         for key, component in self.componentDict.items():
             copiedComponent = component.copy()
             copiedComponent.build()
+            if controlSet:
+                copiedComponent.buildControlSet()
 
             cmds.parent(str(copiedComponent), folder)
 
@@ -216,6 +229,9 @@ class ComponentBuilder(Data):
             if copiedComponent.bilateral:
                 mirrorComponent = copiedComponent.mirrored()
                 mirrorComponent.build()
+
+                if controlSet:
+                    mirrorComponent.buildControlSet()
 
                 cmds.parent(str(mirrorComponent), folder)
 

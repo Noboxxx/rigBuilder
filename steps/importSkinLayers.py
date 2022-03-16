@@ -7,7 +7,11 @@ class SkinLayersFile(JsonFile):
     pass
 
 
-class Mesh(str):
+class Node(str):
+    pass
+
+
+class Mesh(Node):
     pass
 
 

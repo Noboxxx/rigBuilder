@@ -1,7 +1,9 @@
+from functools import partial
+
 from PySide2 import QtWidgets
 from rigBuilder.files.skinFile import SkinFile
 from .attributeWidgets import ScriptWidget, FileWidget, NodeWidget, ComponentBuilderWidget, SkinFileWidget, \
-    PythonFileWidget
+    PythonFileWidget, ListAttributeWidget
 from ..files.core import JsonFile
 from ..steps.buildComponents import BuildComponents, ComponentBuilderFile
 from ..steps.core import StepBuilder
@@ -11,6 +13,7 @@ from ..steps.importMayaFile import ImportMayaFile, MayaFile
 from ..steps.importSkin import ImportSkin
 from ..steps.importSkinLayers import ImportSkinLayers, Mesh
 from ..steps.newScene import NewScene
+from ..steps.packRig import PackRig, Nodes
 from ..ui.dataDictEditor import DataDictEditor, DataAttributeEditor, DataDictList
 
 from ..ui.jsonFileWindow import JsonFileWindow
@@ -22,9 +25,9 @@ class StepDictList(DataDictList):
         CustomScriptFile,
         NewScene,
         ImportMayaFile,
-        ImportSkinLayers,
         BuildComponents,
         ImportSkin,
+        PackRig
     ]
 
 
@@ -41,6 +44,7 @@ class StepAttributeEditor(DataAttributeEditor):
             (ComponentBuilderFile, ComponentBuilderWidget),
             (JsonFile, FileWidget),
             (MayaFile, FileWidget),
+            (Nodes, partial(ListAttributeWidget, NodeWidget))
         ] + self.typeWidgetMap
 
 
