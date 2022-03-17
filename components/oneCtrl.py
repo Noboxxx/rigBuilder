@@ -1,4 +1,4 @@
-from .utils import Controller, createBuffer, matrixConstraint
+from .utils import matrixConstraint
 from maya import cmds
 from .core import Component, Guide
 from .utils2 import controller

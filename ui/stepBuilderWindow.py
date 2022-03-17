@@ -13,7 +13,7 @@ from ..steps.customScriptFile import PythonFile, CustomScriptFile
 from ..steps.importGuidesFile import ImportGuidesFile
 from ..steps.importMayaFile import ImportMayaFile, MayaFile
 from ..steps.importSkin import ImportSkin
-from ..steps.importSkinLayers import ImportSkinLayers, Mesh
+from ..steps.importSkinLayers import Mesh
 from ..steps.newScene import NewScene
 from ..steps.packRig import PackRig, Nodes
 from ..ui.dataDictEditor import DataDictEditor, DataAttributeEditor, DataDictList

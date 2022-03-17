@@ -1,14 +1,14 @@
 import inspect
 from functools import partial
 from PySide2 import QtWidgets
-from .attributeWidgets import ColorWidget, AttributeWidget, NodeWidget, ComboWidget, ListAttributeWidget, \
+from .attributeWidgets import ColorWidget, NodeWidget, ComboWidget, ListAttributeWidget, \
     ConnectionPlugWidget
 from .dataDictEditor import DataDictEditor, DataDictList, DataAttributeEditor
 from .jsonFileWindow import JsonFileWindow
 from ..components.arm import Arm
 from ..components.base import Base
 from ..components.clavicle import Clavicle
-from ..components.core import ComponentBuilder, ConnectionPlug, ConnectionPlugArray, Connection, Guide, GuideDict, GuideArray
+from ..components.core import ComponentBuilder, ConnectionPlug, ConnectionPlugArray, Connection, Guide, GuideArray
 from ..components.fkChain import FkChain
 from ..components.hand import Hand
 from ..components.ikFkChain import IkFkChain

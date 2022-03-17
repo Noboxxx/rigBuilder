@@ -295,5 +295,5 @@ class DataDictEditor(QtWidgets.QWidget):
     def refresh(self, dataDict):  # type: (dict[str: Data]) -> None
         self.dataDictList.refresh(dataDict)
 
-    def getDataDict(self):  # type: () -> MyOrderedDict[str: Data]
+    def getDataDict(self):  # type: () -> OrderedDict[str: Data]
         return self.dataDictList.getDataDict()

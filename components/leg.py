@@ -1,6 +1,6 @@
 from maya import cmds
 from rigBuilder.components.core import Guide
-from rigBuilder.components.limb import Limb, poleVectorMatrix
+from rigBuilder.components.limb import Limb
 from rigBuilder.components.utils import matrixConstraint
 from rigBuilder.components.utils2 import controller
 

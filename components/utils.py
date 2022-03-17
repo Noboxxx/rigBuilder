@@ -2,8 +2,6 @@ from __future__ import division
 from maya import cmds
 from maya.api import OpenMaya
 import math
-import imath
-import re
 import os
 from .nodeUtils import BlendMatrix, Transform, Plug, Joint
 
