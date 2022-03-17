@@ -1,13 +1,15 @@
+import os
 from maya import cmds
 from rigBuilder.components.core import Component
 from rigBuilder.components.utils2 import scaleController
 
 
-class Base2(Component):
+class BaseLegacy(Component):
 
     def __init__(self, **kwargs):
-        super(Base2, self).__init__(**kwargs)
+        super(BaseLegacy, self).__init__(**kwargs)
 
+        self.globalBfr = 'global_C0_srt'
         self.globalCtrl = 'global_C0_ctl'
         self.localCtrl = 'local_C0_ctl'
         self.orientCamCtrl = 'orient_cam_C0_ctl'
@@ -15,9 +17,11 @@ class Base2(Component):
         self.infoCtrlBuffer = 'info_C0_srt'
         self.cogMasterCtrl = 'cog_master_C0_ctl'
         self.cogCtrl = 'cog_C0_ctl'
+        self.cogJnt = 'cog_guide_C0_jnt'
 
     def build(self):
-        cmds.file('C:/Users/plaurent/Desktop/base_hierarchy_cleaned.ma', i=True)
+        currentDirectory = os.path.dirname(os.path.realpath(__file__))
+        cmds.file('{}/src/baseLegacy.ma'.format(currentDirectory), i=True)
 
         # resize ctrls
         ctrls = [
@@ -45,10 +49,10 @@ class Base2(Component):
         cmds.setAttr('{}.tz'.format(self.infoCtrlBuffer), self.size * 8)
 
         #
-        self.children.append('global_C0_srt')
+        self.children.append(self.globalBfr)
         self.controllers += ctrls
-        self.outputs.append('cog_C0_ctl')
-        self.influencers.append('cog_guide_C0_jnt')
-        self.interfaces.append('info_C0_ctl')
+        self.outputs.append(self.cogCtrl)
+        self.influencers.append(self.cogJnt)
+        self.interfaces.append(self.infoCtrl)
 
         self.buildFolder()

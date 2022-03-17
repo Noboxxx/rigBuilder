@@ -1,5 +1,5 @@
 from maya import cmds
-from rigBuilder.components.base2 import Base2
+from rigBuilder.components.baseLegacy import BaseLegacy
 from rigBuilder.components.utils import matrixConstraint
 from rigBuilder.steps.importSkinLayers import Node
 from rigBuilder.steps.core import Step
@@ -37,7 +37,7 @@ class PackRig(Step):
         cmds.parent(geometryGroup, rigGroup, assetGroup)
 
         # Create base component
-        base = Base2(name='base', size=self.size)
+        base = BaseLegacy(name='base', size=self.size)
         base.build()
 
         cmds.parent(str(base), rigGroup)

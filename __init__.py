@@ -27,5 +27,8 @@
 
 # rbf test
 
-#######
-# create guides from components / export guides from step
+
+# TODO:
+# - check components (human and raptor)
+# - checker skin (human and raptor)
+# -

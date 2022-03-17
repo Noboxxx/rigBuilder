@@ -30,8 +30,11 @@ class GuidesFile(JsonFile):
 
         # Create guides
         parenting = list()
+        locking = list()
         for name, info in data.items():
             guide = Guide.create(name)
+
+            locking.append((guide, info['locked']))
 
             for attr in info['locked']:
                 cmds.setAttr('{}.{}'.format(guide, attr), lock=True)
@@ -44,5 +47,9 @@ class GuidesFile(JsonFile):
 
         # parent stuff
         for child, parent in parenting:
-            print child, namingMap[parent]
             cmds.parent(child, namingMap[parent])
+
+        # lock attrs
+        for guide, attrs in locking:
+            for attr in attrs:
+                cmds.setAttr('{}.{}'.format(guide, attr), lock=True)
