@@ -3,12 +3,14 @@ from functools import partial
 from PySide2 import QtWidgets
 from rigBuilder.files.skinFile import SkinFile
 from .attributeWidgets import ScriptWidget, FileWidget, NodeWidget, ComponentBuilderWidget, SkinFileWidget, \
-    PythonFileWidget, ListAttributeWidget
+    PythonFileWidget, ListAttributeWidget, GuidesFileWidget
 from ..files.core import JsonFile
+from ..files.guidesFile import GuidesFile
 from ..steps.buildComponents import BuildComponents, ComponentBuilderFile
 from ..steps.core import StepBuilder
 from ..steps.customScript import CustomScript, Script
 from ..steps.customScriptFile import PythonFile, CustomScriptFile
+from ..steps.importGuidesFile import ImportGuidesFile
 from ..steps.importMayaFile import ImportMayaFile, MayaFile
 from ..steps.importSkin import ImportSkin
 from ..steps.importSkinLayers import ImportSkinLayers, Mesh
@@ -27,7 +29,8 @@ class StepDictList(DataDictList):
         ImportMayaFile,
         BuildComponents,
         ImportSkin,
-        PackRig
+        PackRig,
+        ImportGuidesFile
     ]
 
 
@@ -42,6 +45,7 @@ class StepAttributeEditor(DataAttributeEditor):
             (SkinFile, SkinFileWidget),
             (PythonFile, PythonFileWidget),
             (ComponentBuilderFile, ComponentBuilderWidget),
+            (GuidesFile, GuidesFileWidget),
             (JsonFile, FileWidget),
             (MayaFile, FileWidget),
             (Nodes, partial(ListAttributeWidget, NodeWidget))

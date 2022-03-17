@@ -52,3 +52,5 @@ class FkChain(Component):
             if self.guides:
                 cmds.parent(guide, self.guides[-1])
             self.guides.append(guide)
+
+        cmds.select(self.guides[0])

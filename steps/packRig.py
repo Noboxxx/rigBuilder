@@ -1,9 +1,9 @@
 from maya import cmds
 from rigBuilder.components.base2 import Base2
 from rigBuilder.components.utils import matrixConstraint
-from rigBuilder.components.utils2 import controller
 from rigBuilder.steps.importSkinLayers import Node
 from rigBuilder.steps.core import Step
+from rigBuilder.types import UnsignedFloat
 
 
 class Nodes(list):
@@ -14,12 +14,13 @@ class Nodes(list):
 
 class PackRig(Step):
 
-    def __init__(self, children=None, rigChildren=None, geometryChildren=None, cleanScene=False):
+    def __init__(self, children=None, rigChildren=None, geometryChildren=None, size=1.0, cleanScene=False):
         super(PackRig, self).__init__()
         self.children = Nodes(('geometry',)) if children is None else Nodes(children)
         self.rigChildren = Nodes(('setup',)) if rigChildren is None else Nodes(rigChildren)
         self.geometryChildren = Nodes() if geometryChildren is None else Nodes(geometryChildren)
         self.cleanScene = bool(cleanScene)
+        self.size = UnsignedFloat(size)
 
     def build(self):
         assetGroup = cmds.group(empty=True, name='rig_group')
@@ -36,7 +37,7 @@ class PackRig(Step):
         cmds.parent(geometryGroup, rigGroup, assetGroup)
 
         # Create base component
-        base = Base2(name='base', size=10.0)
+        base = Base2(name='base', size=self.size)
         base.build()
 
         cmds.parent(str(base), rigGroup)

@@ -1,3 +1,4 @@
+import inspect
 from functools import partial
 from PySide2 import QtWidgets
 from .attributeWidgets import ColorWidget, AttributeWidget, NodeWidget, ComboWidget, ListAttributeWidget, \
@@ -15,6 +16,35 @@ from ..components.ikFkChain import IkFkChain
 from ..components.leg import Leg
 from ..components.oneCtrl import OneCtrl
 from ..types import Color, Side
+
+
+class CreateGuidesDialog(QtWidgets.QDialog):
+
+    def __init__(self, name, defaultNumber=0):
+        super(CreateGuidesDialog, self).__init__()
+
+        self.setWindowTitle(name)
+
+        self.validated = False
+
+        self.spin = QtWidgets.QSpinBox()
+        self.spin.setValue(defaultNumber)
+
+        applyBtn = QtWidgets.QPushButton('Apply')
+        applyBtn.clicked.connect(self.validate)
+
+        mainLayout = QtWidgets.QHBoxLayout(self)
+        mainLayout.addWidget(QtWidgets.QLabel('Number'))
+        mainLayout.addWidget(self.spin)
+        mainLayout.addWidget(applyBtn)
+
+    def exec_(self):
+        super(CreateGuidesDialog, self).exec_()
+        return self.spin.value() if self.validated else 0
+
+    def validate(self):
+        self.validated = True
+        self.close()
 
 
 class ConnectionAttributeEditor(DataAttributeEditor):
@@ -70,7 +100,16 @@ class ComponentDictList(DataDictList):
 
     def createGuides(self):
         for item in self.selectedItems():
-            item.d.createGuides(item.text(0))
+            argSpec = inspect.getargspec(item.d.createGuides)
+            kwargDefaultMap = {k: v for k, v in zip(reversed(argSpec.args or list()), reversed(argSpec.defaults or list()))}
+
+            kwargs = dict()
+            if 'number' in kwargDefaultMap.keys():
+                result = CreateGuidesDialog(item.text(0), defaultNumber=kwargDefaultMap['number']).exec_()
+                if result == 0:
+                    continue
+                kwargs['number'] = result
+            item.d.createGuides(item.text(0), **kwargs)
 
         self.emitCurrentDataChanged(self.currentItem())
 

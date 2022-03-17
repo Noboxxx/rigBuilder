@@ -27,3 +27,6 @@ class OneCtrl(Component):
     def mirror(self):
         super(OneCtrl, self).mirror()
         self.guide = self.guide.mirrored()
+
+    def createGuides(self, name):
+        self.guide = Guide.create(name)

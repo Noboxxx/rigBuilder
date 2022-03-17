@@ -28,6 +28,4 @@
 # rbf test
 
 #######
-# finir beta bras, jambes, spine
-# import skin (skin normal et layers)
-# guides system
+# create guides from components / export guides from step

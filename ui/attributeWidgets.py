@@ -159,6 +159,29 @@ class ComponentBuilderWidget(FileWidget):
         ui.show()
 
 
+class GuidesFileWidget(FileWidget):
+    filter = 'Json File (*.json)'
+
+    def __init__(self):
+        super(GuidesFileWidget, self).__init__()
+
+        saveAsBtn = QtWidgets.QPushButton()
+        saveAsBtn.setFixedSize(size(20), size(20))
+        saveAsBtn.setIcon(QtGui.QIcon(':save.png'))
+        saveAsBtn.clicked.connect(self.saveAs)
+        self.mainLayout.addWidget(saveAsBtn)
+
+    def saveAs(self):
+        from rigBuilder.files.guidesFile import GuidesFile
+
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(self, caption='Save Guides File', filter=self.filter)
+        if not path:
+            return
+        f = GuidesFile(path)
+        f.export(force=True)
+        self.pathEdit.setText(f)
+
+
 class SkinFileWidget(FileWidget):
 
     filter = 'Json File (*.json)'
@@ -212,7 +235,7 @@ class NodeWidget(AttributeWidget):
 
     def pick(self):
         from maya import cmds
-        selection = cmds.ls(sl=True, long=True)
+        selection = cmds.ls(sl=True)
 
         if not selection:
             return

@@ -314,6 +314,8 @@ class Limb(Component):
         cmds.parent(ankleJnt, forelegJoints[-1])
         cmds.parent(forelegJoints[0], legJoints[-1])
 
+        return legJoints + forelegJoints + [ankleJnt]
+
     def build(self):
         # settings ctrl
         mainCtrlBuffer, mainCtrl = controller(

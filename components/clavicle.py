@@ -56,3 +56,13 @@ class Clavicle(Component):
         matrixConstraint((ikCtrl,), ikHandle)
 
         self.buildFolder()
+
+    def createGuides(self, name):
+        self.clavicleGuide = Guide.create('{}Clavicle'.format(name))
+        self.shoulderGuide = Guide.create('{}Shoulder'.format(name))
+
+        cmds.parent(self.shoulderGuide, self.clavicleGuide)
+
+        cmds.setAttr('{}.tx'.format(self.shoulderGuide), 10)
+
+        cmds.select(self.clavicleGuide)

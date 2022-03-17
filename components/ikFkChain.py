@@ -1,4 +1,5 @@
-from rigBuilder.components.core import Component, GuideArray
+from __future__ import division
+from rigBuilder.components.core import Component, GuideArray, Guide
 from rigBuilder.components.utils import matrixConstraint
 from rigBuilder.components.utils2 import controller, distance
 from maya import cmds
@@ -16,8 +17,8 @@ class IkFkChain(Component):
 
     def build(self):
         # root ctrl
-        rootBfr, rootCtrl = controller('rootIk_{}_ctl'.format(self), size=self.size, color=self.color,
-                                       matrix=self.guides[0].matrix, shape='cube')
+        rootBfr, rootCtrl = controller('rootIk_{}_ctl'.format(self), size=self.size, color=self.color - 100,
+                                       matrix=self.guides[0].matrix, shape='square')
         self.controllers.append(rootCtrl)
         self.inputs.append(rootBfr)
         self.interfaces.append(rootBfr)
@@ -37,18 +38,15 @@ class IkFkChain(Component):
             self.controllers.append(fkCtrl)
 
         # end ctrl
-        endBfr, endCtrl = controller('endIk_{}_ctl'.format(self), size=self.size, color=self.color,
-                                     matrix=self.guides[-1].matrix, shape='cube')
+        endBfr, endCtrl = controller('endIk_{}_ctl'.format(self), size=self.size, color=self.color - 100,
+                                     matrix=self.guides[-1].matrix, shape='square')
         cmds.parent(endBfr, lastCtrl)
         self.controllers.append(endCtrl)
 
         # curve
         points = [g.matrix[12:15] for g in self.guides]
-        for p in points:
-            lct, = cmds.spaceLocator()
-            cmds.xform(lct, translation=p)
-
         curve = cmds.curve(d=3, editPoint=points, name='{}_crv'.format(self))
+        cmds.setAttr('{}.inheritsTransform'.format(curve), False)
         self.children.append(curve)
 
         # joints
@@ -57,6 +55,7 @@ class IkFkChain(Component):
             if joints:
                 cmds.select(joints[-1])
             joint = cmds.joint(name='part{}_{}_skn'.format(index, self))
+            cmds.setAttr('{}.segmentScaleCompensate'.format(joint), False)
             if index == 0:
                 self.children.append(joint)
             cmds.xform(joint, matrix=guide.matrix, worldSpace=True)
@@ -65,6 +64,9 @@ class IkFkChain(Component):
             self.outputs.insert(0, joint)
 
         cmds.makeIdentity(joints[0], apply=True, rotate=True)
+
+        # plop
+        matrixConstraint((rootCtrl,), joints[0])
 
         # ik
         cmds.select(joints[0], joints[-1], curve)
@@ -95,16 +97,26 @@ class IkFkChain(Component):
             distanceEnd = distance(cvPos, endPos)
             totalLength = distanceRoot + distanceEnd
 
-
-            print position
+            ratio = distanceRoot / totalLength
 
             cmds.skinPercent(
                 skinCluster,
                 '{}.cv[{}]'.format(curve, index),
                 transformValue=[
-                    (rootJoint, 1 - percent),
-                    (endJoint, percent),
+                    (rootJoint, 1 - ratio),
+                    (endJoint, ratio),
                 ],
             )
 
         self.buildFolder()
+
+    def createGuides(self, name='untitled', number=3):
+        self.guides = GuideArray()
+        for index in range(number):
+            guide = Guide.create('{}{}'.format(name, index))
+            cmds.xform(guide, translation=(index * 10, 0, 0))
+            if self.guides:
+                cmds.parent(guide, self.guides[-1])
+            self.guides.append(guide)
+
+        cmds.select(self.guides[0])

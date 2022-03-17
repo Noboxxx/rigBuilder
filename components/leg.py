@@ -108,3 +108,99 @@ class Leg(Limb):
         ctrls.append(ctrl)
 
         return ctrls, reverseNode
+
+    def skinSetup(self, mainCtrl, resultMatrices):
+        skinJoints = super(Leg, self).skinSetup(mainCtrl, resultMatrices)
+
+        toesJnt = cmds.joint(name='toes_{}_skn'.format(self))
+        cmds.setAttr('{}.segmentScaleCompensate'.format(toesJnt), False)
+        self.influencers.append(toesJnt)
+        for attr in ('translate', 'rotate', 'scale', 'shear'):
+            cmds.connectAttr('{}.{}'.format(resultMatrices[3], attr), '{}.{}'.format(toesJnt, attr))
+        cmds.connectAttr('{}.parentInverseMatrix'.format(toesJnt), '{}.parentInverseMatrix'.format(resultMatrices[3]))
+        cmds.connectAttr('{}.jointOrient'.format(toesJnt), '{}.jointOrient'.format(resultMatrices[3]))
+
+        cmds.parent(toesJnt, skinJoints[-1])
+
+        return skinJoints + [toesJnt]
+
+    def createGuides(self, name):
+        self.aGuide = Guide.create('{}Hip'.format(name))
+        self.bGuide = Guide.create('{}Knee'.format(name))
+        self.cGuide = Guide.create('{}Ankle'.format(name))
+
+        self.toesGuide = Guide.create('{}Toes'.format(name))
+
+        self.footTipGuide = Guide.create('{}FootTip'.format(name))
+        self.footBackGuide = Guide.create('{}FootBack'.format(name))
+        self.footInGuide = Guide.create('{}FootIn'.format(name))
+        self.footOutGuide = Guide.create('{}FootOut'.format(name))
+
+        cmds.parent(self.cGuide, self.bGuide)
+        cmds.parent(self.bGuide, self.aGuide)
+        cmds.parent(self.toesGuide, self.cGuide)
+
+        cmds.parent(
+            self.footTipGuide,
+            self.footBackGuide,
+            self.footInGuide,
+            self.footOutGuide,
+            self.cGuide
+        )
+
+        # aGuide
+        cmds.setAttr('{}.rx'.format(self.aGuide), -90)
+        cmds.setAttr('{}.ry'.format(self.aGuide), -5)
+        cmds.setAttr('{}.rz'.format(self.aGuide), -90)
+
+        # bGuide
+        cmds.setAttr('{}.tx'.format(self.bGuide), 10)
+        cmds.setAttr('{}.ty'.format(self.bGuide), lock=True)
+        cmds.setAttr('{}.tz'.format(self.bGuide), lock=True)
+
+        cmds.setAttr('{}.rx'.format(self.bGuide), lock=True)
+        cmds.setAttr('{}.ry'.format(self.bGuide), lock=True)
+        cmds.setAttr('{}.rz'.format(self.bGuide), 10)
+
+        # cGuide
+        cmds.setAttr('{}.tx'.format(self.cGuide), 10)
+        cmds.setAttr('{}.ty'.format(self.cGuide), lock=True)
+        cmds.setAttr('{}.tz'.format(self.cGuide), lock=True)
+
+        cmds.setAttr('{}.rz'.format(self.cGuide), -95)
+
+        # toesGuide
+        cmds.setAttr('{}.tx'.format(self.toesGuide), 5)
+        cmds.setAttr('{}.ty'.format(self.toesGuide), lock=True)
+        cmds.setAttr('{}.tz'.format(self.toesGuide), lock=True)
+
+        # footTip
+        cmds.setAttr('{}.ty'.format(self.footTipGuide), 1)
+        cmds.setAttr('{}.tx'.format(self.footTipGuide), 5)
+
+        cmds.setAttr('{}.rx'.format(self.footTipGuide), -180)
+        cmds.setAttr('{}.ry'.format(self.footTipGuide), -90)
+
+        # footBack
+        cmds.setAttr('{}.ty'.format(self.footBackGuide), 1)
+
+        cmds.setAttr('{}.rx'.format(self.footBackGuide), -180)
+        cmds.setAttr('{}.ry'.format(self.footBackGuide), -90)
+
+        # footIn
+        cmds.setAttr('{}.tx'.format(self.footInGuide), 5)
+        cmds.setAttr('{}.ty'.format(self.footInGuide), 1)
+        cmds.setAttr('{}.tz'.format(self.footInGuide), -1)
+
+        cmds.setAttr('{}.rx'.format(self.footInGuide), -180)
+        cmds.setAttr('{}.ry'.format(self.footInGuide), -90)
+
+        # footOut
+        cmds.setAttr('{}.tx'.format(self.footOutGuide), 5)
+        cmds.setAttr('{}.ty'.format(self.footOutGuide), 1)
+        cmds.setAttr('{}.tz'.format(self.footOutGuide), 1)
+
+        cmds.setAttr('{}.rx'.format(self.footOutGuide), -180)
+        cmds.setAttr('{}.ry'.format(self.footOutGuide), -90)
+
+        cmds.select(self.aGuide)

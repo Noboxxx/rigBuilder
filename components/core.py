@@ -271,6 +271,10 @@ class Guide(str):
 
     @classmethod
     def create(cls, name):
+        guidesGrp = 'guides'
+        if not cmds.objExists(guidesGrp):
+            cmds.group(empty=True, name=guidesGrp)
+
         if cmds.objExists(name):
             pattern = re.compile(r'(^[A-Za-z0-9_]*[A-Za-z_]+)(\d*$)')
             matches = pattern.findall(name)
@@ -284,6 +288,7 @@ class Guide(str):
             return cls.create('{}{}'.format(name, index))
 
         lct, = cmds.spaceLocator(name=name)
+        cmds.parent(lct, guidesGrp)
         return cls(lct)
 
 
