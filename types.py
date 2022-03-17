@@ -11,7 +11,7 @@ class Side(str):
     }
 
     def __init__(self, side):  # type: (str) -> None
-        if side not in self.mirrorTable:
+        if str(side) not in self.mirrorTable:
             raise ValueError('Unrecognized Side \'{}\'.'.format(side))
         super(Side, self).__init__(side)
 
