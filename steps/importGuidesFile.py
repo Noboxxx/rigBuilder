@@ -1,4 +1,4 @@
-from RBuild.steps.core import Step
+from rigBuilder.steps.core import Step
 import os
 from rigBuilder.files.guidesFile import GuidesFile
 

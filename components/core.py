@@ -247,6 +247,62 @@ class ComponentBuilder(Data):
 
 class Guide(str):
 
+    xArrowShape = (
+        (0, 0, 0),
+        (4, 0, 0),
+        (4, 0, -1),
+        (6, 0, 0),
+        (4, 0, 1),
+        (4, 0, 0),
+        (4, 1, 0),
+        (6, 0, 0),
+        (4, -1, 0),
+        (4, 0, 0),
+    )
+    yArrowShape = (
+        (0, 0, 0),
+        (0, 4, 0),
+        (-1, 4, 0),
+        (0, 6, 0),
+        (1, 4, 0),
+        (0, 4, 0),
+        (0, 4, 1),
+        (0, 6, 0),
+        (0, 4, -1),
+        (0, 4, 0),
+    )
+    zArrowShape = (
+        (0, 0, 0),
+        (0, 0, 4),
+        (0, -1, 4),
+        (0, 0, 6),
+        (0, 1, 4),
+        (0, 0, 4),
+        (1, 0, 4),
+        (0, 0, 6),
+        (-1, 0, 4),
+        (0, 0, 4),
+    )
+    xCircleShape = (
+        (0, 6, -2.29478e-06),
+        (0, 5.543276, -2.296103),
+        (0, 4.242639, -4.242642),
+        (0, 2.296098, -5.543278),
+        (0, -3.03984e-06, -6),
+        (0, -2.296103, -5.543276),
+        (0, -4.242643, -4.242638),
+        (0, -5.543279, -2.296098),
+        (0, -6, -1.49012e-07),
+        (0, -5.543277, 2.2961),
+        (0, -4.24264, 4.242641),
+        (0, -2.2961, 5.543277),
+        (0, 8.9407e-07, 6),
+        (0, 2.296102, 5.543277),
+        (0, 4.242641, 4.24264),
+        (0, 5.543278, 2.296098),
+        (0, 6, -2.29478e-06),
+    )
+
     def __init__(self, name):
         super(Guide, self).__init__(name)
 
@@ -270,6 +326,30 @@ class Guide(str):
         return matrix.normalized()
 
     @classmethod
+    def threeArrows(cls, name='guide#'):
+        colors = (255, 0, 0), (0, 255, 0), (0, 0, 255), (100, 100, 100)
+        shapes = cls.xArrowShape, cls.yArrowShape, cls.zArrowShape, cls.xCircleShape
+
+        trs = cmds.group(empty=True, name=name)
+
+        for color, shape in zip(colors, shapes):
+            guide = cmds.curve(point=shape, degree=1)
+            for s in cmds.listRelatives(guide, type='nurbsCurve'):
+
+                cmds.setAttr('{}.overrideEnabled'.format(s), True)
+                cmds.setAttr('{}.overrideRGBColors'.format(s), True)
+
+                cmds.setAttr('{}.overrideColorR'.format(s), color[0] / 255.0)
+                cmds.setAttr('{}.overrideColorG'.format(s), color[1] / 255.0)
+                cmds.setAttr('{}.overrideColorB'.format(s), color[2] / 255.0)
+
+                cmds.parent(s, trs, s=True, r=True)
+
+            cmds.delete(guide)
+
+        return trs
+
+    @classmethod
     def create(cls, name):
         guidesGrp = 'guides'
         if not cmds.objExists(guidesGrp):
@@ -287,9 +367,9 @@ class Guide(str):
             index += 1
             return cls.create('{}{}'.format(name, index))
 
-        lct, = cmds.spaceLocator(name=name)
-        cmds.parent(lct, guidesGrp)
-        return cls(lct)
+        g = cls.threeArrows(name=name)
+        cmds.parent(g, guidesGrp)
+        return cls(g)
 
 
 class GuideArray(list):

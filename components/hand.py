@@ -83,3 +83,38 @@ class Hand(Component):
             self.fingerChain(name, guideArray, mainCtrl, mainJoint)
 
         self.buildFolder()
+
+    def createGuides(self, name):
+        self.handGuide = Guide.create('{}Hand'.format(name))
+
+        tzValues = (5, 2, 0, -2, -4)
+        rxValues = (90, 0, 0, 0, 0)
+        txValues = (2, 5, 5, 5, 5)
+        finger = ('thumb', 'index', 'middle', 'ring', 'pinky')
+
+        for tx, tz, rx, f in zip(txValues, tzValues, rxValues, finger):
+            lastGuide = None
+            for n in range(3):
+                g = Guide.create('{}{}{}'.format(name, f.title(), n))
+
+                if lastGuide is None:
+                    self.__setattr__('{}Guides'.format(f), GuideArray())
+
+                guideArray = self.__getattribute__('{}Guides'.format(f))
+                guideArray.append(g)
+
+                if lastGuide is None:
+                    cmds.parent(g, self.handGuide)
+                    cmds.setAttr('{}.tx'.format(g), tx)
+                    cmds.setAttr('{}.tz'.format(g), tz)
+                    cmds.setAttr('{}.rx'.format(g), rx)
+                else:
+                    cmds.parent(g, lastGuide)
+                    for attr in ('t', 'r'):
+                        for axis in ('x', 'y', 'z'):
+                            cmds.setAttr('{}.{}{}'.format(g, attr, axis), 0)
+                    cmds.setAttr('{}.tx'.format(g), 3)
+
+                lastGuide = g
+
+        cmds.select(self.handGuide)

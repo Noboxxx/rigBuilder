@@ -1,7 +1,7 @@
 import os
 from functools import partial
 from PySide2 import QtWidgets, QtGui
-from RBuild.ui.utils import getMayaMainWindow, deleteSiblingWidgets, size
+from rigBuilder.ui.utils import getMayaMainWindow, deleteSiblingWidgets, size
 from ..files.core import JsonFile
 from ..core import Data
 

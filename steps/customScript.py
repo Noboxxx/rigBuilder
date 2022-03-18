@@ -1,4 +1,4 @@
-from RBuild.steps.core import Step
+from rigBuilder.steps.core import Step
 
 
 class Script(str):

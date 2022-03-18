@@ -1,4 +1,4 @@
-from RBuild.steps.core import Step
+from rigBuilder.steps.core import Step
 from maya import cmds
 import os
 
