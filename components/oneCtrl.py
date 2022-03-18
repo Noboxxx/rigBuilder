@@ -11,7 +11,7 @@ class OneCtrl(Component):
         self.guide = Guide(guide)
 
     def build(self):
-        bfr, ctrl = controller('{}_ctl'.format(self), color=self.color, size=self.size, matrix=self.guide.matrix)
+        bfr, ctrl = controller('{}_ctl'.format(self), color=self.color, size=self.guide.size, matrix=self.guide.matrix)
         skinJoint = cmds.joint(name='{}_skn'.format(self))
         matrixConstraint((ctrl,), skinJoint)
 

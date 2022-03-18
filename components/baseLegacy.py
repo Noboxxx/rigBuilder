@@ -6,9 +6,10 @@ from rigBuilder.components.utils2 import scaleController
 
 class BaseLegacy(Component):
 
-    def __init__(self, **kwargs):
+    def __init__(self, size=1.0, **kwargs):
         super(BaseLegacy, self).__init__(**kwargs)
 
+        self.size = size
         self.globalBfr = 'global_C0_srt'
         self.globalCtrl = 'global_C0_ctl'
         self.localCtrl = 'local_C0_ctl'

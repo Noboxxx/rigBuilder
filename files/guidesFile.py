@@ -36,9 +36,6 @@ class GuidesFile(JsonFile):
 
             locking.append((guide, info['locked']))
 
-            for attr in info['locked']:
-                cmds.setAttr('{}.{}'.format(guide, attr), lock=True)
-
             cmds.xform(guide, matrix=info['matrix'])
             namingMap[name] = str(guide)
 

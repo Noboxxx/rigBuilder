@@ -233,7 +233,7 @@ class Limb(Component):
             cmds.setAttr('{}.segmentScaleCompensate'.format(joint), False)
 
         legIkCtrlBuffer, legIkCtrl = controller(
-            'ik_{}_ctl'.format(self), size=self.size, matrix=self.cGuide.matrix, color=self.color - 100,
+            'ik_{}_ctl'.format(self), size=self.cGuide.size, matrix=self.cGuide.matrix, color=self.color - 100,
             ctrlParent=mainCtrl, visParent=switchPlug, shape='cube')
         self.controllers.append(legIkCtrl)
         self.ikInputs.append(legIkCtrlBuffer)
@@ -248,9 +248,9 @@ class Limb(Component):
 
         # pv
         pvMatrix = poleVectorMatrix(
-            self.aGuide.matrix, self.bGuide.matrix, self.cGuide.matrix, offset=self.size * 5)
+            self.aGuide.matrix, self.bGuide.matrix, self.cGuide.matrix, offset=self.bGuide.size * 5)
         pvCtrlBuffer, pvCtrl = controller('pv_{}_ctl'.format(self), color=self.color - 100, matrix=pvMatrix,
-                                          size=self.size * 0.5, visParent=switchPlug, ctrlParent=mainCtrl, shape='diamond')
+                                          size=self.bGuide.size * 0.5, visParent=switchPlug, ctrlParent=mainCtrl, shape='diamond')
         cmds.poleVectorConstraint(pvCtrl, legIkHandle)
         self.controllers.append(pvCtrl)
         self.inputs.append(pvCtrlBuffer)
@@ -268,7 +268,7 @@ class Limb(Component):
         for index, guide in enumerate((self.aGuide, self.bGuide, self.cGuide)):
             ctrlParent = mainCtrl if index == 0 else latestCtrl
             ctrlBuffer, ctrl = controller(
-                'fk{}_{}_ctl'.format(index, self), size=self.size, matrix=list(guide.matrix.normalized()),
+                'fk{}_{}_ctl'.format(index, self), size=guide.size, matrix=list(guide.matrix.normalized()),
                 color=self.color, ctrlParent=ctrlParent, visParent='{}.outputX'.format(reverseNode))
             ctrls.append(ctrl)
             self.controllers.append(ctrl)
@@ -319,7 +319,7 @@ class Limb(Component):
     def build(self):
         # settings ctrl
         mainCtrlBuffer, mainCtrl = controller(
-            'main_{}_ctl'.format(self), size=self.size * 1.25, color=self.color + 100, matrix=self.aGuide.matrix)
+            'main_{}_ctl'.format(self), size=self.aGuide.size * 1.25, color=self.color + 100, matrix=self.aGuide.matrix)
         self.interfaces.append(mainCtrl)
         self.controllers.append(mainCtrl)
         self.children.append(mainCtrlBuffer)

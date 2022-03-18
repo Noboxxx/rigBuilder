@@ -42,7 +42,7 @@ class Hand(Component):
         latestJoint = None
         for index, guide in enumerate(guideArray):
             parent = ctrlParent if index == 0 else latestCtrl
-            bfr, ctrl = controller('{}{}_{}_ctl'.format(fingerName, index, self), size=self.size * 0.5,
+            bfr, ctrl = controller('{}{}_{}_ctl'.format(fingerName, index, self), size=guide.size,
                                    color=self.color, ctrlParent=parent, matrix=guide.matrix)
             joint = cmds.joint(name='{}{}_{}_skn'.format(fingerName, index, self))
             cmds.setAttr('{}.segmentScaleCompensate'.format(joint), False)
@@ -65,7 +65,7 @@ class Hand(Component):
 
     def build(self):
         # main ctrl
-        mainBuffer, mainCtrl = controller('main_{}_ctl'.format(self), size=self.size, matrix=self.handGuide.matrix,
+        mainBuffer, mainCtrl = controller('main_{}_ctl'.format(self), size=self.handGuide.size, matrix=self.handGuide.matrix,
                                           color=self.color)
         mainJoint = cmds.joint(name='main_{}_skn'.format(self))
 

@@ -15,7 +15,7 @@ class FkChain(Component):
         latestCtrl = None
         for index, guide in enumerate(self.guides):
             bfr, ctrl = controller(
-                'part{}_{}_ctl'.format(index, self), color=self.color, size=self.size, matrix=guide.matrix,
+                'part{}_{}_ctl'.format(index, self), color=self.color, size=guide.size, matrix=guide.matrix,
                 ctrlParent=latestCtrl)
             joint = cmds.joint(name='part{}_{}_skn'.format(index, self))
             cmds.setAttr('{}.segmentScaleCompensate'.format(joint), False)

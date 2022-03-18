@@ -21,13 +21,13 @@ class Clavicle(Component):
         shoulderMatrix = list(self.clavicleGuide.matrix)[:12] + list(self.shoulderGuide.matrix)[12:]
 
         fkBfr, fkCtrl = controller(
-            'fk_{}_ctl'.format(self), size=self.size, color=self.color, matrix=self.clavicleGuide.matrix)
+            'fk_{}_ctl'.format(self), size=self.clavicleGuide.size, color=self.color, matrix=self.clavicleGuide.matrix)
         self.inputs.append(fkBfr)
         self.interfaces.append(fkCtrl)
         self.controllers.append(fkCtrl)
 
         ikBfr, ikCtrl = controller(
-            'ik_{}_ctl'.format(self), size=self.size, color=self.color, matrix=shoulderMatrix, shape='cube')
+            'ik_{}_ctl'.format(self), size=self.clavicleGuide.size, color=self.color, matrix=shoulderMatrix, shape='cube')
         for axis in ('x', 'y', 'z'):
             cmds.setAttr('{}.r{}'.format(ikCtrl, axis), lock=True, keyable=False)
             cmds.setAttr('{}.s{}'.format(ikCtrl, axis), lock=True, keyable=False)

@@ -1,7 +1,7 @@
 import re
 
 from maya import cmds
-from rigBuilder.types import Side, Color, UnsignedInt, UnsignedFloat, Matrix
+from rigBuilder.types import Side, Color, UnsignedInt, UnsignedFloat, Matrix, Vector
 from rigBuilder.core import Data
 from collections import OrderedDict
 
@@ -122,14 +122,13 @@ class Input(Plug):
 
 class Component(Data):
 
-    def __init__(self, name='untitled', side='C', index=0, color=(255, 255, 0), size=1.0, bilateral=False):
+    def __init__(self, name='untitled', side='C', index=0, color=(255, 255, 0), bilateral=False, **kwargs):
         super(Component, self).__init__()
 
         self.name = str(name)
         self.side = Side(side)
         self.index = UnsignedInt(index)
         self.color = Color(color)
-        self.size = UnsignedFloat(size)
         self.bilateral = bool(bilateral)
 
         self.interfaces = Storage()
@@ -139,6 +138,9 @@ class Component(Data):
 
         self.controllers = Storage()
         self.influencers = Storage()
+
+        for k, v in kwargs.items():
+            print('Unknown kwargs: \'{}\' -> {} for \'{}\''.format(k, v, self))
 
     def __repr__(self):
         return repr(str(self))
@@ -249,58 +251,30 @@ class Guide(str):
 
     xArrowShape = (
         (0, 0, 0),
-        (4, 0, 0),
-        (4, 0, -1),
-        (6, 0, 0),
-        (4, 0, 1),
-        (4, 0, 0),
-        (4, 1, 0),
-        (6, 0, 0),
-        (4, -1, 0),
-        (4, 0, 0),
-    )
-    yArrowShape = (
-        (0, 0, 0),
-        (0, 4, 0),
-        (-1, 4, 0),
-        (0, 6, 0),
-        (1, 4, 0),
-        (0, 4, 0),
-        (0, 4, 1),
-        (0, 6, 0),
-        (0, 4, -1),
-        (0, 4, 0),
-    )
-    zArrowShape = (
-        (0, 0, 0),
-        (0, 0, 4),
-        (0, -1, 4),
-        (0, 0, 6),
-        (0, 1, 4),
-        (0, 0, 4),
-        (1, 0, 4),
-        (0, 0, 6),
-        (-1, 0, 4),
-        (0, 0, 4),
+        (1.5, 0, 0),
     )
     xCircleShape = (
-        (0, 6, -2.29478e-06),
-        (0, 5.543276, -2.296103),
-        (0, 4.242639, -4.242642),
-        (0, 2.296098, -5.543278),
-        (0, -3.03984e-06, -6),
-        (0, -2.296103, -5.543276),
-        (0, -4.242643, -4.242638),
-        (0, -5.543279, -2.296098),
-        (0, -6, -1.49012e-07),
-        (0, -5.543277, 2.2961),
-        (0, -4.24264, 4.242641),
-        (0, -2.2961, 5.543277),
-        (0, 8.9407e-07, 6),
-        (0, 2.296102, 5.543277),
-        (0, 4.242641, 4.24264),
-        (0, 5.543278, 2.296098),
-        (0, 6, -2.29478e-06),
+        (0, 2.98023e-08, 1),
+        (0, 0.309017, 0.951057),
+        (0, 0.587785, 0.809017),
+        (0, 0.809017, 0.587785),
+        (0, 0.951057, 0.309017),
+        (0, 1, 0),
+        (0, 0.951057, -0.309017),
+        (0, 0.809017, -0.587785),
+        (0, 0.587785, -0.809017),
+        (0, 0.309017, -0.951057),
+        (0, 0, -1),
+        (0, -0.309017, -0.951057),
+        (0, -0.587786, -0.809017),
+        (0, -0.809018, -0.587786),
+        (0, -0.951057, -0.309017),
+        (0, -1, 0),
+        (0, -0.951057, 0.309017),
+        (0, -0.809017, 0.587785),
+        (0, -0.587785, 0.809017),
+        (0, -0.309017, 0.951057),
+        (0, 2.98023e-08, 1),
     )
 
     def __init__(self, name):
@@ -318,17 +292,38 @@ class Guide(str):
 
     @property
     def matrix(self):
+        return self._matrix.normalized()
+
+    @property
+    def _matrix(self):
         if not cmds.objExists(self):
             raise RuntimeError('Guide named \'{}\' does not exist.'.format(self))
         matrix = Matrix(cmds.xform(self, q=True, matrix=True, worldSpace=True))
         if self._mirror:
             matrix.mirror()
-        return matrix.normalized()
+        return matrix
+
+    @property
+    def size(self):
+        return Vector(self._matrix[4:7]).magnitude() * 1.2
 
     @classmethod
     def threeArrows(cls, name='guide#'):
         colors = (255, 0, 0), (0, 255, 0), (0, 0, 255), (100, 100, 100)
-        shapes = cls.xArrowShape, cls.yArrowShape, cls.zArrowShape, cls.xCircleShape
+        xArrowShape = (
+            (0, 0, 0),
+            (.5, 0, 0),
+        )
+        yArrowShape = (
+            (0, 0, 0),
+            (0, 1.5, 0),
+        )
+        zArrowShape = (
+            (0, 0, 0),
+            (0, 0, 1.5),
+        )
+
+        shapes = xArrowShape, yArrowShape, zArrowShape, cls.xCircleShape
 
         trs = cmds.group(empty=True, name=name)
 

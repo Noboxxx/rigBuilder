@@ -17,7 +17,7 @@ class IkFkChain(Component):
 
     def build(self):
         # root ctrl
-        rootBfr, rootCtrl = controller('rootIk_{}_ctl'.format(self), size=self.size, color=self.color - 100,
+        rootBfr, rootCtrl = controller('rootIk_{}_ctl'.format(self), size=self.guides[0].size, color=self.color - 100,
                                        matrix=self.guides[0].matrix, shape='square')
         self.controllers.append(rootCtrl)
         self.inputs.append(rootBfr)
@@ -27,7 +27,7 @@ class IkFkChain(Component):
         # fk ctrls
         lastCtrl = None
         for index, guide in enumerate(self.guides[1:-1]):
-            fkBfr, fkCtrl = controller('fk{}_{}_ctl'.format(index, self), size=self.size, color=self.color,
+            fkBfr, fkCtrl = controller('fk{}_{}_ctl'.format(index, self), size=guide.size, color=self.color,
                                        matrix=guide.matrix)
             if lastCtrl:
                 cmds.parent(fkBfr, lastCtrl)
@@ -38,7 +38,7 @@ class IkFkChain(Component):
             self.controllers.append(fkCtrl)
 
         # end ctrl
-        endBfr, endCtrl = controller('endIk_{}_ctl'.format(self), size=self.size, color=self.color - 100,
+        endBfr, endCtrl = controller('endIk_{}_ctl'.format(self), size=self.guides[-1].size, color=self.color - 100,
                                      matrix=self.guides[-1].matrix, shape='square')
         cmds.parent(endBfr, lastCtrl)
         self.controllers.append(endCtrl)
