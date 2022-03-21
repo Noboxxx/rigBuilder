@@ -8,7 +8,6 @@ class NewScene(Step):
         # old scene name
         sceneName = cmds.file(q=True, sn=True)
         sceneType = cmds.file(q=True, type=True)
-        print sceneName, sceneType
 
         perspMatrix = cmds.xform('persp', q=True, matrix=True)
 

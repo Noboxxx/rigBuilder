@@ -317,15 +317,15 @@ class Joint(Transform):
         self.jointOrient = Plug('{}.jointOrient'.format(self))
 
 
-class BlendMatrix(Node):
+class BlendMatrixCustom(Node):
 
-    mayaTypeStr = 'blendMatrix'
+    mayaTypeStr = 'blendMatrixCustom'
 
     matricesMatrixAttr = 'matrix'
     matricesOffsetAttr = 'offset'
 
     def __init__(self, name):
-        super(BlendMatrix, self).__init__(name)
+        super(BlendMatrixCustom, self).__init__(name)
 
         self.blender = Plug('{}.blender'.format(self))
         self.resultMatrix = Plug('{}.resultMatrix'.format(self))

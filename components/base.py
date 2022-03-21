@@ -2,9 +2,14 @@ from maya import cmds
 from .core import Component
 from .utils import matrixConstraint
 from .utils2 import controller
+from ..types import UnsignedFloat
 
 
 class Base(Component):
+
+    def __init__(self, size=1.0):
+        super(Base, self).__init__()
+        self.size = UnsignedFloat(size)
 
     def build(self):
         # World Ctrl

@@ -3,11 +3,11 @@ from maya import cmds
 from maya.api import OpenMaya
 import math
 import os
-from .nodeUtils import BlendMatrix, Transform, Plug, Joint
+from .nodeUtils import BlendMatrixCustom, Transform, Plug, Joint
 
 
 currentDir = os.path.join(*os.path.split(os.path.dirname(os.path.realpath(__file__)))[:-1])
-cmds.loadPlugin(os.path.join(currentDir, r'plug-ins\blendMatrixNode.py'))
+cmds.loadPlugin(os.path.join(currentDir, r'plug-ins\blendMatrixCustomNode.py'))
 
 
 def jointChainBetweenTwoMatrices(matrixA, matrixB, sections=4, namePattern='joint{index}', compensateScale=False):
@@ -255,7 +255,7 @@ def matrixConstraint(parents, child, translate=True, rotate=True, scale=True, sh
     """
     child = Plug(child) if '.' in str(child) else Transform(child)
 
-    constraint = BlendMatrix.create('matrixConstraint#')
+    constraint = BlendMatrixCustom.create('matrixConstraint#')
 
     for index, parent in enumerate(parents):
         parent = Plug(parent) if '.' in str(parent) else Transform(parent).worldMatrix

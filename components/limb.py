@@ -2,7 +2,7 @@ from maya import cmds
 from maya.api import OpenMaya
 from rigBuilder.components.core import Component, Guide, Storage
 from rigBuilder.components.nodeUtils import MultMatrix, DecomposeMatrix, QuatToEuler, RotateOrder, ComposeMatrix, \
-    BlendMatrix
+    BlendMatrixCustom
 from rigBuilder.components.utils import matrixConstraint
 from rigBuilder.components.utils2 import controller, distance
 from rigBuilder.types import UnsignedInt
@@ -84,8 +84,8 @@ class Limb(Component):
         self.cGuide = self.cGuide.mirrored()
 
     def buildSecondSegmentSkinJointsSetup(self, elbowTransform, wristTransform):
-        elbowTransform = BlendMatrix(elbowTransform)
-        wristTransform = BlendMatrix(wristTransform)
+        elbowTransform = BlendMatrixCustom(elbowTransform)
+        wristTransform = BlendMatrixCustom(wristTransform)
 
         inverseMatrix = cmds.createNode('inverseMatrix')
         cmds.connectAttr(elbowTransform.resultMatrix, '{}.inputMatrix'.format(inverseMatrix))
@@ -284,7 +284,7 @@ class Limb(Component):
     def resultSetup(self, fkCtrls, ikJoints, switchPlug):
         resultMatrices = list()
         for ik, fk in zip(ikJoints, fkCtrls):
-            resultMatrix = cmds.createNode('blendMatrix')
+            resultMatrix = cmds.createNode('blendMatrixCustom')
             resultMatrices.append(resultMatrix)
 
             cmds.connectAttr('{}.worldMatrix'.format(fk), '{}.matrices[0].matrix'.format(resultMatrix))
@@ -300,10 +300,10 @@ class Limb(Component):
             '{}.resultMatrix'.format(resultMatrices[1]))
         forelegJoints = self.buildSecondSegmentSkinJointsSetup(resultMatrices[1], resultMatrices[2])
 
-        ankleMatrix = cmds.createNode('blendMatrix')
+        ankleMatrix = cmds.createNode('blendMatrixCustom')
         cmds.connectAttr('{}.resultMatrix'.format(resultMatrices[2]), '{}.matrices[0].matrix'.format(ankleMatrix))
 
-        ankleJnt = cmds.joint(name='ankle_{}_skn'.format(self))
+        ankleJnt = cmds.joint(name='{}_{}_skn'.format(self.cName, self))
         cmds.setAttr('{}.segmentScaleCompensate'.format(ankleJnt), False)
         self.influencers.append(ankleJnt)
         for attr in ('translate', 'rotate', 'scale', 'shear'):
