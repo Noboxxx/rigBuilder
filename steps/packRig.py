@@ -16,7 +16,7 @@ class PackRig(Step):
 
     def __init__(self, children=None, rigChildren=None, geometryChildren=None, size=1.0, cleanScene=False):
         super(PackRig, self).__init__()
-        self.children = Nodes(('geometry',)) if children is None else Nodes(children)
+        self.children = Nodes() if children is None else Nodes(children)
         self.rigChildren = Nodes(('setup',)) if rigChildren is None else Nodes(rigChildren)
         self.geometryChildren = Nodes() if geometryChildren is None else Nodes(geometryChildren)
         self.cleanScene = bool(cleanScene)
