@@ -1,9 +1,8 @@
 from maya import cmds
 from rigBuilder.components.baseLegacy import BaseLegacy
 from rigBuilder.components.utils import matrixConstraint
-from rigBuilder.steps.importSkinLayers import Node
 from rigBuilder.steps.core import Step
-from rigBuilder.types import UnsignedFloat
+from rigBuilder.types import UnsignedFloat, Node
 
 
 class Nodes(list):

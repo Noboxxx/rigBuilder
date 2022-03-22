@@ -33,7 +33,20 @@ class SkinFile(JsonFile):
                 data[skinCluster] = {
                     'influences': influences,
                     'weights': weights,
-                    'targets': targets
+                    'targets': targets,
+
+                    'skinningMethod': cmds.getAttr('{}.skinningMethod'.format(skinCluster)),
+                    'useComponents': cmds.getAttr('{}.useComponents'.format(skinCluster)),
+                    'envelope': cmds.getAttr('{}.envelope'.format(skinCluster)),
+                    'deformUserNormals': cmds.getAttr('{}.deformUserNormals'.format(skinCluster)),
+                    'dqsSupportNonRigid': cmds.getAttr('{}.dqsSupportNonRigid'.format(skinCluster)),
+                    'dqsScaleX': cmds.getAttr('{}.dqsScaleX'.format(skinCluster)),
+                    'dqsScaleY': cmds.getAttr('{}.dqsScaleY'.format(skinCluster)),
+                    'dqsScaleZ': cmds.getAttr('{}.dqsScaleZ'.format(skinCluster)),
+                    'maintainMaxInfluences': cmds.getAttr('{}.maintainMaxInfluences'.format(skinCluster)),
+                    'maxInfluences': cmds.getAttr('{}.maxInfluences'.format(skinCluster)),
+                    'weightDistribution': cmds.getAttr('{}.weightDistribution'.format(skinCluster)),
+                    'normalizeWeights': cmds.getAttr('{}.normalizeWeights'.format(skinCluster)),
                 }
 
         self.dump(data, force=force)
@@ -64,18 +77,25 @@ class SkinFile(JsonFile):
         for skinClusterName, info in data.items():
 
             influences = list()
-            for influenceName, position in info['influences']:
+            for influenceName, position in info.pop('influences'):
                 if cmds.objExists(influenceName):
                     influences.append(influenceName)
                 else:
                     closestJoint = self.getClosestJoint(position)
                     influences.append(closestJoint)
 
-            skinCluster, = cmds.skinCluster(influences + info['targets'], name=skinClusterName)
+            targets = info.pop('targets')
+            skinCluster, = cmds.skinCluster(
+                influences + targets,
+                name=skinClusterName,
+            )
 
-            for vertexIndex, weights in enumerate(info['weights']):
+            for vertexIndex, weights in enumerate(info.pop('weights')):
                 cmds.skinPercent(
                     skinCluster,
-                    '{}.vtx[{}]'.format(info['targets'][0], vertexIndex),
+                    '{}.vtx[{}]'.format(targets[0], vertexIndex),
                     transformValue=[(influences[i], w) for i, w in weights],
                 )
+
+            for k, v in info.items():
+                cmds.setAttr('{}.{}'.format(skinCluster, k, v))

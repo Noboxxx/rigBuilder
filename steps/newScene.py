@@ -8,6 +8,7 @@ class NewScene(Step):
         # old scene name
         sceneName = cmds.file(q=True, sn=True)
         sceneType = cmds.file(q=True, type=True)
+        selection = cmds.ls(sl=True)
 
         perspMatrix = cmds.xform('persp', q=True, matrix=True)
 
@@ -20,3 +21,8 @@ class NewScene(Step):
         cmds.file(type=sceneType[0])
 
         cmds.xform('persp', matrix=perspMatrix)
+
+        try:
+            cmds.select(selection)
+        except:
+            pass

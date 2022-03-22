@@ -304,3 +304,7 @@ class File(Path):
 
         with open(str(self), 'w') as f:
             f.write(str(string))
+
+
+class Node(str):
+    pass

@@ -13,9 +13,9 @@ from ..steps.customScriptFile import PythonFile, CustomScriptFile
 from ..steps.importGuidesFile import ImportGuidesFile
 from ..steps.importMayaFile import ImportMayaFile, MayaFile
 from ..steps.importSkin import ImportSkin
-from ..steps.importSkinLayers import Mesh
 from ..steps.newScene import NewScene
 from ..steps.packRig import PackRig, Nodes
+from ..types import Node
 from ..ui.dataDictEditor import DataDictEditor, DataAttributeEditor, DataDictList
 
 from ..ui.jsonFileWindow import JsonFileWindow
@@ -41,7 +41,7 @@ class StepAttributeEditor(DataAttributeEditor):
 
         self.typeWidgetMap = [
             (Script, ScriptWidget),
-            (Mesh, NodeWidget),
+            (Node, NodeWidget),
             (SkinFile, SkinFileWidget),
             (PythonFile, PythonFileWidget),
             (ComponentBuilderFile, ComponentBuilderWidget),
