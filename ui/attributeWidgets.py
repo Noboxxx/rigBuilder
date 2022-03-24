@@ -3,6 +3,7 @@ from functools import partial
 from PySide2 import QtWidgets, QtGui
 from .utils import size, Signal
 from ..components.core import ConnectionPlug, Component
+from ..files.skinFile import SkinFile
 from ..types import File
 
 
@@ -119,8 +120,12 @@ class FileWidget(AttributeWidget):
         openBtn.setIcon(QtGui.QIcon(':openLoadGeneric.png'))
         openBtn.clicked.connect(self.askOpen)
 
-        self.mainLayout.addWidget(self.pathEdit)
-        self.mainLayout.addWidget(openBtn)
+        self.pathLayout = QtWidgets.QHBoxLayout()
+        self.pathLayout.addWidget(self.pathEdit)
+        self.pathLayout.addWidget(openBtn)
+
+        self.mainLayout.setDirection(QtWidgets.QBoxLayout.TopToBottom)
+        self.mainLayout.addLayout(self.pathLayout)
 
         self.setLayout(self.mainLayout)
 
@@ -148,7 +153,7 @@ class ComponentBuilderWidget(FileWidget):
         editBtn.setIcon(QtGui.QIcon(':toolSettings.png'))
         editBtn.clicked.connect(self.openEdit)
 
-        self.mainLayout.addWidget(editBtn)
+        self.pathLayout.addWidget(editBtn)
 
     def openEdit(self):
         from .componentBuilderWindow import ComponentBuilderWindow
@@ -169,7 +174,7 @@ class GuidesFileWidget(FileWidget):
         saveAsBtn.setFixedSize(size(20), size(20))
         saveAsBtn.setIcon(QtGui.QIcon(':save.png'))
         saveAsBtn.clicked.connect(self.saveAs)
-        self.mainLayout.addWidget(saveAsBtn)
+        self.pathLayout.addWidget(saveAsBtn)
 
     def saveAs(self):
         from rigBuilder.files.guidesFile import GuidesFile
@@ -193,7 +198,13 @@ class SkinFileWidget(FileWidget):
         saveAsBtn.setFixedSize(size(20), size(20))
         saveAsBtn.setIcon(QtGui.QIcon(':save.png'))
         saveAsBtn.clicked.connect(self.saveAs)
-        self.mainLayout.addWidget(saveAsBtn)
+        self.pathLayout.addWidget(saveAsBtn)
+
+        self.targetsLine = QtWidgets.QTextEdit()
+        self.targetsLine.setEnabled(False)
+        self.mainLayout.addWidget(self.targetsLine)
+
+
 
     def saveAs(self):
         from rigBuilder.files.skinFile import SkinFile
@@ -204,6 +215,19 @@ class SkinFileWidget(FileWidget):
         f = SkinFile(path)
         f.export(force=True)
         self.pathEdit.setText(f)
+
+    def setValue(self, value):
+        skinFile = SkinFile(value)
+
+        try:
+            targets = skinFile.targets
+        except:
+            targets = None
+
+        if targets:
+            self.targetsLine.setText('\n'.join(targets))
+
+        super(SkinFileWidget, self).setValue(value)
 
 
 class PythonFileWidget(FileWidget):

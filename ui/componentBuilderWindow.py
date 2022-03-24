@@ -7,6 +7,7 @@ from .dataDictEditor import DataDictEditor, DataDictList, DataAttributeEditor
 from .jsonFileWindow import JsonFileWindow
 from ..components.arm import Arm
 from ..components.base import Base
+from ..components.baseLegacy import BaseLegacy, Nodes
 from ..components.clavicle import Clavicle
 from ..components.core import ComponentBuilder, ConnectionPlug, ConnectionPlugArray, Connection, Guide, GuideArray
 from ..components.fkChain import FkChain
@@ -66,7 +67,8 @@ class ComponentAttributeEditor(DataAttributeEditor):
             (Color, ColorWidget),
             (Guide, NodeWidget),
             (Side, partial(ComboWidget, Side.mirrorTable.keys())),
-            (GuideArray, partial(ListAttributeWidget, NodeWidget))
+            (GuideArray, partial(ListAttributeWidget, NodeWidget)),
+            (Nodes, partial(ListAttributeWidget, NodeWidget)),
         ] + self.typeWidgetMap
 
 
@@ -75,6 +77,7 @@ class ComponentDictList(DataDictList):
     types = (
         OneCtrl,
         Base,
+        BaseLegacy,
         FkChain,
         Arm,
         Hand,

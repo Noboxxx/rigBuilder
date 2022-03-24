@@ -71,6 +71,15 @@ class SkinFile(JsonFile):
 
         return joint
 
+    @staticmethod
+    def getSkinCluster(mesh):
+        skinClusters = cmds.ls(cmds.listHistory(mesh), type='skinCluster')
+
+        if skinClusters:
+            return skinClusters[0]
+
+        return None
+
     def import_(self):
 
         data = self.load()
@@ -84,18 +93,35 @@ class SkinFile(JsonFile):
                     closestJoint = self.getClosestJoint(position)
                     influences.append(closestJoint)
 
-            targets = info.pop('targets')
-            skinCluster, = cmds.skinCluster(
-                influences + targets,
-                name=skinClusterName,
-            )
+            target = info.pop('targets')[0]
 
+            # Delete previous skinCluster if one
+            skinCluster = self.getSkinCluster(target)
+            if skinCluster:
+                cmds.delete(skinCluster)
+
+            # Create skin cluster
+            skinCluster, = cmds.skinCluster(influences + [target], name=skinClusterName)
+
+            # Set weights
             for vertexIndex, weights in enumerate(info.pop('weights')):
                 cmds.skinPercent(
                     skinCluster,
-                    '{}.vtx[{}]'.format(targets[0], vertexIndex),
+                    '{}.vtx[{}]'.format(target, vertexIndex),
                     transformValue=[(influences[i], w) for i, w in weights],
                 )
 
+            # Set skinCluster parameters
             for k, v in info.items():
-                cmds.setAttr('{}.{}'.format(skinCluster, k, v))
+                cmds.setAttr('{}.{}'.format(skinCluster, k), v)
+
+    @property
+    def targets(self):
+        data = self.load()
+
+        t = list()
+        for skinCluster, skinClusterInfo in data.items():
+            for target in skinClusterInfo.get('targets', list()):
+                t.append(target)
+
+        return t

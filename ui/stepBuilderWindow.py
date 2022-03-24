@@ -4,6 +4,7 @@ from PySide2 import QtWidgets
 from rigBuilder.files.skinFile import SkinFile
 from .attributeWidgets import ScriptWidget, FileWidget, NodeWidget, ComponentBuilderWidget, SkinFileWidget, \
     PythonFileWidget, ListAttributeWidget, GuidesFileWidget
+from ..components.baseLegacy import Nodes
 from ..files.core import JsonFile
 from ..files.guidesFile import GuidesFile
 from ..steps.buildComponents import BuildComponents, ComponentBuilderFile
@@ -14,7 +15,7 @@ from ..steps.importGuidesFile import ImportGuidesFile
 from ..steps.importMayaFile import ImportMayaFile, MayaFile
 from ..steps.importSkin import ImportSkin
 from ..steps.newScene import NewScene
-from ..steps.packRig import PackRig, Nodes
+from ..steps.transferSkin import TransferSkin
 from ..types import Node
 from ..ui.dataDictEditor import DataDictEditor, DataAttributeEditor, DataDictList
 
@@ -29,7 +30,7 @@ class StepDictList(DataDictList):
         ImportMayaFile,
         BuildComponents,
         ImportSkin,
-        PackRig,
+        TransferSkin,
         ImportGuidesFile
     ]
 

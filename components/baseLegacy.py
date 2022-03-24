@@ -1,15 +1,24 @@
 import os
 from maya import cmds
 from rigBuilder.components.core import Component
+from rigBuilder.types import Node
 from rigBuilder.components.utils2 import scaleController
+
+
+class Nodes(list):
+
+    def __init__(self, seq=None):
+        super(Nodes, self).__init__(list() if seq is None else [Node(i) for i in seq])
 
 
 class BaseLegacy(Component):
 
-    def __init__(self, size=1.0, **kwargs):
+    def __init__(self, size=1.0, geometryDags=None, **kwargs):
         super(BaseLegacy, self).__init__(**kwargs)
 
         self.size = size
+        self.geometryDags = Nodes(geometryDags if geometryDags is not None else ('geometry',))
+
         self.globalBfr = 'global_C0_srt'
         self.globalCtrl = 'global_C0_ctl'
         self.localCtrl = 'local_C0_ctl'
@@ -55,5 +64,14 @@ class BaseLegacy(Component):
         self.outputs.append(self.cogCtrl)
         self.influencers.append(self.cogJnt)
         self.interfaces.append(self.infoCtrl)
+
+        # geometry
+        for node in self.geometryDags:
+            # connect mesh vis
+            cmds.connectAttr('{}.Mesh'.format(self.infoCtrl), '{}.v'.format(node), force=True)
+
+            # connect mesh smooth
+            for mesh in cmds.listRelatives(node, allDescendents=True, type='mesh') or list():
+                cmds.connectAttr('{}.smooth'.format(self.infoCtrl), '{}.smoothLevel'.format(mesh), force=True)
 
         self.buildFolder()
