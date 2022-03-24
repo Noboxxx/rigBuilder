@@ -55,7 +55,6 @@ class IkFkChain(Component):
             if joints:
                 cmds.select(joints[-1])
             joint = cmds.joint(name='part{}_{}_skn'.format(index, self))
-            cmds.setAttr('{}.segmentScaleCompensate'.format(joint), False)
             if index == 0:
                 self.children.append(joint)
             cmds.xform(joint, matrix=guide.matrix, worldSpace=True)
@@ -64,6 +63,8 @@ class IkFkChain(Component):
             self.outputs.insert(0, joint)
 
         cmds.makeIdentity(joints[0], apply=True, rotate=True)
+        for joint in joints:
+            cmds.setAttr('{}.segmentScaleCompensate'.format(joint), False)
 
         # plop
         matrixConstraint((rootCtrl,), joints[0])
@@ -72,6 +73,11 @@ class IkFkChain(Component):
         cmds.select(joints[0], joints[-1], curve)
         ikHandle, _ = cmds.ikHandle(solver='ikSplineSolver', ccv=False, roc=False, pcv=False)
         self.children.append(ikHandle)
+
+        cmds.setAttr('{}.dTwistControlEnable'.format(ikHandle), True)
+        cmds.setAttr('{}.dWorldUpType'.format(ikHandle), 4)
+        cmds.connectAttr('{}.worldMatrix[0]'.format(rootCtrl), '{}.dWorldUpMatrix'.format(ikHandle))
+        cmds.connectAttr('{}.worldMatrix[0]'.format(endCtrl), '{}.dWorldUpMatrixEnd'.format(ikHandle))
 
         # curve joints
         cmds.select(clear=True)
