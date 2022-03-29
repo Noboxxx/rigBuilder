@@ -37,11 +37,18 @@ class IkFkChain(Component):
             lastCtrl = fkCtrl
             self.controllers.append(fkCtrl)
 
+        # last fk
+        lastFkBfr, lastFkCtrl = controller(
+            'fk_{}_ctl'.format(len(self.guides), self),
+            size=self.guides[-1].size, color=self.color, matrix=self.guides[-1].matrix)
+
         # end ctrl
         endBfr, endCtrl = controller('endIk_{}_ctl'.format(self), size=self.guides[-1].size, color=self.color - 100,
                                      matrix=self.guides[-1].matrix, shape='square')
         cmds.parent(endBfr, lastCtrl)
         self.controllers.append(endCtrl)
+
+        cmds.parent(lastFkBfr, endCtrl)
 
         # curve
         points = [g.matrix[12:15] for g in self.guides]
@@ -65,6 +72,9 @@ class IkFkChain(Component):
         cmds.makeIdentity(joints[0], apply=True, rotate=True)
         for joint in joints:
             cmds.setAttr('{}.segmentScaleCompensate'.format(joint), False)
+
+        for attr in ('rx', 'ry', 'rz'):
+            cmds.connectAttr('{}.{}'.format(lastFkCtrl, attr), '{}.{}'.format(joints[-1], attr))
 
         # plop
         matrixConstraint((rootCtrl,), joints[0])
