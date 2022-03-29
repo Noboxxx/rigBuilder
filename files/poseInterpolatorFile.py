@@ -2,28 +2,71 @@ from maya.api import OpenMaya
 from rigBuilder.files.core import JsonFile
 from maya import cmds
 
+simpleTypes = (
+    'float',
+    'bool',
+    'enum',
+    'doubleLinear',
+    'message',
+    'long',
+    'double',
+    'short',
+    'time'
+)
 
-def setAttr(plug, attributesMap=None):
-    for attr, value in attributesMap.items():
-        p = '{}.{}'.format(plug, attr)
 
-        if isinstance(value, (list, tuple)):
-            for i, v in enumerate(value):
-                setAttr('{}[{}]'.format(p, i), v)
-        elif isinstance(value, dict):
+def setAttr(obj, value):
+    print obj, value
+    if not isinstance(obj, OpenMaya.MPlug):
+        selection = OpenMaya.MSelectionList()
+        selection.add(obj)
+        try:
+            plug = selection.getPlug(0)  # type: OpenMaya.MPlug
+        except TypeError:
+            obj = selection.getDependNode(0)  # type: OpenMaya.MObject
+            node = OpenMaya.MFnDependencyNode(obj)
             for k, v in value.items():
-                if k.isdigit():
-                    setAttr('{}[{}]'.format(p, k), v)
-                else:
-                    setAttr('{}.{}'.format(p, k), v)
+                setAttr('{}.{}'.format(node.name(), k), v)
+            return
+    else:
+        plug = obj
 
-        else:
-            cmds.setAttr(p, value)
+    if isinstance(value, dict):
+        for k, v in value.items():
+            if v is None:
+                continue
+            if isinstance(k, int):
+                setAttr('{}[{}]'.format(plug, k), v)
+            else:
+                setAttr('{}.{}'.format(plug, k), v)
+        return
 
+    t = cmds.getAttr(plug, type=True)
 
-def attributeChildren(plug):
-    children = [i for i in cmds.listAttr(plug) if i.count('.') == 1]
-    return [i.split('.')[-1] for i in children if not plug.endswith(i)]
+    kwargs = dict()
+    if t == 'message':
+        return
+
+    if t == 'string' and value is None:
+        value = str()
+
+    if t not in simpleTypes:
+        kwargs['type'] = t
+
+    # t = cmds.getAttr(plug, type=True)
+    #
+    # if t not in simpleTypes:
+    #     kwargs['type'] = t
+    # kwargs['clamp'] = True
+    # isSettable = cmds.getAttr(plug, settable=True)
+    # print ''
+    print plug, '({})'.format(t), '->', repr(value)
+    # print 'isSettable', isSettable
+    # if t == 'string':
+    #     if value is None:
+    #         value = ''
+
+    cmds.setAttr(plug, value, clamp=True, **kwargs)
 
 
 def getAttr(obj):  # type: (OpenMaya.MPlug or basestring) -> any
