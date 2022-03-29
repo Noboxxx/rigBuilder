@@ -1,3 +1,4 @@
+from maya.api import OpenMaya
 from rigBuilder.files.core import JsonFile
 from maya import cmds
 
@@ -20,42 +21,51 @@ def setAttr(plug, attributesMap=None):
             cmds.setAttr(p, value)
 
 
-def getAttr(plug):
-    plugSplit = plug.split('.')
-    attr = '.'.join(plugSplit[1:])
-    node = plugSplit[0]
+def attributeChildren(plug):
+    children = [i for i in cmds.listAttr(plug) if i.count('.') == 1]
+    return [i.split('.')[-1] for i in children if not plug.endswith(i)]
 
-    bareAttr = attr.split('.')[-1]
-    if bareAttr.endswith(']'):
-        bareAttr = bareAttr.split('[')[0]
 
-    # multi = cmds.attributeQuery(bareAttr, node=node, multi=True)
-    if not cmds.objExists(plug):
+def getAttr(obj):  # type: (OpenMaya.MPlug or basestring) -> any
+    if not isinstance(obj, OpenMaya.MPlug):
+        selection = OpenMaya.MSelectionList()
+        selection.add(obj)
+        try:
+            plug = selection.getPlug(0)  # type: OpenMaya.MPlug
+        except TypeError:
+            obj = selection.getDependNode(0)  # type: OpenMaya.MObject
+            node = OpenMaya.MFnDependencyNode(obj)
+            values = dict()
+            for index in range(node.attributeCount()):
+                attribute = OpenMaya.MFnAttribute(node.attribute(index))
+                plug = OpenMaya.MPlug(node.object(), attribute.object())
+                if str(plug).count('.') == 1:
+                    values[attribute.name] = getAttr(plug)
+            return values
+    else:
+        plug = obj
+
+    if plug.isArray:
+        values = dict()
+        for index in plug.getExistingArrayAttributeIndices():
+            child = plug.elementByPhysicalIndex(index)
+            values[index] = getAttr(child)
+        return values
+
+    elif plug.isCompound:
+        values = dict()
+        for index in range(plug.numChildren()):
+            child = plug.child(index)
+            attribute = OpenMaya.MFnAttribute(child.attribute()).name
+            values[attribute] = getAttr(child)
+        return values
+
+    t = cmds.getAttr(plug, type=True)
+
+    if t == 'message':
         return None
 
-    indices = cmds.getAttr(plug, multiIndices=True)
-
-    children = cmds.attributeQuery(bareAttr, node=node, listChildren=True)
-
-    print ''
-    print '--->', plug
-    print 'indices', indices
-    print 'children', children
-    # print 'multi', multi
-
-    if indices:
-        value = dict()
-        for index in indices:
-            value[int(index)] = getAttr('{}[{}]'.format(plug, index))
-    else:
-        if children:
-            value = dict()
-            for child in children:
-                value[child] = getAttr('{}.{}'.format(plug, child))
-        else:
-            value = cmds.getAttr(plug)
-
-    return value
+    return cmds.getAttr(plug)
 
 
 class PoseInterpolatorFile(JsonFile):
