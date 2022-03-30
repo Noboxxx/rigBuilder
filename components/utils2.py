@@ -200,7 +200,7 @@ shapes = {
 }
 
 
-def controller(name, normal=(1, 0, 0), size=1.0, matrix=None, color=(0, 255, 255), ctrlParent=None, visParent=None,
+def controller(name, normal=(1, 0, 0), size=1.0, matrix=None, color=(255, 255, 0), ctrlParent=None, visParent=None,
                shape=None):
     bfr = cmds.group(empty=True, name='{}Bfr'.format(name))
 

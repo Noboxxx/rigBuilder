@@ -282,14 +282,28 @@ class Limb(Component):
         return ctrls, reverseNode
 
     def resultSetup(self, fkCtrls, ikJoints, switchPlug):
+        freeBBfr, freeBCtrl = controller(
+            'free{}_{}_ctl'.format(self.bName.title(), self),
+            size=self.bGuide.size * .9,
+            matrix=self.bGuide.matrix,
+            color=self.color + 100,
+            shape='sphere'
+        )
+
         resultMatrices = list()
-        for ik, fk in zip(ikJoints, fkCtrls):
+        for index, (ik, fk) in enumerate(zip(ikJoints, fkCtrls)):
             resultMatrix = cmds.createNode('blendMatrixCustom')
             resultMatrices.append(resultMatrix)
 
-            cmds.connectAttr('{}.worldMatrix'.format(fk), '{}.matrices[0].matrix'.format(resultMatrix))
-            cmds.connectAttr('{}.worldMatrix'.format(ik), '{}.matrices[1].matrix'.format(resultMatrix))
-            cmds.connectAttr(switchPlug, '{}.blender'.format(resultMatrix))
+            if index != 1:
+                cmds.connectAttr('{}.worldMatrix'.format(fk), '{}.matrices[0].matrix'.format(resultMatrix))
+                cmds.connectAttr('{}.worldMatrix'.format(ik), '{}.matrices[1].matrix'.format(resultMatrix))
+                cmds.connectAttr(switchPlug, '{}.blender'.format(resultMatrix))
+            else:
+                b = matrixConstraint((fk, ik), freeBBfr)
+                cmds.connectAttr(switchPlug, '{}.blender'.format(b))
+                cmds.connectAttr('{}.worldMatrix'.format(freeBCtrl), '{}.matrices[0].matrix'.format(resultMatrix))
+
             self.outputs.insert(0, '{}.resultMatrix'.format(resultMatrix))
 
         return resultMatrices

@@ -1,7 +1,7 @@
 import re
 
 from maya import cmds
-from rigBuilder.types import Side, Color, UnsignedInt, UnsignedFloat, Matrix, Vector
+from rigBuilder.types import Side, Color, UnsignedInt, Matrix, Vector
 from rigBuilder.core import Data
 from collections import OrderedDict
 
@@ -140,7 +140,7 @@ class Component(Data):
         self.influencers = Storage()
 
         for k, v in kwargs.items():
-            print('Unknown kwargs: \'{}\' -> {} for \'{}\''.format(k, v, self))
+            print('Unknown kwargs: {} -> {} for {}'.format(repr(k), repr(v), repr(self)))
 
     def __repr__(self):
         return repr(str(self))
