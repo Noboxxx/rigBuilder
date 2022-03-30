@@ -268,15 +268,17 @@ class Limb(Component):
         for index, guide in enumerate((self.aGuide, self.bGuide, self.cGuide)):
             ctrlParent = mainCtrl if index == 0 else latestCtrl
             ctrlBuffer, ctrl = controller(
-                'fk{}_{}_ctl'.format(index, self), size=guide.size, matrix=list(guide.matrix.normalized()),
+                'fk{}_{}_ctl'.format(index, self), size=guide.size, matrix=list(guide.matrix),
                 color=self.color, ctrlParent=ctrlParent, visParent='{}.outputX'.format(reverseNode))
+
+            cmds.parent(ctrlBuffer, mainCtrl)
+
             ctrls.append(ctrl)
             self.controllers.append(ctrl)
 
-            if index == 0:
-                cmds.parent(ctrlBuffer, mainCtrl)
-            else:
-                cmds.parent(ctrlBuffer, latestCtrl)
+            if index > 0:
+                matrixConstraint((latestCtrl,), ctrlBuffer, maintainOffset=True, scale=False, shear=False)
+
             latestCtrl = ctrl
 
         return ctrls, reverseNode
@@ -289,6 +291,8 @@ class Limb(Component):
             color=self.color + 100,
             shape='sphere'
         )
+        self.controllers.append(freeBCtrl)
+        self.children.append(freeBBfr)
 
         resultMatrices = list()
         for index, (ik, fk) in enumerate(zip(ikJoints, fkCtrls)):
