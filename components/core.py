@@ -183,15 +183,8 @@ class Component(Data):
                 cmds.connectAttr(indexedPlug, objPlug, nextAvailable=True)
 
     def buildControlSet(self):
-        controlSet = 'ControlSet'
-        if not cmds.objExists(controlSet):
-            cmds.select(clear=True)
-            cmds.sets(name=controlSet)
-
         cmds.select(self.controllers)
-        s = cmds.sets(name='set_{}'.format(self))
-
-        cmds.sets(s, addElement=controlSet)
+        return cmds.sets(name='set_{}'.format(self))
 
     def getStorageDict(self):
         d = dict()
@@ -222,8 +215,10 @@ class ComponentBuilder(Data):
         for key, component in self.componentDict.items():
             copiedComponent = component.copy()
             copiedComponent.build()
+
+            sets = list()
             if controlSet:
-                copiedComponent.buildControlSet()
+                sets.append(copiedComponent.buildControlSet())
 
             cmds.parent(str(copiedComponent), folder)
 
@@ -233,12 +228,26 @@ class ComponentBuilder(Data):
                 mirrorComponent.build()
 
                 if controlSet:
-                    mirrorComponent.buildControlSet()
+                    sets.append(mirrorComponent.buildControlSet())
 
                 cmds.parent(str(mirrorComponent), folder)
 
             mirroredComponentDict[key] = mirrorComponent or copiedComponent
             componentDict[key] = copiedComponent
+
+            if sets:
+                controlSetNode = 'ControlSet'
+                if not cmds.objExists(controlSetNode):
+                    cmds.select(clear=True)
+                    cmds.sets(name=controlSetNode)
+                if len(sets) == 1:
+                    cmds.sets(sets[0], addElement=controlSetNode)
+                else:
+                    cmds.select(clear=True)
+                    grpSet = cmds.sets(name='set_{}'.format(key))
+                    cmds.sets(grpSet, addElement=controlSetNode)
+                    for s in sets:
+                        cmds.sets(s, addElement=grpSet)
 
         for key, connection in self.connectionDict.items():
             connection.copy().build(componentDict)
