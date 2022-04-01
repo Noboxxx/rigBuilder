@@ -6,6 +6,14 @@ from rigBuilder.components.utils2 import controller
 
 class Hand(Component):
 
+    fingerNames = (
+        'thumb',
+        'index',
+        'middle',
+        'ring',
+        'pinky'
+    )
+
     def __init__(
             self,
             handGuide='',
@@ -40,10 +48,19 @@ class Hand(Component):
     def fingerChain(self, fingerName, guideArray, ctrlParent, jointParent):
         latestCtrl = None
         latestJoint = None
+
+        offsets = list()
         for index, guide in enumerate(guideArray):
             parent = ctrlParent if index == 0 else latestCtrl
             bfr, ctrl = controller('{}{}_{}_ctl'.format(fingerName, index, self), size=guide.size,
                                    color=self.color, ctrlParent=parent, matrix=guide.matrix)
+            off = cmds.group(empty=True, name='{}{}_{}_off'.format(fingerName, index, self))
+
+            cmds.xform(off, matrix=list(guide.matrix))
+
+            cmds.parent(ctrl, off)
+            cmds.parent(off, bfr)
+
             joint = cmds.joint(name='{}{}_{}_skn'.format(fingerName, index, self))
             cmds.setAttr('{}.segmentScaleCompensate'.format(joint), False)
 
@@ -63,6 +80,10 @@ class Hand(Component):
             cmds.parent(bfr, parent)
             latestCtrl = ctrl
 
+            offsets.append(off)
+
+        return offsets
+
     def build(self):
         # main ctrl
         mainBuffer, mainCtrl = controller('main_{}_ctl'.format(self), size=self.handGuide.size, matrix=self.handGuide.matrix,
@@ -76,11 +97,24 @@ class Hand(Component):
         self.outputs.append(mainCtrl)
 
         # fingers
-        guideArrays = (self.indexGuides, self.middleGuides, self.ringGuides, self.pinkyGuides, self.thumbGuides)
-        names = ('index', 'middle', 'ring', 'pinky', 'thumb')
+        guideArrays = (self.thumbGuides, self.indexGuides, self.middleGuides, self.ringGuides, self.pinkyGuides)
 
-        for name, guideArray in zip(names, guideArrays):
-            self.fingerChain(name, guideArray, mainCtrl, mainJoint)
+        fingerOffsets = list()
+        for name, guideArray in zip(self.fingerNames, guideArrays):
+            if guideArray:
+                offsets = self.fingerChain(name, guideArray, mainCtrl, mainJoint)
+                fingerOffsets.append(
+                    (name, offsets)
+                )
+
+        for sourceAttr, destAttr in zip(('bend', 'spread'), ('rz', 'ry')):
+            for name, offsets in fingerOffsets:
+                sourceFullAttr = '{}{}'.format(sourceAttr, name.title())
+                sourcePlug = '{}.{}'.format(mainCtrl, sourceFullAttr)
+                cmds.addAttr(mainCtrl, longName=sourceFullAttr, keyable=True)
+
+                for off in offsets:
+                    cmds.connectAttr(sourcePlug, '{}.{}'.format(off, destAttr))
 
         self.buildFolder()
 
