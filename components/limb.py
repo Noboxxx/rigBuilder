@@ -2,57 +2,11 @@ from maya import cmds
 from maya.api import OpenMaya
 from rigBuilder.components.core import Component, Guide, Storage
 from rigBuilder.components.nodeUtils import MultMatrix, DecomposeMatrix, QuatToEuler, RotateOrder, ComposeMatrix, \
-    BlendMatrixCustom
+    BlendMatrixCustom, Transform, DistanceBetween, MultiplyDivide, BlendColors, Node
 from rigBuilder.components.utils import matrixConstraint
 from rigBuilder.components.utils2 import controller, distance
-from rigBuilder.types import UnsignedInt
-
-
-def poleVectorMatrix(matrixA, matrixB, matrixC, offset=10.0):
-    positionA = matrixA[12:15]
-    positionB = matrixB[12:15]
-    positionC = matrixC[12:15]
-
-    abLength = distance(positionA, positionB)
-    bcLength = distance(positionB, positionC)
-    fullLength = abLength + bcLength
-
-    abRatio = abLength / fullLength
-    bcRatio = bcLength / fullLength
-
-    midPosition = [x * bcRatio + y * abRatio for x, y in zip(positionA, positionC)]
-
-    forwardVector = OpenMaya.MVector([x - y for x, y in zip(positionB, midPosition)])
-    forwardVector.normalize()
-
-    sideVector = OpenMaya.MVector([x - y for x, y in zip(midPosition, positionA)])
-    sideVector.normalize()
-
-    upVector = sideVector ^ forwardVector
-    upVector.normalize()
-
-    sideVector = forwardVector ^ upVector
-    sideVector.normalize()
-
-    matrix = OpenMaya.MMatrix(
-        [
-            forwardVector.x, forwardVector.y, forwardVector.z, 0.0,
-            upVector.x, upVector.y, upVector.z, 0.0,
-            sideVector.x, sideVector.y, sideVector.z, 0.0,
-            midPosition[0], midPosition[1], midPosition[2], 1.0
-        ]
-    )
-
-    offsetMatrix = OpenMaya.MMatrix(
-        [
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            offset, 0.0, 0.0, 1.0,
-        ]
-    )
-
-    return offsetMatrix * matrix
+from rigBuilder.components.utilss.ikUtils import ikFullStretchSetup, poleVectorMatrix
+from rigBuilder.types import UnsignedInt, UnsignedFloat
 
 
 class Limb(Component):
@@ -64,7 +18,7 @@ class Limb(Component):
     abName = str()
     bcName = str()
 
-    def __init__(self, aGuide='', bGuide='', cGuide='', firstSection=4, secondSection=4, **kwargs):
+    def __init__(self, aGuide='', bGuide='', cGuide='', firstSection=4, secondSection=4, pvDistance=5.0, **kwargs):
         super(Limb, self).__init__(**kwargs)
 
         self.aGuide = Guide(aGuide)
@@ -73,6 +27,8 @@ class Limb(Component):
 
         self.firstSection = UnsignedInt(firstSection)
         self.secondSection = UnsignedInt(secondSection)
+
+        self.pvDistance = UnsignedFloat(pvDistance)
 
         self.ikInputs = Storage()
         self.pvInputs = Storage()
@@ -119,7 +75,6 @@ class Limb(Component):
 
         wristResultMatrix = MultMatrix.create('startResultMatrix#')
         wristResultMatrix.matrixIn.index(0).connectIn(wristXRotationMatrix.outputMatrix)
-        # startResultMatrix.matrixIn.index(1).set(list(offset))
         wristResultMatrix.matrixIn.index(2).connectIn(wristTranslateMatrix.outputMatrix)
         wristResultMatrix.matrixIn.index(3).connectIn(elbowTransform.resultMatrix)
 
@@ -248,14 +203,39 @@ class Limb(Component):
 
         # pv
         pvMatrix = poleVectorMatrix(
-            self.aGuide.matrix, self.bGuide.matrix, self.cGuide.matrix, offset=self.bGuide.size * 5)
-        pvCtrlBuffer, pvCtrl = controller('pv_{}_ctl'.format(self), color=self.color - 100, matrix=pvMatrix,
-                                          size=self.bGuide.size * 0.5, visParent=switchPlug, ctrlParent=mainCtrl, shape='diamond')
+            self.aGuide.matrix, self.bGuide.matrix, self.cGuide.matrix, offset=self.bGuide.size * self.pvDistance)
+        pvCtrlBuffer, pvCtrl = controller(
+            'pv_{}_ctl'.format(self), color=self.color - 100, matrix=pvMatrix,
+            size=self.bGuide.size, visParent=switchPlug, ctrlParent=mainCtrl, shape='diamond')
         cmds.poleVectorConstraint(pvCtrl, legIkHandle)
         self.controllers.append(pvCtrl)
         self.inputs.append(pvCtrlBuffer)
         self.children.append(pvCtrlBuffer)
         self.pvInputs.append(pvCtrlBuffer)
+
+        # stretch
+        cmds.addAttr(mainCtrl, longName='minStretch', min=0, defaultValue=1, keyable=True)
+        cmds.addAttr(mainCtrl, longName='maxStretch', min=0, defaultValue=2, keyable=True)
+        cmds.addAttr(mainCtrl, longName='pvLock', min=0, max=1, defaultValue=0, keyable=True)
+        cmds.addAttr(mainCtrl, longName='offStretchA', keyable=True)
+        cmds.addAttr(mainCtrl, longName='offStretchB', keyable=True)
+
+        elbowStretchPlug, wristStretchPlug = ikFullStretchSetup(
+            rootSpaceWorldMatrixPlug='{}.worldMatrix'.format(mainCtrl),
+            shoulderCtrlWorldMatrixPlug='{}.worldMatrix'.format(mainCtrl),
+            poleVectorCtrlWorldMatrixPlug='{}.worldMatrix'.format(pvCtrl),
+            handCtrlWorldMatrixPlug='{}.worldMatrix'.format(legIkCtrl),
+            elbowForwardValueOrig=cmds.getAttr('{}.tx'.format(joints[1])),
+            wristForwardValueOrig=cmds.getAttr('{}.tx'.format(joints[2])),
+            minStretchPlug='{}.minStretch'.format(mainCtrl),
+            maxStretchPlug='{}.maxStretch'.format(mainCtrl),
+            pvLockPlug='{}.pvLock'.format(mainCtrl),
+            offsetAPlug='{}.offStretchA'.format(mainCtrl),
+            offsetBPlug='{}.offStretchB'.format(mainCtrl)
+        )
+
+        cmds.connectAttr(elbowStretchPlug, '{}.tx'.format(joints[1]))
+        cmds.connectAttr(wristStretchPlug, '{}.tx'.format(joints[2]))
 
         return joints, legIkCtrlBuffer, legIkCtrl, legIkHandle
 

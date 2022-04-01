@@ -21,7 +21,7 @@ class IkFkChain(Component):
                                        matrix=self.guides[0].matrix, shape='square')
         self.controllers.append(rootCtrl)
         self.inputs.append(rootBfr)
-        self.interfaces.append(rootBfr)
+        self.interfaces.append(rootCtrl)
         self.children.append(rootBfr)
 
         # fk ctrls
