@@ -3,11 +3,11 @@ from maya.api import OpenMaya
 from rigBuilder.components.utils2 import distance
 
 
-def localMatrixPlug(parentWMatrixPlug, childWMatrixPlug):
+def localMatrixPlug(parentWMatrixPlug, childWMatrixPlug, name='localMatrix#'):
     parentInverseWMatrix = cmds.createNode('inverseMatrix')
     cmds.connectAttr(parentWMatrixPlug, '{}.inputMatrix'.format(parentInverseWMatrix))
 
-    multMatrix = cmds.createNode('multMatrix')
+    multMatrix = cmds.createNode('multMatrix', name=name)
     cmds.connectAttr(childWMatrixPlug, '{}.matrixIn[0]'.format(multMatrix))
     cmds.connectAttr('{}.outputMatrix'.format(parentInverseWMatrix), '{}.matrixIn[1]'.format(multMatrix))
 

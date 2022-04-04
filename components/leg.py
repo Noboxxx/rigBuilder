@@ -1,4 +1,5 @@
 from maya import cmds
+from maya.api import OpenMaya
 from rigBuilder.components.core import Guide
 from rigBuilder.components.limb import Limb
 from rigBuilder.components.utils import matrixConstraint
@@ -96,6 +97,19 @@ class Leg(Limb):
         cmds.parent(footIkCtrlBuffer, footBackIkCtrl)
         cmds.parent(toesIkCtrlBuffer, footBackIkCtrl)
 
+        #
+        offsetMatrix = cmds.createNode('multMatrix')
+        offset = OpenMaya.MMatrix(list(self.cGuide.matrix)) * OpenMaya.MMatrix(cmds.getAttr('{}.worldMatrix'.format(footIkCtrl))).inverse()
+        cmds.setAttr('{}.matrixIn[0]'.format(offsetMatrix), list(offset), type='matrix')
+        cmds.connectAttr('{}.worldMatrix'.format(footIkCtrl), '{}.matrixIn[1]'.format(offsetMatrix))
+        # lct, = cmds.spaceLocator()
+        # self.children.append(lct)
+        # cmds.xform(lct, matrix=list(self.cGuide.matrix))
+        # matrixConstraint((footIkCtrl,), lct, maintainOffset=True)
+
+        localMatrices = [c for c in cmds.listConnections('{}.worldMatrix'.format(legIkCtrl), source=False, destination=True) if c.startswith('localMatrix')]
+        for m in localMatrices:
+            cmds.connectAttr('{}.matrixSum'.format(offsetMatrix), '{}.matrixIn[0]'.format(m), force=True)
         return joints, legIkCtrlBuffer, legIkCtrl, legIkHandle
 
     def fkSetup(self, mainCtrl, switchPlug):
