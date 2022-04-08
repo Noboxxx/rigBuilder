@@ -1,9 +1,51 @@
 import os
 from functools import partial
-from PySide2 import QtWidgets, QtGui
+from PySide2 import QtWidgets, QtGui, QtCore
 from rigBuilder.ui.utils import getMayaMainWindow, deleteSiblingWidgets, size
 from ..files.core import JsonFile
 from ..core import Data
+
+
+class AskToSave(QtWidgets.QDialog):
+
+    save = 1
+    ignore = 0
+    cancel = -1
+
+    def __init__(self, title='Warning', text='Save before continuing?', parent=None):
+        super(AskToSave, self).__init__(parent or getMayaMainWindow())
+
+        self.result = self.cancel
+
+        self.setWindowTitle(title)
+
+        label = QtWidgets.QLabel(text)
+
+        saveBtn = QtWidgets.QPushButton('Save')
+        saveBtn.clicked.connect(partial(self.set, self.save))
+
+        ignoreBtn = QtWidgets.QPushButton('Ignore')
+        ignoreBtn.clicked.connect(partial(self.set, self.ignore))
+
+        cancelBtn = QtWidgets.QPushButton('Cancel')
+        cancelBtn.clicked.connect(partial(self.set, self.cancel))
+
+        buttonLayout = QtWidgets.QHBoxLayout()
+        buttonLayout.addWidget(saveBtn)
+        buttonLayout.addWidget(ignoreBtn)
+        buttonLayout.addWidget(cancelBtn)
+
+        mainLayout = QtWidgets.QVBoxLayout(self)
+        mainLayout.addWidget(label)
+        mainLayout.addLayout(buttonLayout)
+
+    def exec_(self):
+        super(AskToSave, self).exec_()
+        return self.result
+
+    def set(self, value):
+        self.result = value
+        self.accept()
 
 
 class Settings(Data):
@@ -143,13 +185,7 @@ class JsonFileWindow(QtWidgets.QMainWindow):
         self.refresh(f.load())
         self.file = f
         print('{} -> File opened: {}'.format(self.title, self.file))
-        # try:
-        #     self.refresh(f.load())
-        #     self.file = f
-        #     print('{} -> File opened: {}'.format(self.title, self.file))
-        # except (TypeError, AttributeError) as e:
-        #     print('{} -> File could not be opened: {}'.format(self.title, f))
-        #     print(e)
+        print('{} -> File opened: {}'.format(self.title, self.file))
 
     def clear(self):
         self.file = None
@@ -200,6 +236,7 @@ class JsonFileWindow(QtWidgets.QMainWindow):
         if not path:
             return
         self.open(path)
+        self.saveSettings()
 
     def closeEvent(self, event):
         result = QtWidgets.QMessageBox.question(

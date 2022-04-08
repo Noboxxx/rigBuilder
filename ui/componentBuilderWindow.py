@@ -141,12 +141,8 @@ class ComponentBuilderWindow(JsonFileWindow):
         tab.addTab(self.componentEditor, 'components')
         tab.addTab(self.connectionEditor, 'connections')
 
-        buildBtn = QtWidgets.QPushButton('Build')
-        buildBtn.clicked.connect(self.build)
-
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(tab)
-        layout.addWidget(buildBtn)
 
         self.mainLayout.addLayout(layout)
 
@@ -159,6 +155,3 @@ class ComponentBuilderWindow(JsonFileWindow):
         componentDict = self.componentEditor.getDataDict()
         connectionDict = self.connectionEditor.getDataDict()
         return ComponentBuilder(componentDict, connectionDict)
-
-    def build(self):
-        self.getData().build()

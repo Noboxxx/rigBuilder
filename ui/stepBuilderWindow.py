@@ -1,6 +1,7 @@
 from functools import partial
 
 from PySide2 import QtWidgets
+from maya import cmds, mel
 from rigBuilder.files.skinFile import SkinFile
 from .attributeWidgets import ScriptWidget, FileWidget, NodeWidget, ComponentBuilderWidget, SkinFileWidget, \
     PythonFileWidget, ListAttributeWidget, GuidesFileWidget
@@ -20,7 +21,7 @@ from ..steps.transferSkin import TransferSkin
 from ..types import Node
 from ..ui.dataDictEditor import DataDictEditor, DataAttributeEditor, DataDictList
 
-from ..ui.jsonFileWindow import JsonFileWindow
+from ..ui.jsonFileWindow import JsonFileWindow, AskToSave
 
 
 class StepDictList(DataDictList):
@@ -80,6 +81,20 @@ class StepBuilderWindow(JsonFileWindow):
         return StepBuilder(self.stepEditor.getDataDict())
 
     def build(self):
+        build = True
+        if cmds.file(q=True, modified=True):
+            result = AskToSave(parent=self, title='Warning: Scene not saved', text='Save scene before continuing?').exec_()
+            if result == AskToSave.cancel:
+                build = False
+            elif result == AskToSave.save:
+                mel.eval('SaveSceneAs')
+                if cmds.file(q=True, modified=True):
+                    build = False
+
+        if not build:
+            print('Build Canceled')
+            return
+
         stepBuilder = self.getData()
         stepBuilder.build()
 
