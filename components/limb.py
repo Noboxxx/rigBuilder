@@ -6,6 +6,7 @@ from rigBuilder.components.nodeUtils import MultMatrix, DecomposeMatrix, QuatToE
 from rigBuilder.components.utils import matrixConstraint
 from rigBuilder.components.utils2 import controller, distance
 from rigBuilder.components.utilss.ikUtils import ikFullStretchSetup, poleVectorMatrix
+from rigBuilder.components.utilss.setupUtils import jointChain
 from rigBuilder.types import UnsignedInt, UnsignedFloat
 
 
@@ -292,27 +293,35 @@ class Limb(Component):
 
         return resultMatrices
 
+    # def skinSetup(self, mainCtrl, resultMatrices):
+    #     legJoints = self.buildFirstSegmentSkinJointsSetup(
+    #         '{}.worldMatrix'.format(mainCtrl), '{}.resultMatrix'.format(resultMatrices[0]),
+    #         '{}.resultMatrix'.format(resultMatrices[1]))
+    #     forelegJoints = self.buildSecondSegmentSkinJointsSetup(resultMatrices[1], resultMatrices[2])
+    #
+    #     ankleMatrix = cmds.createNode('blendMatrixCustom')
+    #     cmds.connectAttr('{}.resultMatrix'.format(resultMatrices[2]), '{}.matrices[0].matrix'.format(ankleMatrix))
+    #
+    #     ankleJnt = cmds.joint(name='{}_{}_skn'.format(self.cName, self))
+    #     cmds.setAttr('{}.segmentScaleCompensate'.format(ankleJnt), False)
+    #     self.influencers.append(ankleJnt)
+    #     for attr in ('translate', 'rotate', 'scale', 'shear'):
+    #         cmds.connectAttr('{}.{}'.format(ankleMatrix, attr), '{}.{}'.format(ankleJnt, attr))
+    #     cmds.connectAttr('{}.parentInverseMatrix'.format(ankleJnt), '{}.parentInverseMatrix'.format(ankleMatrix))
+    #     cmds.connectAttr('{}.jointOrient'.format(ankleJnt), '{}.jointOrient'.format(ankleMatrix))
+    #
+    #     cmds.parent(ankleJnt, forelegJoints[-1])
+    #     cmds.parent(forelegJoints[0], legJoints[-1])
+    #
+    #     return legJoints + forelegJoints + [ankleJnt]
+
     def skinSetup(self, mainCtrl, resultMatrices):
-        legJoints = self.buildFirstSegmentSkinJointsSetup(
-            '{}.worldMatrix'.format(mainCtrl), '{}.resultMatrix'.format(resultMatrices[0]),
-            '{}.resultMatrix'.format(resultMatrices[1]))
-        forelegJoints = self.buildSecondSegmentSkinJointsSetup(resultMatrices[1], resultMatrices[2])
+        print 'skinSetup', mainCtrl, resultMatrices
 
-        ankleMatrix = cmds.createNode('blendMatrixCustom')
-        cmds.connectAttr('{}.resultMatrix'.format(resultMatrices[2]), '{}.matrices[0].matrix'.format(ankleMatrix))
+        firstSectionJoints = jointChain(self.aGuide.matrix, self.bGuide.matrix, sections=self.firstSection, name='{}#_{}_skn'.format(self.abName, self))
+        secondSectionJoints = jointChain(self.bGuide.matrix, self.cGuide.matrix, sections=self.secondSection, name='{}#_{}_skn'.format(self.bcName, self))
 
-        ankleJnt = cmds.joint(name='{}_{}_skn'.format(self.cName, self))
-        cmds.setAttr('{}.segmentScaleCompensate'.format(ankleJnt), False)
-        self.influencers.append(ankleJnt)
-        for attr in ('translate', 'rotate', 'scale', 'shear'):
-            cmds.connectAttr('{}.{}'.format(ankleMatrix, attr), '{}.{}'.format(ankleJnt, attr))
-        cmds.connectAttr('{}.parentInverseMatrix'.format(ankleJnt), '{}.parentInverseMatrix'.format(ankleMatrix))
-        cmds.connectAttr('{}.jointOrient'.format(ankleJnt), '{}.jointOrient'.format(ankleMatrix))
-
-        cmds.parent(ankleJnt, forelegJoints[-1])
-        cmds.parent(forelegJoints[0], legJoints[-1])
-
-        return legJoints + forelegJoints + [ankleJnt]
+        return firstSectionJoints + secondSectionJoints
 
     def build(self):
         # settings ctrl
