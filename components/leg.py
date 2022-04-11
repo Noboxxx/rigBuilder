@@ -129,10 +129,10 @@ class Leg(Limb):
         toesJnt = cmds.joint(name='toes_{}_skn'.format(self))
         cmds.setAttr('{}.segmentScaleCompensate'.format(toesJnt), False)
         self.influencers.append(toesJnt)
-        for attr in ('translate', 'rotate', 'scale', 'shear'):
-            cmds.connectAttr('{}.{}'.format(resultMatrices[3], attr), '{}.{}'.format(toesJnt, attr))
-        cmds.connectAttr('{}.parentInverseMatrix'.format(toesJnt), '{}.parentInverseMatrix'.format(resultMatrices[3]))
-        cmds.connectAttr('{}.jointOrient'.format(toesJnt), '{}.jointOrient'.format(resultMatrices[3]))
+        # for attr in ('translate', 'rotate', 'scale', 'shear'):
+        #     cmds.connectAttr('{}.{}'.format(resultMatrices[3], attr), '{}.{}'.format(toesJnt, attr))
+        # cmds.connectAttr('{}.parentInverseMatrix'.format(toesJnt), '{}.parentInverseMatrix'.format(resultMatrices[3]))
+        # cmds.connectAttr('{}.jointOrient'.format(toesJnt), '{}.jointOrient'.format(resultMatrices[3]))
 
         cmds.parent(toesJnt, skinJoints[-1])
 

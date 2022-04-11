@@ -1,3 +1,4 @@
+from __future__ import division
 from maya import cmds
 from maya.api import OpenMaya
 from rigBuilder.components.core import Component, Guide, Storage
@@ -6,7 +7,8 @@ from rigBuilder.components.nodeUtils import MultMatrix, DecomposeMatrix, QuatToE
 from rigBuilder.components.utils import matrixConstraint
 from rigBuilder.components.utils2 import controller, distance
 from rigBuilder.components.utilss.ikUtils import ikFullStretchSetup, poleVectorMatrix
-from rigBuilder.components.utilss.setupUtils import jointChain
+from rigBuilder.components.utilss.mathUtils import blendMatrices
+from rigBuilder.components.utilss.setupUtils import jointChain, ribbon
 from rigBuilder.types import UnsignedInt, UnsignedFloat
 
 
@@ -275,10 +277,10 @@ class Limb(Component):
         self.controllers.append(freeBCtrl)
         self.children.append(freeBBfr)
 
-        resultMatrices = list()
+        resultPlugMatrices = list()
         for index, (ik, fk) in enumerate(zip(ikJoints, fkCtrls)):
             resultMatrix = cmds.createNode('blendMatrixCustom')
-            resultMatrices.append(resultMatrix)
+            resultPlugMatrices.append('{}.resultMatrix'.format(resultMatrix))
 
             if index != 1:
                 cmds.connectAttr('{}.worldMatrix'.format(fk), '{}.matrices[0].matrix'.format(resultMatrix))
@@ -291,37 +293,64 @@ class Limb(Component):
 
             self.outputs.insert(0, '{}.resultMatrix'.format(resultMatrix))
 
-        return resultMatrices
+        return resultPlugMatrices
 
-    # def skinSetup(self, mainCtrl, resultMatrices):
-    #     legJoints = self.buildFirstSegmentSkinJointsSetup(
-    #         '{}.worldMatrix'.format(mainCtrl), '{}.resultMatrix'.format(resultMatrices[0]),
-    #         '{}.resultMatrix'.format(resultMatrices[1]))
-    #     forelegJoints = self.buildSecondSegmentSkinJointsSetup(resultMatrices[1], resultMatrices[2])
-    #
-    #     ankleMatrix = cmds.createNode('blendMatrixCustom')
-    #     cmds.connectAttr('{}.resultMatrix'.format(resultMatrices[2]), '{}.matrices[0].matrix'.format(ankleMatrix))
-    #
-    #     ankleJnt = cmds.joint(name='{}_{}_skn'.format(self.cName, self))
-    #     cmds.setAttr('{}.segmentScaleCompensate'.format(ankleJnt), False)
-    #     self.influencers.append(ankleJnt)
-    #     for attr in ('translate', 'rotate', 'scale', 'shear'):
-    #         cmds.connectAttr('{}.{}'.format(ankleMatrix, attr), '{}.{}'.format(ankleJnt, attr))
-    #     cmds.connectAttr('{}.parentInverseMatrix'.format(ankleJnt), '{}.parentInverseMatrix'.format(ankleMatrix))
-    #     cmds.connectAttr('{}.jointOrient'.format(ankleJnt), '{}.jointOrient'.format(ankleMatrix))
-    #
-    #     cmds.parent(ankleJnt, forelegJoints[-1])
-    #     cmds.parent(forelegJoints[0], legJoints[-1])
-    #
-    #     return legJoints + forelegJoints + [ankleJnt]
+    def skinSetup(self, mainCtrl, resultPlugMatrices):
+        joints = list()
+        for p in resultPlugMatrices:
+            j = cmds.joint()
+            joints.append(j)
+            matrixConstraint((p,), j)
 
-    def skinSetup(self, mainCtrl, resultMatrices):
-        print 'skinSetup', mainCtrl, resultMatrices
+        aEndMatrix = self.aGuide.matrix[:12] + self.bGuide.matrix[12:]
+        bEndMatrix = self.bGuide.matrix[:12] + self.cGuide.matrix[12:]
 
-        firstSectionJoints = jointChain(self.aGuide.matrix, self.bGuide.matrix, sections=self.firstSection, name='{}#_{}_skn'.format(self.abName, self))
-        secondSectionJoints = jointChain(self.bGuide.matrix, self.cGuide.matrix, sections=self.secondSection, name='{}#_{}_skn'.format(self.bcName, self))
+        firstSurface, firstMOutputs = ribbon(self.aGuide.matrix, aEndMatrix, nEdges=3, nOutputs=self.firstSection + 1)
+        secondSurface, secondMOutputs = ribbon(self.bGuide.matrix, bEndMatrix, nEdges=3, nOutputs=self.secondSection + 1)
 
-        return firstSectionJoints + secondSectionJoints
+        firstJointChain = jointChain(
+            self.aGuide.matrix, aEndMatrix, nJoints=self.firstSection + 1, name='{}<i>_{}_skn'.format(self.abName, self))
+        secondJointChain = jointChain(
+            self.bGuide.matrix, bEndMatrix, nJoints=self.secondSection + 1, name='{}<i>_{}_skn'.format(self.bcName, self))
+
+        for output, joint in zip(firstMOutputs + secondMOutputs, firstJointChain + secondJointChain):
+            matrixConstraint((output,), joint)
+
+        for name, srf, jointA, jointB in ((self.abName, firstSurface, joints[0], joints[1]), (self.bcName, secondSurface, joints[1], joints[2])):
+            bendBfr, bendCtrl = controller(name='{}Bend_{}_ctl'.format(name, self), shape='sphere', color=self.color + 100)
+            bendJoint = cmds.joint(name='{}Bend_{}_jnt'.format(name, self))
+
+            matrixConstraint((jointA, ), bendBfr, translate=False)
+            constraint = matrixConstraint((jointA, jointB), bendBfr, rotate=False, scale=False, shear=False)
+            cmds.setAttr('{}.blender'.format(constraint), .5)
+
+            skinCluster, = cmds.skinCluster(jointA, bendJoint, jointB, srf)
+
+            nPointsU = cmds.getAttr('{}.spansU'.format(srf)) + cmds.getAttr('{}.degreeU'.format(srf))
+
+            skinValues = (
+                (1.0, 0.0, 0.0),
+                (2/3, 1/3, 0.0),
+                (0.0, 1.0, 0.0),
+                (0.0, 1/3, 2/3),
+                (0.0, 0.0, 1.0),
+            )
+
+            for u in range(nPointsU):
+                for v, (a, b, c) in enumerate(skinValues):
+                    cvPlug = '{}.cv[{}][{}]'.format(srf, u, v)
+
+                    cmds.skinPercent(
+                        skinCluster,
+                        cvPlug,
+                        transformValue=[
+                            (jointA, a),
+                            (bendJoint, b),
+                            (jointB, c),
+                        ],
+                    )
+
+        return firstJointChain + secondJointChain
 
     def build(self):
         # settings ctrl
@@ -344,10 +373,10 @@ class Limb(Component):
         fkCtrls = self.fkSetup(mainCtrl, switchPlug)[0]
 
         # Result Matrices and switch
-        resultMatrices = self.resultSetup(fkCtrls, ikJoints, switchPlug)
+        resultPlugMatrices = self.resultSetup(fkCtrls, ikJoints, switchPlug)
 
         # skin joints
-        self.skinSetup(mainCtrl, resultMatrices)
+        self.skinSetup(mainCtrl, resultPlugMatrices)
 
         # buildFolder
         self.buildFolder()
