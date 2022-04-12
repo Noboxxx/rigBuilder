@@ -8,7 +8,7 @@ from rigBuilder.components.utils import matrixConstraint
 from rigBuilder.components.utils2 import controller, distance
 from rigBuilder.components.utilss.ikUtils import ikFullStretchSetup, poleVectorMatrix
 from rigBuilder.components.utilss.mathUtils import blendMatrices
-from rigBuilder.components.utilss.setupUtils import jointChain, ribbon
+from rigBuilder.components.utilss.setupUtils import jointChain, ribbon, decomposeMatrix
 from rigBuilder.types import UnsignedInt, UnsignedFloat
 
 
@@ -42,16 +42,14 @@ class Limb(Component):
         self.bGuide = self.bGuide.mirrored()
         self.cGuide = self.cGuide.mirrored()
 
-    def buildSecondSegmentSkinJointsSetup(self, elbowTransform, wristTransform):
-        elbowTransform = BlendMatrixCustom(elbowTransform)
-        wristTransform = BlendMatrixCustom(wristTransform)
+    def buildSecondSegmentSkinJointsSetup(self, elbowMatrix, wristMatrix):
 
         inverseMatrix = cmds.createNode('inverseMatrix')
-        cmds.connectAttr(elbowTransform.resultMatrix, '{}.inputMatrix'.format(inverseMatrix))
+        cmds.connectAttr(elbowMatrix, '{}.inputMatrix'.format(inverseMatrix))
 
         # Stuff
         localWristMatrix = MultMatrix.create('localWristMatrix#')
-        localWristMatrix.matrixIn.index(0).connectIn(wristTransform.resultMatrix)
+        localWristMatrix.matrixIn.index(0).connectIn(wristMatrix)
         localWristMatrix.matrixIn.index(1).connectIn('{}.outputMatrix'.format(inverseMatrix))
 
         inverseLocalWristMatrix = OpenMaya.MMatrix(localWristMatrix.matrixSum.get()).inverse()
@@ -79,24 +77,9 @@ class Limb(Component):
         wristResultMatrix = MultMatrix.create('startResultMatrix#')
         wristResultMatrix.matrixIn.index(0).connectIn(wristXRotationMatrix.outputMatrix)
         wristResultMatrix.matrixIn.index(2).connectIn(wristTranslateMatrix.outputMatrix)
-        wristResultMatrix.matrixIn.index(3).connectIn(elbowTransform.resultMatrix)
+        wristResultMatrix.matrixIn.index(3).connectIn(elbowMatrix)
 
-        # Constraint joints
-        joints = list()
-        for index in range(self.secondSection + 1):
-            if joints:
-                cmds.select(joints[-1])
-
-            joint = cmds.joint(name='{}{}_{}_skn'.format(self.bcName, index, self))
-            cmds.setAttr('{}.segmentScaleCompensate'.format(joint), False)
-
-            self.influencers.append(joint)
-            blendMatrix = matrixConstraint((elbowTransform.resultMatrix, wristResultMatrix.matrixSum), joint)
-            blendMatrix.blender.set(float(index) / float(self.secondSection))
-
-            joints.append(joint)
-
-        return joints
+        return '{}.matrixSum'.format(wristResultMatrix)
 
     def buildFirstSegmentSkinJointsSetup(self, parentMatrixPlug, startMatrixPlug, endMatrixPlug):
         startWorldMatrix = OpenMaya.MMatrix(cmds.getAttr(startMatrixPlug))
@@ -153,24 +136,7 @@ class Limb(Component):
 
             resultMatrices.append(startResultMatrix)
 
-        # Constraint joints
-        joints = list()
-        for index in range(self.firstSection + 1):
-            if joints:
-                cmds.select(joints[-1])
-
-            joint = cmds.joint(name='{}{}_{}_skn'.format(self.abName, index, self))
-            cmds.setAttr('{}.segmentScaleCompensate'.format(joint), False)
-            self.influencers.append(joint)
-            blendMatrix = matrixConstraint((resultMatrices[0].matrixSum, resultMatrices[1].matrixSum), joint)
-            blendMatrix.blender.set(float(index) / float(self.firstSection))
-
-            if index == 0:
-                self.children.append(joint)
-
-            joints.append(joint)
-
-        return joints
+        return ['{}.matrixSum'.format(m) for m in resultMatrices]
 
     def ikSetup(self, mainCtrl, switchPlug):
         # joints
@@ -296,11 +262,16 @@ class Limb(Component):
         return resultPlugMatrices
 
     def skinSetup(self, mainCtrl, resultPlugMatrices):
-        joints = list()
-        for p in resultPlugMatrices:
-            j = cmds.joint()
-            joints.append(j)
-            matrixConstraint((p,), j)
+        aDriver, aEndDriver = self.buildFirstSegmentSkinJointsSetup(
+            '{}.worldMatrix'.format(mainCtrl),
+            resultPlugMatrices[0],
+            resultPlugMatrices[1]
+        )
+
+        bEndDriver = self.buildSecondSegmentSkinJointsSetup(
+            resultPlugMatrices[1],
+            resultPlugMatrices[2]
+        )
 
         aEndMatrix = self.aGuide.matrix[:12] + self.bGuide.matrix[12:]
         bEndMatrix = self.bGuide.matrix[:12] + self.cGuide.matrix[12:]
@@ -316,15 +287,24 @@ class Limb(Component):
         for output, joint in zip(firstMOutputs + secondMOutputs, firstJointChain + secondJointChain):
             matrixConstraint((output,), joint)
 
-        for name, srf, jointA, jointB in ((self.abName, firstSurface, joints[0], joints[1]), (self.bcName, secondSurface, joints[1], joints[2])):
+        firstSectionSetup = (self.abName, firstSurface, aDriver, aEndDriver)
+        secondSectionSetup = (self.bcName, secondSurface, resultPlugMatrices[1], bEndDriver)
+        for name, srf, mPlugA, mPlugB in (firstSectionSetup, secondSectionSetup):
             bendBfr, bendCtrl = controller(name='{}Bend_{}_ctl'.format(name, self), shape='sphere', color=self.color + 100)
             bendJoint = cmds.joint(name='{}Bend_{}_jnt'.format(name, self))
 
-            matrixConstraint((jointA, ), bendBfr, translate=False)
-            constraint = matrixConstraint((jointA, jointB), bendBfr, rotate=False, scale=False, shear=False)
+            matrixConstraint((mPlugA, ), bendBfr, translate=False)
+            constraint = matrixConstraint((mPlugA, mPlugB), bendBfr, rotate=False, scale=False, shear=False)
             cmds.setAttr('{}.blender'.format(constraint), .5)
 
-            skinCluster, = cmds.skinCluster(jointA, bendJoint, jointB, srf)
+            joints = list()
+            for m in (mPlugA, mPlugB):
+                cmds.select(clear=True)
+                j = cmds.joint()
+                joints.append(j)
+                decomposeMatrix(m, j)
+
+            skinCluster, = cmds.skinCluster(joints[0], bendJoint, joints[1], srf)
 
             nPointsU = cmds.getAttr('{}.spansU'.format(srf)) + cmds.getAttr('{}.degreeU'.format(srf))
 
@@ -344,9 +324,9 @@ class Limb(Component):
                         skinCluster,
                         cvPlug,
                         transformValue=[
-                            (jointA, a),
+                            (joints[0], a),
                             (bendJoint, b),
-                            (jointB, c),
+                            (joints[1], c),
                         ],
                     )
 

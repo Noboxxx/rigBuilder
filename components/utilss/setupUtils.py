@@ -65,3 +65,36 @@ def ribbon(matrixA, matrixB, nEdges=5, nOutputs=5, width=1.0):
         outputMatrixPlugs.append('{}.output'.format(fourByFour))
 
     return srf, outputMatrixPlugs
+
+
+def decomposeMatrix(plug, transform, translate=('x', 'y', 'z'), rotate=('x', 'y', 'z'), scale=('x', 'y', 'z'), shear=('x', 'y', 'z'), force=False):
+    print 'decomposeMatrix', plug, transform
+    node = cmds.createNode('decomposeMatrix')
+    cmds.connectAttr(plug, '{}.inputMatrix'.format(node))
+
+    attrs = {
+        'translate': translate,
+        'rotate': rotate,
+        'scale': scale,
+        'shear': shear,
+    }
+
+    for attr, axis in attrs.items():
+        if not axis:
+            continue
+
+        if 'x' in axis and 'y' in axis and 'z' in axis:
+            cmds.connectAttr(
+                '{}.output{}'.format(node, attr.title()),
+                '{}.{}'.format(transform, attr)
+            )
+            continue
+
+        for axes in axis:
+            cmds.connectAttr(
+                '{}.output{}{}'.format(node, attr.title(), axes),
+                '{}.{}{}'.format(transform, node, axes),
+                force=force
+            )
+
+    return node
