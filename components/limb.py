@@ -261,76 +261,77 @@ class Limb(Component):
 
         return resultPlugMatrices
 
+    def ribbonSetup(self, mainCtrl, startMatrixPlug, endMatrixPlug, sections, name):
+        startMatrix = cmds.getAttr(startMatrixPlug)
+        endMatrix = cmds.getAttr(endMatrixPlug)
+
+        # Create surface
+        surface, matrixPlugs = ribbon(startMatrix, endMatrix, nEdges=3, nOutputs=sections + 1)
+        cmds.setAttr('{}.inheritsTransform'.format(surface), False)
+        self.children.append(surface)
+
+        # Create skin joints
+        skinJoints = jointChain(startMatrix, endMatrix, nJoints=sections + 1, name='{}<i>_{}_skn'.format(name, self))
+        self.children.append(skinJoints[0])
+        self.influencers += skinJoints
+
+        for output, joint in zip(matrixPlugs, skinJoints):
+            matrixConstraint((output,), joint, scale=False)
+            matrixConstraint((mainCtrl,), joint, translate=False, rotate=False, shear=False)
+
+        # Driver joints
+        driverJoints = list()
+        for letter, plug in (('A', startMatrixPlug), ('B', endMatrixPlug)):
+            j = cmds.joint(name='{}Driver{}_{}_jnt'.format(name, letter, self))
+            cmds.setAttr('{}.inheritsTransform'.format(j), False)
+            decomposeMatrix(plug, j)
+            driverJoints.append(j)
+            self.children.append(j)
+
+        # Bender ctrl / joint
+        bendBfr, bendCtrl = controller(name='{}Bend_{}_ctl'.format(name, self), shape='sphere',
+                                       color=self.color + 100, size=self.bGuide.size)
+        bendJoint = cmds.joint(name='{}Bend_{}_jnt'.format(name, self))
+        self.controllers.append(bendCtrl)
+        self.children.append(bendBfr)
+
+        constraint = matrixConstraint(driverJoints, bendBfr)
+        cmds.setAttr('{}.blender'.format(constraint), .5)
+
+        # Skin Surface
+        skinCluster, = cmds.skinCluster(driverJoints[0], bendJoint, driverJoints[1], surface)
+        nPointsU = cmds.getAttr('{}.spansU'.format(surface)) + cmds.getAttr('{}.degreeU'.format(surface))
+        skinValues = (
+            (1.0, 0.0, 0.0),
+            (2/3, 1/3, 0.0),
+            (0.0, 1.0, 0.0),
+            (0.0, 1/3, 2/3),
+            (0.0, 0.0, 1.0),
+        )
+        for u in range(nPointsU):
+            for v, (a, b, c) in enumerate(skinValues):
+                cvPlug = '{}.cv[{}][{}]'.format(surface, u, v)
+
+                cmds.skinPercent(
+                    skinCluster,
+                    cvPlug,
+                    transformValue=[
+                        (driverJoints[0], a),
+                        (bendJoint, b),
+                        (driverJoints[1], c),
+                    ],
+                )
+
+        return skinJoints
+
     def skinSetup(self, mainCtrl, resultPlugMatrices):
-        aDriver, aEndDriver = self.buildFirstSegmentSkinJointsSetup(
-            '{}.worldMatrix'.format(mainCtrl),
-            resultPlugMatrices[0],
-            resultPlugMatrices[1]
-        )
+        # Ribbons and joint chains
+        aDriverMPlug, aEndDriverMPlug = self.buildFirstSegmentSkinJointsSetup(
+            '{}.worldMatrix'.format(mainCtrl), resultPlugMatrices[0], resultPlugMatrices[1])
+        bEndDriverMPlug = self.buildSecondSegmentSkinJointsSetup(resultPlugMatrices[1], resultPlugMatrices[2])
 
-        bEndDriver = self.buildSecondSegmentSkinJointsSetup(
-            resultPlugMatrices[1],
-            resultPlugMatrices[2]
-        )
-
-        aEndMatrix = self.aGuide.matrix[:12] + self.bGuide.matrix[12:]
-        bEndMatrix = self.bGuide.matrix[:12] + self.cGuide.matrix[12:]
-
-        firstSurface, firstMOutputs = ribbon(self.aGuide.matrix, aEndMatrix, nEdges=3, nOutputs=self.firstSection + 1)
-        secondSurface, secondMOutputs = ribbon(self.bGuide.matrix, bEndMatrix, nEdges=3, nOutputs=self.secondSection + 1)
-
-        firstJointChain = jointChain(
-            self.aGuide.matrix, aEndMatrix, nJoints=self.firstSection + 1, name='{}<i>_{}_skn'.format(self.abName, self))
-        secondJointChain = jointChain(
-            self.bGuide.matrix, bEndMatrix, nJoints=self.secondSection + 1, name='{}<i>_{}_skn'.format(self.bcName, self))
-
-        for output, joint in zip(firstMOutputs + secondMOutputs, firstJointChain + secondJointChain):
-            matrixConstraint((output,), joint)
-
-        firstSectionSetup = (self.abName, firstSurface, aDriver, aEndDriver)
-        secondSectionSetup = (self.bcName, secondSurface, resultPlugMatrices[1], bEndDriver)
-        for name, srf, mPlugA, mPlugB in (firstSectionSetup, secondSectionSetup):
-            bendBfr, bendCtrl = controller(name='{}Bend_{}_ctl'.format(name, self), shape='sphere', color=self.color + 100)
-            bendJoint = cmds.joint(name='{}Bend_{}_jnt'.format(name, self))
-
-            matrixConstraint((mPlugA, ), bendBfr, translate=False)
-            constraint = matrixConstraint((mPlugA, mPlugB), bendBfr, rotate=False, scale=False, shear=False)
-            cmds.setAttr('{}.blender'.format(constraint), .5)
-
-            joints = list()
-            for m in (mPlugA, mPlugB):
-                cmds.select(clear=True)
-                j = cmds.joint()
-                joints.append(j)
-                decomposeMatrix(m, j)
-
-            skinCluster, = cmds.skinCluster(joints[0], bendJoint, joints[1], srf)
-
-            nPointsU = cmds.getAttr('{}.spansU'.format(srf)) + cmds.getAttr('{}.degreeU'.format(srf))
-
-            skinValues = (
-                (1.0, 0.0, 0.0),
-                (2/3, 1/3, 0.0),
-                (0.0, 1.0, 0.0),
-                (0.0, 1/3, 2/3),
-                (0.0, 0.0, 1.0),
-            )
-
-            for u in range(nPointsU):
-                for v, (a, b, c) in enumerate(skinValues):
-                    cvPlug = '{}.cv[{}][{}]'.format(srf, u, v)
-
-                    cmds.skinPercent(
-                        skinCluster,
-                        cvPlug,
-                        transformValue=[
-                            (joints[0], a),
-                            (bendJoint, b),
-                            (joints[1], c),
-                        ],
-                    )
-
-        return firstJointChain + secondJointChain
+        self.ribbonSetup(mainCtrl, aDriverMPlug, aEndDriverMPlug, self.firstSection, self.abName)
+        self.ribbonSetup(mainCtrl, resultPlugMatrices[1], bEndDriverMPlug, self.secondSection, self.bcName)
 
     def build(self):
         # settings ctrl

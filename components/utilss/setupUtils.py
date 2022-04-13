@@ -4,7 +4,7 @@ from maya.api import OpenMaya
 from rigBuilder.components.utilss.mathUtils import blendMatrices
 
 
-def jointChain(matrixA, matrixB, nJoints=4, name='joint<i>', freezeRotate=True):
+def jointChain(matrixA, matrixB, nJoints=4, name='joint<i>', freezeRotate=True, scaleCompensate=False):
     cmds.select(clear=True)
 
     joints = list()
@@ -16,6 +16,10 @@ def jointChain(matrixA, matrixB, nJoints=4, name='joint<i>', freezeRotate=True):
 
     if freezeRotate:
         cmds.makeIdentity(joints[0], rotate=True, apply=True)
+
+    if not scaleCompensate:
+        for j in joints:
+            cmds.setAttr('{}.segmentScaleCompensate'.format(j), False)
 
     return joints
 
