@@ -21,12 +21,13 @@ class Limb(Component):
     abName = str()
     bcName = str()
 
-    def __init__(self, aGuide='', bGuide='', cGuide='', firstSection=4, secondSection=4, pvDistance=5.0, **kwargs):
+    def __init__(self, aGuide='', bGuide='', cGuide='', uiGuide='', firstSection=4, secondSection=4, pvDistance=5.0, **kwargs):
         super(Limb, self).__init__(**kwargs)
 
         self.aGuide = Guide(aGuide)
         self.bGuide = Guide(bGuide)
         self.cGuide = Guide(cGuide)
+        self.uiGuide = Guide(uiGuide)
 
         self.firstSection = UnsignedInt(firstSection)
         self.secondSection = UnsignedInt(secondSection)
@@ -41,6 +42,7 @@ class Limb(Component):
         self.aGuide = self.aGuide.mirrored()
         self.bGuide = self.bGuide.mirrored()
         self.cGuide = self.cGuide.mirrored()
+        self.uiGuide = self.uiGuide.mirrored()
 
     def buildSecondSegmentSkinJointsSetup(self, elbowMatrix, wristMatrix):
 
@@ -183,11 +185,11 @@ class Limb(Component):
         self.pvInputs.append(pvCtrlBuffer)
 
         # stretch
-        cmds.addAttr(mainCtrl, longName='minStretch', min=0, defaultValue=1, keyable=True)
-        cmds.addAttr(mainCtrl, longName='maxStretch', min=0, defaultValue=2, keyable=True)
-        cmds.addAttr(mainCtrl, longName='pvLock', min=0, max=1, defaultValue=0, keyable=True)
-        cmds.addAttr(mainCtrl, longName='offStretchA', keyable=True)
-        cmds.addAttr(mainCtrl, longName='offStretchB', keyable=True)
+        cmds.addAttr(self.interfaces[0], longName='minStretch', min=0, defaultValue=1, keyable=True)
+        cmds.addAttr(self.interfaces[0], longName='maxStretch', min=0, defaultValue=2, keyable=True)
+        cmds.addAttr(self.interfaces[0], longName='pvLock', min=0, max=1, defaultValue=0, keyable=True)
+        cmds.addAttr(self.interfaces[0], longName='offStretchA', keyable=True)
+        cmds.addAttr(self.interfaces[0], longName='offStretchB', keyable=True)
 
         elbowStretchPlug, wristStretchPlug = ikFullStretchSetup(
             rootSpaceWorldMatrixPlug='{}.worldMatrix'.format(mainCtrl),
@@ -196,11 +198,11 @@ class Limb(Component):
             handCtrlWorldMatrixPlug='{}.worldMatrix'.format(legIkCtrl),
             elbowForwardValueOrig=cmds.getAttr('{}.tx'.format(joints[1])),
             wristForwardValueOrig=cmds.getAttr('{}.tx'.format(joints[2])),
-            minStretchPlug='{}.minStretch'.format(mainCtrl),
-            maxStretchPlug='{}.maxStretch'.format(mainCtrl),
-            pvLockPlug='{}.pvLock'.format(mainCtrl),
-            offsetAPlug='{}.offStretchA'.format(mainCtrl),
-            offsetBPlug='{}.offStretchB'.format(mainCtrl)
+            minStretchPlug='{}.minStretch'.format(self.interfaces[0]),
+            maxStretchPlug='{}.maxStretch'.format(self.interfaces[0]),
+            pvLockPlug='{}.pvLock'.format(self.interfaces[0]),
+            offsetAPlug='{}.offStretchA'.format(self.interfaces[0]),
+            offsetBPlug='{}.offStretchB'.format(self.interfaces[0])
         )
 
         cmds.connectAttr(elbowStretchPlug, '{}.tx'.format(joints[1]))
@@ -334,18 +336,30 @@ class Limb(Component):
         self.ribbonSetup(mainCtrl, resultPlugMatrices[1], bEndDriverMPlug, self.secondSection, self.bcName)
 
     def build(self):
-        # settings ctrl
+        # main ctrl
         mainCtrlBuffer, mainCtrl = controller(
             'main_{}_ctl'.format(self), size=self.aGuide.size * 1.25, color=self.color + 100, matrix=self.aGuide.matrix)
-        self.interfaces.append(mainCtrl)
         self.controllers.append(mainCtrl)
         self.children.append(mainCtrlBuffer)
         self.inputs.append(mainCtrlBuffer)
 
+        # ui ctrl
+        uiBfr, uiCtrl = controller(
+            'ui_{}_ctl'.format(self),
+            size=self.uiGuide.size,
+            matrix=self.uiGuide.matrix,
+            color=(0, 255, 255),
+            ctrlParent=mainCtrl
+        )
+        self.children.append(uiBfr)
+        self.controllers.append(uiCtrl)
+        self.interfaces.append(uiCtrl)
+        matrixConstraint((mainCtrl,), uiBfr, maintainOffset=True)
+
         # switch plug
         switchAttr = 'switchFkIk'
-        switchPlug = '{}.{}'.format(mainCtrl, switchAttr)
-        cmds.addAttr(mainCtrl, longName=switchAttr, min=0, max=1, keyable=True)
+        switchPlug = '{}.{}'.format(self.interfaces[0], switchAttr)
+        cmds.addAttr(self.interfaces[0], longName=switchAttr, min=0, max=1, keyable=True)
 
         # ik setup
         ikJoints = self.ikSetup(mainCtrl, switchPlug)[0]

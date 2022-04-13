@@ -72,7 +72,6 @@ def ribbon(matrixA, matrixB, nEdges=5, nOutputs=5, width=1.0):
 
 
 def decomposeMatrix(plug, transform, translate=('x', 'y', 'z'), rotate=('x', 'y', 'z'), scale=('x', 'y', 'z'), shear=('x', 'y', 'z'), force=False):
-    print 'decomposeMatrix', plug, transform
     node = cmds.createNode('decomposeMatrix')
     cmds.connectAttr(plug, '{}.inputMatrix'.format(node))
 
