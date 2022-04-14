@@ -143,6 +143,7 @@ class Leg(Limb):
         self.aGuide = Guide.create('{}Hip'.format(name))
         self.bGuide = Guide.create('{}Knee'.format(name))
         self.cGuide = Guide.create('{}Ankle'.format(name))
+        self.uiGuide = Guide.create('{}Ui'.format(name))
 
         self.toesGuide = Guide.create('{}Toes'.format(name))
 
@@ -154,6 +155,7 @@ class Leg(Limb):
         cmds.parent(self.cGuide, self.bGuide)
         cmds.parent(self.bGuide, self.aGuide)
         cmds.parent(self.toesGuide, self.cGuide)
+        cmds.parent(self.uiGuide, self.aGuide)
 
         cmds.parent(
             self.footTipGuide,
@@ -163,6 +165,9 @@ class Leg(Limb):
             self.cGuide
         )
 
+        # uiGuide
+        cmds.setAttr('{}.tz'.format(self.uiGuide), 10)
+
         # aGuide
         cmds.setAttr('{}.rx'.format(self.aGuide), -90)
         cmds.setAttr('{}.ry'.format(self.aGuide), -5)
@@ -170,24 +175,14 @@ class Leg(Limb):
 
         # bGuide
         cmds.setAttr('{}.tx'.format(self.bGuide), 10)
-        cmds.setAttr('{}.ty'.format(self.bGuide), lock=True)
-        cmds.setAttr('{}.tz'.format(self.bGuide), lock=True)
-
-        cmds.setAttr('{}.rx'.format(self.bGuide), lock=True)
-        cmds.setAttr('{}.ry'.format(self.bGuide), lock=True)
         cmds.setAttr('{}.rz'.format(self.bGuide), 10)
 
         # cGuide
         cmds.setAttr('{}.tx'.format(self.cGuide), 10)
-        cmds.setAttr('{}.ty'.format(self.cGuide), lock=True)
-        cmds.setAttr('{}.tz'.format(self.cGuide), lock=True)
-
         cmds.setAttr('{}.rz'.format(self.cGuide), -95)
 
         # toesGuide
         cmds.setAttr('{}.tx'.format(self.toesGuide), 5)
-        cmds.setAttr('{}.ty'.format(self.toesGuide), lock=True)
-        cmds.setAttr('{}.tz'.format(self.toesGuide), lock=True)
 
         # footTip
         cmds.setAttr('{}.ty'.format(self.footTipGuide), 1)
