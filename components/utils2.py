@@ -201,7 +201,10 @@ shapes = {
 
 
 def controller(name, normal=(1, 0, 0), size=1.0, matrix=None, color=(255, 255, 0), ctrlParent=None, visParent=None,
-               shape=None):
+               shape=None, lockAttrs=None):
+    if lockAttrs is None:
+        lockAttrs = list()
+
     bfr = cmds.group(empty=True, name='{}Bfr'.format(name))
 
     shapeInfo = shapes.get(shape, shapes['circle'])
@@ -240,6 +243,9 @@ def controller(name, normal=(1, 0, 0), size=1.0, matrix=None, color=(255, 255, 0
         cmds.connectAttr(visParent, '{}.v'.format(bfr))
 
     cmds.setAttr('{}.v'.format(ctrl), lock=True, keyable=False)
+
+    for attr in lockAttrs:
+        cmds.setAttr('{}.{}'.format(ctrl, attr), lock=True, keyable=False)
 
     return bfr, ctrl
 

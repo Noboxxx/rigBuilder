@@ -240,7 +240,8 @@ class Limb(Component):
             size=self.bGuide.size * .9,
             matrix=self.bGuide.matrix,
             color=self.color + 100,
-            shape='sphere'
+            shape='sphere',
+            lockAttrs=('ry', 'rz', 'sx', 'sy', 'sz')
         )
         self.controllers.append(freeBCtrl)
         self.children.append(freeBBfr)
@@ -349,7 +350,9 @@ class Limb(Component):
             size=self.uiGuide.size,
             matrix=self.uiGuide.matrix,
             color=(0, 255, 255),
-            ctrlParent=mainCtrl
+            ctrlParent=mainCtrl,
+            shape='diamond',
+            lockAttrs=[a + x for a in ('t', 'r', 's') for x in ('x', 'y', 'z')]
         )
         self.children.append(uiBfr)
         self.controllers.append(uiCtrl)
