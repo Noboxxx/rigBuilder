@@ -99,22 +99,9 @@ class Hand(Component):
         # fingers
         guideArrays = (self.thumbGuides, self.indexGuides, self.middleGuides, self.ringGuides, self.pinkyGuides)
 
-        fingerOffsets = list()
         for name, guideArray in zip(self.fingerNames, guideArrays):
             if guideArray:
                 offsets = self.fingerChain(name, guideArray, mainCtrl, mainJoint)
-                fingerOffsets.append(
-                    (name, offsets)
-                )
-
-        for sourceAttr, destAttr in zip(('bend', 'spread'), ('rz', 'ry')):
-            for name, offsets in fingerOffsets:
-                sourceFullAttr = '{}{}'.format(sourceAttr, name.title())
-                sourcePlug = '{}.{}'.format(mainCtrl, sourceFullAttr)
-                cmds.addAttr(mainCtrl, longName=sourceFullAttr, keyable=True)
-
-                for off in offsets:
-                    cmds.connectAttr(sourcePlug, '{}.{}'.format(off, destAttr))
 
         self.buildFolder()
 
