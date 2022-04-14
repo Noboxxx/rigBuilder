@@ -42,10 +42,10 @@ class IkFkChain(Component):
             'fk{}_{}_ctl'.format(len(self.guides), self),
             size=self.guides[-1].size, color=self.color, matrix=self.guides[-1].matrix)
 
-        # first fk
-        firstFkBfr, firstFkCtrl = controller(
-            'fk{}_{}_ctl'.format(0, self),
-            size=self.guides[0].size, color=self.color, matrix=self.guides[0].matrix)
+        # # first fk
+        # firstFkBfr, firstFkCtrl = controller(
+        #     'fk{}_{}_ctl'.format(0, self),
+        #     size=self.guides[0].size, color=self.color, matrix=self.guides[0].matrix)
 
         # end ctrl
         endBfr, endCtrl = controller('endIk_{}_ctl'.format(self), size=self.guides[-1].size, color=self.color - 100,
@@ -54,7 +54,7 @@ class IkFkChain(Component):
         self.controllers.append(endCtrl)
 
         cmds.parent(lastFkBfr, endCtrl)
-        cmds.parent(firstFkBfr, rootCtrl)
+        # cmds.parent(firstFkBfr, rootCtrl)
 
         # curve
         points = [g.matrix[12:15] for g in self.guides]

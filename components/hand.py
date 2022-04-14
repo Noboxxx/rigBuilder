@@ -101,7 +101,7 @@ class Hand(Component):
 
         for name, guideArray in zip(self.fingerNames, guideArrays):
             if guideArray:
-                offsets = self.fingerChain(name, guideArray, mainCtrl, mainJoint)
+                self.fingerChain(name, guideArray, mainCtrl, mainJoint)
 
         self.buildFolder()
 
