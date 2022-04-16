@@ -125,7 +125,9 @@ class Leg(Limb):
 
     def skinSetup(self, mainCtrl, resultPlugMatrices):
         super(Leg, self).skinSetup(mainCtrl, resultPlugMatrices)
-        
+
+        cmds.select(clear=True)
+
         ankleJnt = cmds.joint(name='ankle_{}_skn'.format(self))
         cmds.setAttr('{}.segmentScaleCompensate'.format(ankleJnt), False)
 
