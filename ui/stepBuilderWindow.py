@@ -17,6 +17,7 @@ from ..steps.importGuidesFile import ImportGuidesFile
 from ..steps.importMayaFile import ImportMayaFile, MayaFile
 from ..steps.importSkin import ImportSkin
 from ..steps.newScene import NewScene
+from ..steps.finalizeRig import FinalizeRig
 from ..steps.transferSkin import TransferSkin
 from ..types import Node
 from ..ui.dataDictEditor import DataDictEditor, DataAttributeEditor, DataDictList
@@ -35,6 +36,7 @@ class StepDictList(DataDictList):
         TransferSkin,
         ImportGuidesFile,
         ImportCorrectives,
+        FinalizeRig,
     ]
 
 
