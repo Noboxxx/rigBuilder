@@ -136,7 +136,6 @@ class DataDictList(QtWidgets.QTreeWidget):
         self.currentDataChanged.emit(item.d if item is not None else None)
 
     def refresh(self, dataDict, disabledKeys=None):  # type: (dict[str: Data], List[str]) -> None
-        print 'refresh', dataDict, disabledKeys
         self.clear()
 
         if dataDict is None:
@@ -203,7 +202,6 @@ class DataDictList(QtWidgets.QTreeWidget):
         self.setCurrentItem(item)
 
     def addItem(self, key, data, enabled=True):  # type: (str, Data, bool) -> None
-        print 'addItem', key, data, enabled
         if key in self.getDataDict().keys():
             pattern = re.compile(r'(^[A-Za-z0-9_]*[A-Za-z_]+)(\d*$)')
             matches = pattern.findall(key)
