@@ -55,6 +55,7 @@ class Leg(Limb):
         cmds.scaleConstraint(footIkCtrl, joints[2])
 
         footIkHandle, _ = cmds.ikHandle(startJoint=joints[2], endEffector=joints[3], solver='ikSCsolver')
+        cmds.setAttr('{}.v'.format(footIkHandle), False)
         self.children.append(footIkHandle)
 
         toesIkCtrlBuffer, toesIkCtrl = controller(

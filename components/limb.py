@@ -152,6 +152,8 @@ class Limb(Component):
 
             cmds.xform(joint, matrix=list(guide.matrix), worldSpace=True)
 
+        cmds.setAttr('{}.v'.format(joints[0]), False)
+
         # leg ctrls
         cmds.makeIdentity(joints[0], rotate=True, apply=True)
 
@@ -165,6 +167,7 @@ class Limb(Component):
         self.ikInputs.append(legIkCtrlBuffer)
 
         legIkHandle, _ = cmds.ikHandle(startJoint=joints[0], endEffector=joints[2], solver='ikRPsolver')
+        cmds.setAttr('{}.v'.format(legIkHandle), False)
         self.children.append(legIkHandle)
 
         matrixConstraint((legIkCtrl,), joints[2], translate=False, rotate=True, scale=True, shear=True)
@@ -270,6 +273,7 @@ class Limb(Component):
 
         # Create surface
         surface, matrixPlugs = ribbon(startMatrix, endMatrix, nEdges=3, nOutputs=sections + 1)
+        cmds.setAttr('{}.v'.format(surface), False)
         cmds.setAttr('{}.inheritsTransform'.format(surface), False)
         self.children.append(surface)
 
@@ -287,6 +291,7 @@ class Limb(Component):
         for letter, plug in (('A', startMatrixPlug), ('B', endMatrixPlug)):
             j = cmds.joint(name='{}Driver{}_{}_jnt'.format(name, letter, self))
             cmds.setAttr('{}.inheritsTransform'.format(j), False)
+            cmds.setAttr('{}.v'.format(j), False)
             decomposeMatrix(plug, j)
             driverJoints.append(j)
             self.children.append(j)

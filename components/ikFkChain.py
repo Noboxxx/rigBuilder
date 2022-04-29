@@ -60,6 +60,7 @@ class IkFkChain(Component):
         points = [g.matrix[12:15] for g in self.guides]
         curve = cmds.curve(d=3, editPoint=points, name='{}_crv'.format(self))
         cmds.setAttr('{}.inheritsTransform'.format(curve), False)
+        cmds.setAttr('{}.v'.format(curve), False)
         self.children.append(curve)
 
         # joints
@@ -88,6 +89,7 @@ class IkFkChain(Component):
         # ik
         cmds.select(joints[0], joints[-1], curve)
         ikHandle, _ = cmds.ikHandle(solver='ikSplineSolver', ccv=False, roc=False, pcv=False)
+        cmds.setAttr('{}.v'.format(ikHandle), False)
         self.children.append(ikHandle)
 
         cmds.setAttr('{}.dTwistControlEnable'.format(ikHandle), True)

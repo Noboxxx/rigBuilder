@@ -50,6 +50,7 @@ class Clavicle(Component):
         self.outputs.append(clavicleJnt)
 
         ikHandle, _ = cmds.ikHandle(startJoint=clavicleJnt, endEffector=shoulderJnt, solver='ikSCsolver')
+        cmds.setAttr('{}.v'.format(ikHandle), False)
         self.children.append(ikHandle)
 
         matrixConstraint((fkCtrl,), clavicleJnt, rotate=False)
