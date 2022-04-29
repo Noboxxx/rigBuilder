@@ -20,7 +20,7 @@ class FinalizeRig(Step):
         unusedInfluences = [inf for inf in allInfluences if inf not in weightedInfluences]
         cmds.skinCluster(skinCls, e=True, removeInfluence=unusedInfluences)
 
-    def build(self):
+    def build(self, workspace=''):
         # optimize skinClusters
         if self.removeUnusedSkinInfluences:
             for skinCluster in cmds.ls(type='skinCluster'):

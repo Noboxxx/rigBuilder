@@ -12,5 +12,6 @@ class CustomScriptFile(Step):
         super(CustomScriptFile, self).__init__()
         self.file = PythonFile(file)
 
-    def build(self):
-        execfile(self.file)
+    def build(self, workspace=''):
+        f = PythonFile(self.file.replace('...', workspace))
+        execfile(f)

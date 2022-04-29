@@ -185,7 +185,6 @@ class JsonFileWindow(QtWidgets.QMainWindow):
         self.refresh(f.load())
         self.file = f
         print('{} -> File opened: {}'.format(self.title, self.file))
-        print('{} -> File opened: {}'.format(self.title, self.file))
 
     def clear(self):
         self.file = None

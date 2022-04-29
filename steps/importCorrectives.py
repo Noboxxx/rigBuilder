@@ -11,5 +11,5 @@ class ImportCorrectives(Step):
         self.shapeFile = BlendShapeFile(shapeFile)
         self.driverFile = File(driverFile)
 
-    def build(self):
+    def build(self, workspace=''):
         self.shapeFile.import_()

@@ -13,5 +13,5 @@ class CustomScript(Step):
         super(CustomScript, self).__init__(**kwargs)
         self.script = Script(script)
 
-    def build(self):
+    def build(self, workspace=''):
         self.script.execute()

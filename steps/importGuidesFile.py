@@ -7,7 +7,8 @@ class ImportGuidesFile(Step):
 
     def __init__(self, file=str(), **kwargs):
         super(ImportGuidesFile, self).__init__(**kwargs)
-        self.file = GuidesFile(os.path.normpath(file))
+        self.file = GuidesFile(file)
 
-    def build(self):
-        self.file.import_()
+    def build(self, workspace=''):
+        f = GuidesFile(self.file.replace('...', workspace))
+        f.import_()

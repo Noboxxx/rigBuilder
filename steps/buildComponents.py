@@ -13,5 +13,6 @@ class BuildComponents(Step):
         self.file = ComponentBuilderFile(file)
         self.controlSet = bool(controlSet)
 
-    def build(self):
-        self.file.load().build(controlSet=self.controlSet)
+    def build(self, workspace=''):
+        f = ComponentBuilderFile(self.file.replace('...', workspace))
+        f.load().build(controlSet=self.controlSet)

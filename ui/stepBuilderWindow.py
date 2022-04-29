@@ -1,6 +1,6 @@
 from functools import partial
 
-from PySide2 import QtWidgets
+from PySide2 import QtWidgets, QtGui
 from maya import cmds, mel
 from rigBuilder.files.skinFile import SkinFile
 from .attributeWidgets import ScriptWidget, FileWidget, NodeWidget, ComponentBuilderWidget, SkinFileWidget, \
@@ -19,7 +19,7 @@ from ..steps.importSkin import ImportSkin
 from ..steps.newScene import NewScene
 from ..steps.finalizeRig import FinalizeRig
 from ..steps.transferSkin import TransferSkin
-from ..types import Node
+from ..types import Node, Path
 from ..ui.dataDictEditor import DataDictEditor, DataAttributeEditor, DataDictList
 
 from ..ui.jsonFileWindow import JsonFileWindow, AskToSave
@@ -58,6 +58,34 @@ class StepAttributeEditor(DataAttributeEditor):
         ] + self.typeWidgetMap
 
 
+class WorkspaceWidget(QtWidgets.QWidget):
+
+    def __init__(self):
+        super(WorkspaceWidget, self).__init__()
+
+        self.field = QtWidgets.QLineEdit()
+
+        openBtn = QtWidgets.QPushButton()
+        openBtn.setMaximumSize(20, 20)
+        openBtn.setIcon(QtGui.QIcon(':open.png'))
+
+        lay = QtWidgets.QHBoxLayout()
+        lay.setMargin(0)
+        lay.addWidget(QtWidgets.QLabel('workspace'))
+        lay.addWidget(self.field)
+        lay.addWidget(openBtn)
+
+        self.setLayout(lay)
+
+    @property
+    def workspace(self):
+        return Path(self.field.text())
+
+    @workspace.setter
+    def workspace(self, path):
+        self.field.setText(Path(path))
+
+
 class StepBuilderWindow(JsonFileWindow):
 
     def __init__(self):
@@ -68,11 +96,14 @@ class StepBuilderWindow(JsonFileWindow):
             dataAttributeEditor=StepAttributeEditor()
         )
 
+        self.workspaceWidget = WorkspaceWidget()
+
         buildBtn = QtWidgets.QPushButton('Build')
         buildBtn.clicked.connect(self.build)
 
         layout = QtWidgets.QVBoxLayout()
         layout.setMargin(0)
+        layout.addWidget(self.workspaceWidget)
         layout.addWidget(self.stepEditor)
         layout.addWidget(buildBtn)
         layout.setStretch(1, 1)
@@ -80,7 +111,11 @@ class StepBuilderWindow(JsonFileWindow):
         self.mainLayout.addLayout(layout)
 
     def getData(self):  # type: () -> StepBuilder
-        return StepBuilder(stepDict=self.stepEditor.getDataDict(), disabledSteps=self.stepEditor.getDisabledKeys())
+        return StepBuilder(
+            stepDict=self.stepEditor.getDataDict(),
+            disabledSteps=self.stepEditor.getDisabledKeys(),
+            workspace=self.workspaceWidget.workspace
+        )
 
     def build(self):
         build = True
@@ -102,6 +137,7 @@ class StepBuilderWindow(JsonFileWindow):
 
     def refresh(self, data=None):  # type: (StepBuilder) -> None
         data = StepBuilder() if data is None else data
+        self.workspaceWidget.workspace = data.workspace
         self.stepEditor.refresh(data.stepDict, disabledKeys=data.disabledSteps)
 
 

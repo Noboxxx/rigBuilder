@@ -26,7 +26,7 @@ class TransferSkin(Step):
         self.sourceMesh = Node(sourceMesh)
         self.destinationMeshes = Nodes(destinationMeshes)
 
-    def build(self):
+    def build(self, workspace=''):
         joints = cmds.skinCluster(self.sourceMesh, q=True, influence=True)
         sourceSkinCluster = cmds.ls(cmds.listHistory(self.sourceMesh), type='skinCluster')[0]
 

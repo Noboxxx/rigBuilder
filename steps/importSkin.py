@@ -8,5 +8,6 @@ class ImportSkin(Step):
         super(ImportSkin, self).__init__()
         self.file = SkinFile(file)
 
-    def build(self):
-        self.file.import_()
+    def build(self, workspace=''):
+        f = SkinFile(self.file.replace('...', workspace))
+        f.import_()

@@ -4,7 +4,7 @@ from maya import cmds
 
 class NewScene(Step):
 
-    def build(self):
+    def build(self, workspace=''):
         # old scene name
         sceneName = cmds.file(q=True, sn=True)
         sceneType = cmds.file(q=True, type=True)
