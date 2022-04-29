@@ -116,8 +116,8 @@ class FileWidget(AttributeWidget):
         self.pathEdit.textChanged.connect(self.emitValueChanged)
 
         openBtn = QtWidgets.QPushButton()
+        openBtn.setIcon(QtGui.QIcon(':fileOpen.png'))
         openBtn.setFixedSize(size(20), size(20))
-        openBtn.setIcon(QtGui.QIcon(':openLoadGeneric.png'))
         openBtn.clicked.connect(self.askOpen)
 
         self.pathLayout = QtWidgets.QHBoxLayout()

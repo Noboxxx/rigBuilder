@@ -21,7 +21,7 @@ from ..steps.finalizeRig import FinalizeRig
 from ..steps.transferSkin import TransferSkin
 from ..types import Node, Path
 from ..ui.dataDictEditor import DataDictEditor, DataAttributeEditor, DataDictList
-
+import subprocess
 from ..ui.jsonFileWindow import JsonFileWindow, AskToSave
 
 
@@ -67,15 +67,32 @@ class WorkspaceWidget(QtWidgets.QWidget):
 
         openBtn = QtWidgets.QPushButton()
         openBtn.setMaximumSize(20, 20)
-        openBtn.setIcon(QtGui.QIcon(':open.png'))
+        openBtn.setIcon(QtGui.QIcon(':fileOpen.png'))
+        openBtn.clicked.connect(self.askOpen)
+
+        explorerBtn = QtWidgets.QPushButton()
+        explorerBtn.setMaximumSize(20, 20)
+        explorerBtn.setIcon(QtGui.QIcon(':eye.png'))
+        explorerBtn.clicked.connect(self.openExplorer)
 
         lay = QtWidgets.QHBoxLayout()
         lay.setMargin(0)
         lay.addWidget(QtWidgets.QLabel('workspace'))
         lay.addWidget(self.field)
+        lay.addWidget(explorerBtn)
         lay.addWidget(openBtn)
 
         self.setLayout(lay)
+
+    def askOpen(self):
+        path = QtWidgets.QFileDialog.getExistingDirectory(self, caption='Open Workspace')
+        if not path:
+            return
+
+        self.workspace = path
+
+    def openExplorer(self):
+        subprocess.Popen(r'explorer /select,"{}"'.format(self.workspace))
 
     @property
     def workspace(self):
