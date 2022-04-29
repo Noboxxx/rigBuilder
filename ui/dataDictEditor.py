@@ -108,8 +108,9 @@ class DataDictList(QtWidgets.QTreeWidget):
 
     def __init__(self):
         super(DataDictList, self).__init__()
-        self.setHeaderLabels(('key', 'type'))
-        self.setColumnWidth(1, size(50))
+        self.setHeaderLabels(('key', 'type', ''))
+        # self.setColumnWidth(1, size(50))
+        self.setColumnWidth(2, size(25))
 
         self.currentDataChanged = Signal()
         self.currentItemChanged.connect(self.emitCurrentDataChanged)
@@ -134,14 +135,17 @@ class DataDictList(QtWidgets.QTreeWidget):
     def emitCurrentDataChanged(self, item):
         self.currentDataChanged.emit(item.d if item is not None else None)
 
-    def refresh(self, dataDict):  # type: (dict[str: Data]) -> None
+    def refresh(self, dataDict, disabledKeys=None):  # type: (dict[str: Data], List[str]) -> None
+        print 'refresh', dataDict, disabledKeys
         self.clear()
 
         if dataDict is None:
             return
 
+        disabledKeys = disabledKeys if disabledKeys is not None else list()
+
         for key, data in dataDict.items():
-            self.addItem(key, data)
+            self.addItem(key, data, enabled=key not in disabledKeys)
 
     def getDataDict(self):  # type: () -> OrderedDict[str: Data]
         iterator = QtWidgets.QTreeWidgetItemIterator(self)
@@ -155,6 +159,21 @@ class DataDictList(QtWidgets.QTreeWidget):
             iterator.next()
 
         return dataDict
+
+    def getDisabledKeys(self):
+        iterator = QtWidgets.QTreeWidgetItemIterator(self)
+
+        disabledKeys = list()
+        while True:
+            item = iterator.value()
+            if item is None:
+                break
+            checkbox = self.itemWidget(item, 2)  # type: QtWidgets.QCheckBox
+            if not checkbox.isChecked():
+                disabledKeys.append(item.text(0))
+            iterator.next()
+
+        return disabledKeys
 
     def removeSelectedItems(self):
         result = QtWidgets.QMessageBox.question(
@@ -183,7 +202,8 @@ class DataDictList(QtWidgets.QTreeWidget):
         self.setItemSelected(item, True)
         self.setCurrentItem(item)
 
-    def addItem(self, key, data):  # type: (str, Data) -> None
+    def addItem(self, key, data, enabled=True):  # type: (str, Data, bool) -> None
+        print 'addItem', key, data, enabled
         if key in self.getDataDict().keys():
             pattern = re.compile(r'(^[A-Za-z0-9_]*[A-Za-z_]+)(\d*$)')
             matches = pattern.findall(key)
@@ -196,11 +216,15 @@ class DataDictList(QtWidgets.QTreeWidget):
             index += 1
             return self.addItem('{}{}'.format(name, index), data)
 
+        checkbox = QtWidgets.QCheckBox(self)
+        checkbox.setChecked(enabled)
+
         item = QtWidgets.QTreeWidgetItem(
             (key, data.__class__.__name__)
         )
         item.d = data
         self.addTopLevelItem(item)
+        self.setItemWidget(item, 2, checkbox)
 
     def renameSelectedItem(self):
         selectedItem = self.selectedItems()[0]
@@ -280,8 +304,8 @@ class DataDictEditor(QtWidgets.QWidget):
         splitter = QtWidgets.QSplitter()
         splitter.addWidget(self.dataDictList)
         splitter.addWidget(self.dataAttributeEditor)
-        splitter.setStretchFactor(0, 3)
-        splitter.setStretchFactor(1, 7)
+        splitter.setStretchFactor(0, 4)
+        splitter.setStretchFactor(1, 6)
 
         mainLayout = QtWidgets.QHBoxLayout()
         mainLayout.setMargin(0)
@@ -292,8 +316,11 @@ class DataDictEditor(QtWidgets.QWidget):
         self.dataDictList.currentDataChanged.connect(self.dataAttributeEditor.refresh)
         self.dataAttributeEditor.attributeValueChanged.connect(self.dataDictList.setAttributeValue)
 
-    def refresh(self, dataDict):  # type: (dict[str: Data]) -> None
-        self.dataDictList.refresh(dataDict)
+    def refresh(self, dataDict, disabledKeys=None):  # type: (dict[str: Data], list) -> None
+        self.dataDictList.refresh(dataDict, disabledKeys=disabledKeys)
 
     def getDataDict(self):  # type: () -> OrderedDict[str: Data]
         return self.dataDictList.getDataDict()
+
+    def getDisabledKeys(self):
+        return self.dataDictList.getDisabledKeys()

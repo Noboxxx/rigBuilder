@@ -148,10 +148,19 @@ class ComponentBuilderWindow(JsonFileWindow):
 
     def refresh(self, data=None):  # type: (ComponentBuilder) -> None
         data = ComponentBuilder() if data is None else data
-        self.componentEditor.refresh(data.componentDict)
-        self.connectionEditor.refresh(data.connectionDict)
+        self.componentEditor.refresh(data.componentDict, data.disabledComponents)
+        self.connectionEditor.refresh(data.connectionDict, data.disabledConnections)
 
     def getData(self):  # type: () -> ComponentBuilder
         componentDict = self.componentEditor.getDataDict()
+        disabledComponents = self.componentEditor.getDisabledKeys()
+
         connectionDict = self.connectionEditor.getDataDict()
-        return ComponentBuilder(componentDict, connectionDict)
+        disabledConnections = self.connectionEditor.getDisabledKeys()
+
+        return ComponentBuilder(
+            componentDict=componentDict,
+            connectionDict=connectionDict,
+            disabledConnections=disabledConnections,
+            disabledComponents=disabledComponents,
+        )

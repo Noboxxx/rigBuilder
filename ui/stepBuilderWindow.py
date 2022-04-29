@@ -80,7 +80,7 @@ class StepBuilderWindow(JsonFileWindow):
         self.mainLayout.addLayout(layout)
 
     def getData(self):  # type: () -> StepBuilder
-        return StepBuilder(self.stepEditor.getDataDict())
+        return StepBuilder(stepDict=self.stepEditor.getDataDict(), disabledSteps=self.stepEditor.getDisabledKeys())
 
     def build(self):
         build = True
@@ -102,6 +102,6 @@ class StepBuilderWindow(JsonFileWindow):
 
     def refresh(self, data=None):  # type: (StepBuilder) -> None
         data = StepBuilder() if data is None else data
-        self.stepEditor.refresh(data.stepDict)
+        self.stepEditor.refresh(data.stepDict, disabledKeys=data.disabledSteps)
 
 

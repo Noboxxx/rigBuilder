@@ -200,10 +200,12 @@ class Component(Data):
 
 class ComponentBuilder(Data):
 
-    def __init__(self, componentDict=None, connectionDict=None):
-        # type: (dict[str: Component], dict[str:Connection], GuideDict) -> None
+    def __init__(self, componentDict=None, connectionDict=None, disabledComponents=None, disabledConnections=None):
+        # type: (dict[str: Component], dict[str:Connection], List[str], List[str]) -> None
         super(ComponentBuilder, self).__init__()
 
+        self.disabledConnections = disabledConnections if disabledConnections is not None else list()
+        self.disabledComponents = disabledComponents if disabledComponents is not None else list()
         self.componentDict = componentDict if componentDict is not None else dict()
         self.connectionDict = connectionDict if connectionDict is not None else dict()
 
@@ -213,6 +215,8 @@ class ComponentBuilder(Data):
         componentDict = dict()
         mirroredComponentDict = dict()
         for key, component in self.componentDict.items():
+            if key in self.disabledComponents:
+                continue
             copiedComponent = component.copy()
             copiedComponent.build()
 
@@ -250,6 +254,8 @@ class ComponentBuilder(Data):
                         cmds.sets(s, addElement=grpSet)
 
         for key, connection in self.connectionDict.items():
+            if key in self.disabledConnections:
+                continue
             connection.copy().build(componentDict)
 
             if connection.bilateral:
