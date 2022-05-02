@@ -12,6 +12,7 @@ from ..steps.buildComponents import BuildComponents, ComponentBuilderFile
 from ..steps.core import StepBuilder
 from ..steps.customScript import CustomScript, Script
 from ..steps.customScriptFile import PythonFile, CustomScriptFile
+from ..steps.exportFile import ExportFile
 from ..steps.importCorrectives import ImportCorrectives
 from ..steps.importGuidesFile import ImportGuidesFile
 from ..steps.importMayaFile import ImportMayaFile, MayaFile
@@ -37,6 +38,7 @@ class StepDictList(DataDictList):
         ImportGuidesFile,
         ImportCorrectives,
         FinalizeRig,
+        ExportFile,
     ]
 
 

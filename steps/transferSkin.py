@@ -21,10 +21,11 @@ class TransferSkin(Step):
         'normalizeWeights',
     )
 
-    def __init__(self, sourceMesh='', destinationMeshes=None, **kwargs):
+    def __init__(self, sourceMesh='', destinationMeshes=None, hideSource=False, **kwargs):
         super(TransferSkin, self).__init__(**kwargs)
         self.sourceMesh = Node(sourceMesh)
         self.destinationMeshes = Nodes(destinationMeshes)
+        self.hideSource = bool(hideSource)
 
     def build(self, workspace=''):
         joints = cmds.skinCluster(self.sourceMesh, q=True, influence=True)
@@ -46,4 +47,5 @@ class TransferSkin(Step):
             for attr, value in settings.items():
                 cmds.setAttr('{}.{}'.format(skinCluster, attr), value)
 
-        cmds.setAttr('{}.v'.format(self.sourceMesh), False)
+        if self.hideSource:
+            cmds.setAttr('{}.v'.format(self.sourceMesh), False)
