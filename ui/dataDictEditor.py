@@ -190,18 +190,20 @@ class DataDictList(QtWidgets.QTreeWidget):
             self.takeTopLevelItem(index)
 
     def moveSelectedSelectedItem(self, step):
-        selectedItem = self.selectedItems()[0]
-
-        index = self.indexOfTopLevelItem(selectedItem)
-        item = self.takeTopLevelItem(index)
-
+        item = self.selectedItems()[0]  # type: QtWidgets.QTreeWidgetItem
+        enabled = self.itemWidget(item, 2).isChecked()
+        index = self.indexOfTopLevelItem(item)
         newIndex = int(clamp(index + step, 0, self.topLevelItemCount()))
 
-        self.insertTopLevelItem(newIndex, item)
-        self.setItemSelected(item, True)
-        self.setCurrentItem(item)
+        self.takeTopLevelItem(index)
+        newItem = self.addItem(
+            key=item.text(0), data=item.d, index=newIndex, enabled=enabled
+        )
 
-    def addItem(self, key, data, enabled=True):  # type: (str, Data, bool) -> None
+        self.setItemSelected(newItem, True)
+        self.setCurrentItem(newItem)
+
+    def addItem(self, key, data, index=-1, enabled=True):  # type: (str, Data, int, bool) -> QtWidgets.QTreeWidgetItem
         if key in self.getDataDict().keys():
             pattern = re.compile(r'(^[A-Za-z0-9_]*[A-Za-z_]+)(\d*$)')
             matches = pattern.findall(key)
@@ -221,8 +223,12 @@ class DataDictList(QtWidgets.QTreeWidget):
             (key, data.__class__.__name__)
         )
         item.d = data
-        self.addTopLevelItem(item)
+        if index == -1:
+            self.addTopLevelItem(item)
+        else:
+            self.insertTopLevelItem(index, item)
         self.setItemWidget(item, 2, checkbox)
+        return item
 
     def renameSelectedItem(self):
         selectedItem = self.selectedItems()[0]
