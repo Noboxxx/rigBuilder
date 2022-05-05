@@ -15,7 +15,7 @@ from ..components.hand import Hand
 from ..components.ikFkChain import IkFkChain
 from ..components.leg import Leg
 from ..components.oneCtrl import OneCtrl
-from ..types import Color, Side
+from ..types import Color, Side, Choice
 
 
 class CreateGuidesDialog(QtWidgets.QDialog):
@@ -66,7 +66,7 @@ class ComponentAttributeEditor(DataAttributeEditor):
         self.typeWidgetMap = [
             (Color, ColorWidget),
             (Guide, NodeWidget),
-            (Side, partial(ComboWidget, Side.mirrorTable.keys())),
+            (Choice, ComboWidget),
             (GuideArray, partial(ListAttributeWidget, NodeWidget)),
             (Nodes, partial(ListAttributeWidget, NodeWidget)),
         ] + self.typeWidgetMap

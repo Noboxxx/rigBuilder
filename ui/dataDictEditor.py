@@ -92,12 +92,12 @@ class DataAttributeEditor(QtWidgets.QTreeWidget):
     def getAttributeWidget(self, key, value):
         for t, w in self.typeWidgetMap:
             if isinstance(value, t):
-                widget = w()
+                widget = w(value.__class__)
                 widget.setValue(value)
                 widget.valueChanged.connect(partial(self.attributeValueChanged.emit, key, type(value)))
                 return widget
 
-        widget = DefaultWidget()
+        widget = DefaultWidget(value.__class__)
         widget.setValue(value)
         return widget
 

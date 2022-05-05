@@ -23,8 +23,14 @@ class StepBuilder(Data):
     def build(self):
         start = time.time()
         print('---> Build starts')
+        stepTimes = list()
         for name, step in self.stepDict.items():
             if name in self.disabledSteps:
                 continue
+            startStep = time.time()
             step.build(workspace=self.workspace)
-        print('---> Build stops [{} sec]'.format(time.time() - start))
+            stepTime = round(time.time() - startStep, 2)
+            stepTimes.append((name, stepTime))
+        print('---> Build stops: {} seconds'.format(round(time.time() - start), 2))
+        for stepName, stepTime in stepTimes:
+            print('# {}: {} seconds'.format(stepName, stepTime))

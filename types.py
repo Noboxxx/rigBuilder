@@ -2,18 +2,33 @@ import math
 import os
 
 
-class Side(str):
+class Choice(str):
+    choices = tuple()
+
+    @staticmethod
+    def __new__(cls, value):
+        if value not in cls.choices:
+            raise ValueError('{} is not a valid value for {}'.format(repr(value), repr(cls.__name__)))
+        return super(Choice, cls).__new__(cls, value)
+
+    @classmethod
+    def default(cls):
+        return cls(cls.choices[0])
+
+
+class Side(Choice):
+
+    choices = (
+        'C',
+        'L',
+        'R'
+    )
 
     mirrorTable = {
         'L': 'R',
         'R': 'L',
         'C': 'C',
     }
-
-    def __init__(self, side):  # type: (str) -> None
-        if str(side) not in self.mirrorTable:
-            raise ValueError('Unrecognized Side \'{}\'.'.format(side))
-        super(Side, self).__init__(side)
 
     def mirrored(self):
         return self.__class__(self.mirrorTable[self])

@@ -9,8 +9,9 @@ from ..types import File
 
 class AttributeWidget(QtWidgets.QWidget):
 
-    def __init__(self):
+    def __init__(self, cl):
         super(AttributeWidget, self).__init__()
+        self.cl = cl
 
         self.valueChanged = Signal()
 
@@ -30,8 +31,8 @@ class AttributeWidget(QtWidgets.QWidget):
 
 class ColorWidget(AttributeWidget):
 
-    def __init__(self):
-        super(ColorWidget, self).__init__()
+    def __init__(self, cl):
+        super(ColorWidget, self).__init__(cl)
 
         self.redSpinBox = QtWidgets.QSpinBox()
         self.redSpinBox.setMaximum(255)
@@ -90,8 +91,8 @@ class ColorWidget(AttributeWidget):
 
 class ScriptWidget(AttributeWidget):
 
-    def __init__(self):
-        super(ScriptWidget, self).__init__()
+    def __init__(self, cl):
+        super(ScriptWidget, self).__init__(cl)
 
         self.textEdit = QtWidgets.QTextEdit()
         self.textEdit.textChanged.connect(self.emitValueChanged)
@@ -109,8 +110,8 @@ class FileWidget(AttributeWidget):
 
     filter = ''
 
-    def __init__(self):
-        super(FileWidget, self).__init__()
+    def __init__(self, cl):
+        super(FileWidget, self).__init__(cl)
 
         self.pathEdit = QtWidgets.QLineEdit()
         self.pathEdit.textChanged.connect(self.emitValueChanged)
@@ -145,8 +146,8 @@ class FileWidget(AttributeWidget):
 
 class ComponentBuilderWidget(FileWidget):
 
-    def __init__(self):
-        super(ComponentBuilderWidget, self).__init__()
+    def __init__(self, cl):
+        super(ComponentBuilderWidget, self).__init__(cl)
 
         editBtn = QtWidgets.QPushButton()
         editBtn.setFixedSize(size(20), size(20))
@@ -167,8 +168,8 @@ class ComponentBuilderWidget(FileWidget):
 class GuidesFileWidget(FileWidget):
     filter = 'Json File (*.json)'
 
-    def __init__(self):
-        super(GuidesFileWidget, self).__init__()
+    def __init__(self, cl):
+        super(GuidesFileWidget, self).__init__(cl)
 
         saveAsBtn = QtWidgets.QPushButton()
         saveAsBtn.setFixedSize(size(20), size(20))
@@ -191,8 +192,8 @@ class SkinFileWidget(FileWidget):
 
     filter = 'Json File (*.json)'
 
-    def __init__(self):
-        super(SkinFileWidget, self).__init__()
+    def __init__(self, cl):
+        super(SkinFileWidget, self).__init__(cl)
 
         saveAsBtn = QtWidgets.QPushButton()
         saveAsBtn.setFixedSize(size(20), size(20))
@@ -203,8 +204,6 @@ class SkinFileWidget(FileWidget):
         self.targetsLine = QtWidgets.QTextEdit()
         self.targetsLine.setEnabled(False)
         self.mainLayout.addWidget(self.targetsLine)
-
-
 
     def saveAs(self):
         from rigBuilder.files.skinFile import SkinFile
@@ -236,8 +235,8 @@ class PythonFileWidget(FileWidget):
 
 class NodeWidget(AttributeWidget):
 
-    def __init__(self):
-        super(NodeWidget, self).__init__()
+    def __init__(self, cl):
+        super(NodeWidget, self).__init__(cl)
 
         self.nodeEdit = QtWidgets.QLineEdit()
 
@@ -268,8 +267,8 @@ class NodeWidget(AttributeWidget):
 
 
 class BoolWidget(AttributeWidget):
-    def __init__(self):
-        super(BoolWidget, self).__init__()
+    def __init__(self, cl):
+        super(BoolWidget, self).__init__(cl)
 
         self.check = QtWidgets.QCheckBox()
         self.check.stateChanged.connect(self.emitValueChanged)
@@ -284,8 +283,8 @@ class BoolWidget(AttributeWidget):
 
 
 class StringWidget(AttributeWidget):
-    def __init__(self):
-        super(StringWidget, self).__init__()
+    def __init__(self, cl):
+        super(StringWidget, self).__init__(cl)
 
         self.line = QtWidgets.QLineEdit()
         self.line.textChanged.connect(self.emitValueChanged)
@@ -301,8 +300,8 @@ class StringWidget(AttributeWidget):
 
 class DefaultWidget(AttributeWidget):
 
-    def __init__(self):
-        super(DefaultWidget, self).__init__()
+    def __init__(self, cl):
+        super(DefaultWidget, self).__init__(cl)
 
         self.line = QtWidgets.QLineEdit()
         self.line.setEnabled(False)
@@ -317,8 +316,8 @@ class DefaultWidget(AttributeWidget):
 
 
 class FloatWidget(AttributeWidget):
-    def __init__(self):
-        super(FloatWidget, self).__init__()
+    def __init__(self, cl):
+        super(FloatWidget, self).__init__(cl)
 
         self.spin = QtWidgets.QDoubleSpinBox()
         self.spin.setMinimum(-10000.0)
@@ -335,8 +334,8 @@ class FloatWidget(AttributeWidget):
 
 
 class IntWidget(AttributeWidget):
-    def __init__(self):
-        super(IntWidget, self).__init__()
+    def __init__(self, cl):
+        super(IntWidget, self).__init__(cl)
 
         self.spin = QtWidgets.QSpinBox()
         self.spin.setMinimum(-10000)
@@ -354,10 +353,10 @@ class IntWidget(AttributeWidget):
 
 class ComboWidget(AttributeWidget):
 
-    def __init__(self, choices=None):
-        super(ComboWidget, self).__init__()
+    def __init__(self, cl):
+        super(ComboWidget, self).__init__(cl)
         self.combo = QtWidgets.QComboBox()
-        for choice in choices or list():
+        for choice in cl.choices:
             self.combo.addItem(choice)
 
         self.combo.currentTextChanged.connect(self.emitValueChanged)
@@ -369,13 +368,13 @@ class ComboWidget(AttributeWidget):
         self.combo.setCurrentIndex(index)
 
     def getValue(self):
-        return self.combo.currentText()
+        return self.cl(self.combo.currentText())
 
 
 class ListAttributeWidget(AttributeWidget):
 
-    def __init__(self, t):
-        super(ListAttributeWidget, self).__init__()
+    def __init__(self, t, cl):
+        super(ListAttributeWidget, self).__init__(cl)
 
         self.t = t
 
@@ -391,7 +390,7 @@ class ListAttributeWidget(AttributeWidget):
         self.mainLayout.addLayout(self.layout)
 
     def addItem(self):
-        wid = self.t()  # type: AttributeWidget
+        wid = self.t(self.cl)  # type: AttributeWidget
         wid.valueChanged.connect(self.emitValueChanged)
         self.widgets.append(wid)
 
@@ -429,8 +428,8 @@ class ListAttributeWidget(AttributeWidget):
 
 class ConnectionPlugWidget(AttributeWidget):
 
-    def __init__(self, func=None):  # type: (dict[str: Component]) -> None
-        super(ConnectionPlugWidget, self).__init__()
+    def __init__(self, cl, func=None):  # # type: (None, dict[str: Component]) -> None
+        super(ConnectionPlugWidget, self).__init__(cl)
 
         self.componentDict = dict() if func is None else func()
 
@@ -497,3 +496,26 @@ class ConnectionPlugWidget(AttributeWidget):
         index = self.indexSpin.value()
 
         return ConnectionPlug((key, attribute, index))
+
+
+class SkinFileWidget2(FileWidget):
+    filter = 'Xml File (*.xml)'
+
+    def __init__(self, cl):
+        super(SkinFileWidget2, self).__init__(cl)
+
+        saveAsBtn = QtWidgets.QPushButton()
+        saveAsBtn.setFixedSize(size(20), size(20))
+        saveAsBtn.setIcon(QtGui.QIcon(':save.png'))
+        saveAsBtn.clicked.connect(self.saveAs)
+        self.pathLayout.addWidget(saveAsBtn)
+
+    def saveAs(self):
+        from rigBuilder.files.skinFile2 import SkinFile2
+
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(self, caption='Save Skin File', filter=self.filter)
+        if not path:
+            return
+        f = SkinFile2(path)
+        f.export()
+        self.pathEdit.setText(f)

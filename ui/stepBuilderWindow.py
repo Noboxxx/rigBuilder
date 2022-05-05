@@ -4,10 +4,11 @@ from PySide2 import QtWidgets, QtGui
 from maya import cmds, mel
 from rigBuilder.files.skinFile import SkinFile
 from .attributeWidgets import ScriptWidget, FileWidget, NodeWidget, ComponentBuilderWidget, SkinFileWidget, \
-    PythonFileWidget, ListAttributeWidget, GuidesFileWidget
+    PythonFileWidget, ListAttributeWidget, GuidesFileWidget, SkinFileWidget2, ComboWidget
 from ..components.baseLegacy import Nodes
 from ..files.core import JsonFile
 from ..files.guidesFile import GuidesFile
+from ..files.skinFile2 import SkinFile2
 from ..steps.buildComponents import BuildComponents, ComponentBuilderFile
 from ..steps.core import StepBuilder
 from ..steps.customScript import CustomScript, Script
@@ -17,10 +18,12 @@ from ..steps.importCorrectives import ImportCorrectives
 from ..steps.importGuidesFile import ImportGuidesFile
 from ..steps.importMayaFile import ImportMayaFile, MayaFile
 from ..steps.importSkin import ImportSkin
+from ..steps.importSkin2 import ImportSkin2, SkinMethod
+from ..steps.mirrorSkinWeigths import MirrorSkinWeights
 from ..steps.newScene import NewScene
 from ..steps.finalizeRig import FinalizeRig
 from ..steps.transferSkin import TransferSkin
-from ..types import Node, Path
+from ..types import Node, Path, Choice
 from ..ui.dataDictEditor import DataDictEditor, DataAttributeEditor, DataDictList
 import subprocess
 from ..ui.jsonFileWindow import JsonFileWindow, AskToSave
@@ -34,11 +37,13 @@ class StepDictList(DataDictList):
         ImportMayaFile,
         BuildComponents,
         ImportSkin,
+        ImportSkin2,
         TransferSkin,
         ImportGuidesFile,
         ImportCorrectives,
         FinalizeRig,
         ExportFile,
+        MirrorSkinWeights,
     ]
 
 
@@ -50,6 +55,9 @@ class StepAttributeEditor(DataAttributeEditor):
         self.typeWidgetMap = [
             (Script, ScriptWidget),
             (Node, NodeWidget),
+            (Choice, ComboWidget),
+            # (SkinMethod, ComboWidget),
+            (SkinFile2, SkinFileWidget2),
             (SkinFile, SkinFileWidget),
             (PythonFile, PythonFileWidget),
             (ComponentBuilderFile, ComponentBuilderWidget),
