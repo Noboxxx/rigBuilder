@@ -6,7 +6,7 @@ def getAllAncestors(cl, data=None):
 
     parents = cl.__bases__
     for parent in parents:
-        data.append(parent)
+        data.insert(0, parent)
         getAllAncestors(parent, data)
 
     return data

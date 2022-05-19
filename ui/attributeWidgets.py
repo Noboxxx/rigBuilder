@@ -428,7 +428,7 @@ class ListAttributeWidget(AttributeWidget):
 
 class ConnectionPlugWidget(AttributeWidget):
 
-    def __init__(self, cl, func=None):  # # type: (None, dict[str: Component]) -> None
+    def __init__(self, func, cl):  # # type: (None, dict[str: Component]) -> None
         super(ConnectionPlugWidget, self).__init__(cl)
 
         self.componentDict = dict() if func is None else func()
