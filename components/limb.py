@@ -306,6 +306,13 @@ class Limb(Component):
         constraint = matrixConstraint(driverJoints, bendBfr)
         cmds.setAttr('{}.blender'.format(constraint), .5)
 
+        # benders
+        benderAttr = 'benders'
+        benderPlug = '{}.{}'.format(self.interfaces[0], benderAttr)
+        if not cmds.objExists(benderPlug):
+            cmds.addAttr(self.interfaces[0], longName=benderAttr, attributeType='bool', defaultValue=False, k=True)
+        cmds.connectAttr(benderPlug, '{}.v'.format(bendBfr))
+
         # Skin Surface
         skinCluster, = cmds.skinCluster(driverJoints[0], bendJoint, driverJoints[1], surface)
         nPointsU = cmds.getAttr('{}.spansU'.format(surface)) + cmds.getAttr('{}.degreeU'.format(surface))

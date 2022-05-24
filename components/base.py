@@ -7,8 +7,8 @@ from ..types import UnsignedFloat
 
 class Base(Component):
 
-    def __init__(self, size=1.0):
-        super(Base, self).__init__()
+    def __init__(self, size=1.0, **kwargs):
+        super(Base, self).__init__(**kwargs)
         self.size = UnsignedFloat(size)
 
     def build(self):

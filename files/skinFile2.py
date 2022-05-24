@@ -1,5 +1,8 @@
 import math
 import os
+import xml
+from xml.etree.ElementTree import Element
+
 from maya import cmds
 from rigBuilder.types import File
 from xml.etree import ElementTree
@@ -65,14 +68,16 @@ class SkinFile2(File):
 
     def export(self, mesh=None):
         mesh = cmds.ls(sl=True)[0] if mesh is None else mesh
+        deformer = self.getSkinCluster(mesh)
         cmds.deformerWeights(
             os.path.basename(self),
             path=os.path.dirname(self),
             ex=True,
-            deformer=self.getSkinCluster(mesh),
+            deformer=deformer,
             attribute=self.attributes,
         )
         tree = ElementTree.parse(self)
+        # root = tree.getroot()
 
         for w in tree.findall('weights'):
             joint = w.get('source')
@@ -82,6 +87,18 @@ class SkinFile2(File):
             w.set('tx', str(tx))
             w.set('ty', str(ty))
             w.set('tz', str(tz))
+
+        # # blendWeights
+        # bw = Element('blendWeights')
+        # bw.set('deformer', deformer)
+        # root.append(bw)
+        #
+        # blendWeights = cmds.getAttr('{}.blendWeights'.format(deformer))
+        # for i, v in enumerate(blendWeights[0]):
+        #     w = Element('weight')
+        #     w.set('index', str(i))
+        #     w.set('value', str(v))
+        #     bw.append(w)
 
         tree.write(str(self))
 
@@ -100,7 +117,6 @@ class SkinFile2(File):
             ty = w.get('ty')
             tz = w.get('tz')
             if tx and ty and tz:
-                print tx, ty, tz
                 joint = self.getClosestJoint((float(tx), float(ty), float(tz)))
                 if joint is None:
                     raise RuntimeError('No closest joint found for {}.'.format(repr(joint)))
@@ -121,5 +137,12 @@ class SkinFile2(File):
             im=True,
             method=method,
             deformer=skinCluster,
-            ignoreName=True
+            ignoreName=True,
+            attribute=self.attributes,
         )
+
+        for d in tree.findall('deformer'):
+            for a in d.findall('attribute'):
+                name = a.get('name')
+                value = a.get('value')
+                cmds.setAttr('{}.{}'.format(skinCluster, name), eval(value))
