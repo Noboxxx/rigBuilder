@@ -42,10 +42,8 @@ class IkFkChain(Component):
             'fk{}_{}_ctl'.format(len(self.guides), self),
             size=self.guides[-1].size, color=self.color, matrix=self.guides[-1].matrix)
 
-        # # first fk
-        # firstFkBfr, firstFkCtrl = controller(
-        #     'fk{}_{}_ctl'.format(0, self),
-        #     size=self.guides[0].size, color=self.color, matrix=self.guides[0].matrix)
+        for attr in ('tx', 'ty', 'tz', 'sx', 'sy', 'sz'):
+            cmds.setAttr('{}.{}'.format(lastFkCtrl, attr), lock=True, keyable=False)
 
         # end ctrl
         endBfr, endCtrl = controller('endIk_{}_ctl'.format(self), size=self.guides[-1].size, color=self.color - 100,
@@ -54,7 +52,6 @@ class IkFkChain(Component):
         self.controllers.append(endCtrl)
 
         cmds.parent(lastFkBfr, endCtrl)
-        # cmds.parent(firstFkBfr, rootCtrl)
 
         # curve
         points = [g.matrix[12:15] for g in self.guides]
