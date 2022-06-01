@@ -110,7 +110,7 @@ class Color(list):
         #     r = distance * 2 + v
         #     mirroredColor.append(int(r))
         # return self.__class__(mirroredColor)
-        return self.__class__((self[1], self[2], self[0]))
+        return self.__class__((self[2], self[0], self[1]))
 
 
 class UnsignedInt(int):
@@ -323,3 +323,9 @@ class File(Path):
 
 class Node(str):
     pass
+
+
+class StringArray(list):
+
+    def __init__(self, seq=tuple()):
+        super(StringArray, self).__init__(map(str, seq))

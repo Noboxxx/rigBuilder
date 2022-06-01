@@ -2,7 +2,7 @@ import inspect
 from functools import partial
 from PySide2 import QtWidgets
 from .attributeWidgets import ColorWidget, NodeWidget, ComboWidget, ListAttributeWidget, \
-    ConnectionPlugWidget
+    ConnectionPlugWidget, StringWidget
 from .dataDictEditor import DataDictEditor, DataDictList, DataAttributeEditor
 from .jsonFileWindow import JsonFileWindow
 from ..components.arm import Arm
@@ -15,7 +15,7 @@ from ..components.hand import Hand
 from ..components.ikFkChain import IkFkChain
 from ..components.leg import Leg
 from ..components.oneCtrl import OneCtrl
-from ..types import Color, Side, Choice
+from ..types import Color, Side, Choice, StringArray
 
 
 class CreateGuidesDialog(QtWidgets.QDialog):
@@ -56,6 +56,7 @@ class ConnectionAttributeEditor(DataAttributeEditor):
         self.typeWidgetMap = [
             (ConnectionPlug, partial(ConnectionPlugWidget, self.getComponentDictFunc)),
             (ConnectionPlugArray, partial(ListAttributeWidget, partial(ConnectionPlugWidget, self.getComponentDictFunc))),
+            (StringArray, partial(ListAttributeWidget, StringWidget)),
         ] + self.typeWidgetMap
 
 

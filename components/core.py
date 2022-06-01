@@ -1,7 +1,7 @@
 import re
 
 from maya import cmds
-from rigBuilder.types import Side, Color, UnsignedInt, Matrix, Vector
+from rigBuilder.types import Side, Color, UnsignedInt, Matrix, Vector, StringArray
 from rigBuilder.core import Data
 from collections import OrderedDict
 
@@ -62,14 +62,14 @@ class ConnectionPlug(list):
 
 class Connection(Data):
 
-    def __init__(self, sources=None, destination=None, bilateral=False, translate=True, rotate=True, scale=True, shear=True, maintainOffset=True):
-        # type: (List[list], list, bool, bool, bool, bool, bool, bool) -> None
+    def __init__(self, attributeName='follow', sources=None, destination=None,  bilateral=False, translate=True, rotate=True, scale=True, shear=True, maintainOffset=True, **kwargs):
         super(Connection, self).__init__()
 
         self.sources = ConnectionPlugArray(sources) if sources is not None else ConnectionPlugArray()
         self.destination = ConnectionPlug(destination) if destination is not None else ConnectionPlug()
         self.bilateral = bilateral
 
+        self.attributeName = str(attributeName)
         self.translate = bool(translate)
         self.rotate = bool(rotate)
         self.scale = bool(scale)
@@ -84,18 +84,14 @@ class Connection(Data):
 
         interface = self.destination.getComponent(componentDict).interfaces[0]
 
-        attrs = '_'.join([attr for attr, state in zip(
-            ('t', 'r', 's', 'sh'),
-            (self.translate, self.rotate, self.scale, self.shear),
-        ) if state])
-
-        attr = '{}_space_{}'.format(destination, attrs)
-        plug = '{}.{}'.format(interface, attr)
+        plug = '{}.{}'.format(interface, self.attributeName)
+        if cmds.objExists(plug):
+            raise RuntimeError('Attribute already exists: {}'.format(repr(plug)))
         cmds.addAttr(
             interface,
-            longName=attr,
+            longName=self.attributeName,
             attributeType='enum',
-            enumName=':'.join(map(str, sources)),
+            enumName=':'.join(x.key for x in self.sources),
             keyable=True,
         )
         constr = matrixConstraint(sources, destination, self.translate, self.rotate, self.scale, self.shear, self.maintainOffset)
