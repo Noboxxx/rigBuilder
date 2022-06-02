@@ -48,6 +48,29 @@ class StepDictList(DataDictList):
         ImportCtrlShapes,
     ]
 
+    def __init__(self, workspaceWidget):
+        super(StepDictList, self).__init__()
+
+        self.workspaceWidget = workspaceWidget
+
+    def populateContextMenu(self):
+
+        buildAction = QtWidgets.QAction('Build', self)
+        buildAction.triggered.connect(self.build)
+        if not self.selectedItems():
+            buildAction.setEnabled(False)
+
+        menu = super(StepDictList, self).populateContextMenu()
+        menu.addSeparator()
+        menu.addAction(buildAction)
+
+        return menu
+
+    def build(self):
+        for item in self.selectedItems():
+            step = item.d
+            step.build(workspace=self.workspaceWidget.workspace)
+
 
 class StepAttributeEditor(DataAttributeEditor):
 
@@ -120,12 +143,12 @@ class StepBuilderWindow(JsonFileWindow):
     def __init__(self):
         super(StepBuilderWindow, self).__init__(title='Step Builder')
 
+        self.workspaceWidget = WorkspaceWidget()
+
         self.stepEditor = DataDictEditor(
-            dataDictList=StepDictList(),
+            dataDictList=StepDictList(self.workspaceWidget),
             dataAttributeEditor=StepAttributeEditor()
         )
-
-        self.workspaceWidget = WorkspaceWidget()
 
         buildBtn = QtWidgets.QPushButton('Build')
         buildBtn.clicked.connect(self.build)
