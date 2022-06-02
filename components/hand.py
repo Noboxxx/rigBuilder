@@ -90,6 +90,8 @@ class Hand(Component):
                                           color=self.color)
         mainJoint = cmds.joint(name='main_{}_skn'.format(self))
 
+        self.controllers.append(mainCtrl)
+
         self.children.append(mainBuffer)
         self.interfaces.append(mainCtrl)
 

@@ -41,7 +41,7 @@ class IkFkChain(Component):
         lastFkBfr, lastFkCtrl = controller(
             'fk{}_{}_ctl'.format(len(self.guides), self),
             size=self.guides[-1].size, color=self.color, matrix=self.guides[-1].matrix)
-
+        self.controllers.append(lastFkCtrl)
         for attr in ('tx', 'ty', 'tz', 'sx', 'sy', 'sz'):
             cmds.setAttr('{}.{}'.format(lastFkCtrl, attr), lock=True, keyable=False)
 

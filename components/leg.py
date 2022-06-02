@@ -119,6 +119,8 @@ class Leg(Limb):
         ctrlBuffer, ctrl = controller(
             'fk{}_{}_ctl'.format(len(ctrls), self), size=self.toesGuide.size, matrix=list(self.toesGuide.matrix.normalized()),
             color=self.color, ctrlParent=ctrls[-1], visParent='{}.outputX'.format(reverseNode))
+
+        self.controllers.append(ctrl)
         cmds.parent(ctrlBuffer, ctrls[-1])
         ctrls.append(ctrl)
 
