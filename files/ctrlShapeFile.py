@@ -4,8 +4,11 @@ from rigBuilder.files.core import JsonFile
 
 class CtrlShapeFile(JsonFile):
 
-    def export(self, ctrls=tuple(), force=False):
+    def export(self, ctrls=None, force=False):
         data = dict()
+
+        if ctrls is None:
+            ctrls = cmds.ls(sl=True, type='transform')
 
         for ctrl in ctrls:
             shapes = cmds.listRelatives(ctrl, shapes=True, type='nurbsCurve')
