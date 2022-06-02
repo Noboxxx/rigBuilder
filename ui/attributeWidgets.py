@@ -144,6 +144,59 @@ class FileWidget(AttributeWidget):
         self.setValue(path)
 
 
+class JsonFileWidget(AttributeWidget):
+
+    filter = 'Json File (*.json)'
+
+    def __init__(self, cl):
+        super(JsonFileWidget, self).__init__(cl)
+
+        self.pathEdit = QtWidgets.QLineEdit()
+        self.pathEdit.textChanged.connect(self.emitValueChanged)
+
+        openBtn = QtWidgets.QPushButton()
+        openBtn.setIcon(QtGui.QIcon(':fileOpen.png'))
+        openBtn.setFixedSize(size(20), size(20))
+        openBtn.clicked.connect(self.askOpen)
+
+        saveAsBtn = QtWidgets.QPushButton()
+        saveAsBtn.setEnabled('export' in dir(self.cl))
+        saveAsBtn.setFixedSize(size(20), size(20))
+        saveAsBtn.setIcon(QtGui.QIcon(':save.png'))
+        saveAsBtn.clicked.connect(self.saveAs)
+
+        self.pathLayout = QtWidgets.QHBoxLayout()
+        self.pathLayout.addWidget(self.pathEdit)
+        self.pathLayout.addWidget(openBtn)
+        self.pathLayout.addWidget(saveAsBtn)
+
+        self.mainLayout.setDirection(QtWidgets.QBoxLayout.TopToBottom)
+        self.mainLayout.addLayout(self.pathLayout)
+
+        self.setLayout(self.mainLayout)
+
+    def setValue(self, value):
+        self.pathEdit.setText(File(value))
+
+    def getValue(self):
+        return File(self.pathEdit.text())
+
+    def askOpen(self):
+        path, _ = QtWidgets.QFileDialog.getOpenFileName(self, caption='Open File', filter=self.filter)
+        if not path:
+            return
+
+        self.setValue(path)
+
+    def saveAs(self):
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(self, caption='Save File', filter=self.filter)
+        if not path:
+            return
+        f = self.cl(path)
+        f.export(force=True)
+        self.pathEdit.setText(f)
+
+
 class ComponentBuilderWidget(FileWidget):
 
     def __init__(self, cl):

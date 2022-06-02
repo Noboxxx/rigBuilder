@@ -4,7 +4,7 @@ from PySide2 import QtWidgets, QtGui
 from maya import cmds, mel
 from rigBuilder.files.skinFile import SkinFile
 from .attributeWidgets import ScriptWidget, FileWidget, NodeWidget, ComponentBuilderWidget, SkinFileWidget, \
-    PythonFileWidget, ListAttributeWidget, GuidesFileWidget, SkinFileWidget2, ComboWidget
+    PythonFileWidget, ListAttributeWidget, GuidesFileWidget, SkinFileWidget2, ComboWidget, JsonFileWidget
 from ..components.baseLegacy import Nodes
 from ..files.core import JsonFile
 from ..files.guidesFile import GuidesFile
@@ -15,6 +15,7 @@ from ..steps.customScript import CustomScript, Script
 from ..steps.customScriptFile import PythonFile, CustomScriptFile
 from ..steps.exportFile import ExportFile
 from ..steps.importCorrectives import ImportCorrectives
+from ..steps.importCtrlShapes import ImportCtrlShapes
 from ..steps.importGuidesFile import ImportGuidesFile
 from ..steps.importMayaFile import ImportMayaFile, MayaFile
 from ..steps.importSkin import ImportSkin
@@ -44,6 +45,7 @@ class StepDictList(DataDictList):
         FinalizeRig,
         ExportFile,
         MirrorSkinWeights,
+        ImportCtrlShapes,
     ]
 
 
@@ -62,9 +64,9 @@ class StepAttributeEditor(DataAttributeEditor):
             (PythonFile, PythonFileWidget),
             (ComponentBuilderFile, ComponentBuilderWidget),
             (GuidesFile, GuidesFileWidget),
-            (JsonFile, FileWidget),
+            (JsonFile, JsonFileWidget),
             (MayaFile, FileWidget),
-            (Nodes, partial(ListAttributeWidget, NodeWidget))
+            (Nodes, partial(ListAttributeWidget, NodeWidget)),
         ] + self.typeWidgetMap
 
 
