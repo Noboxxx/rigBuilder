@@ -48,14 +48,22 @@ class CtrlShapeFile(JsonFile):
 
         self.dump(data, force=force)
 
-    def import_(self, scale=1.0):
+    def import_(self, scale=1.0, useColor=True):
         data = self.load()
 
         for ctrl, shapesData in data.items():
             if not cmds.objExists(ctrl):
                 continue
 
-            cmds.delete(cmds.listRelatives(ctrl, shapes=True, type='nurbsCurve'))
+            oldRgbColor = (0, 0, 0)
+            oldIndexColor = 0
+            oldIsRgb = False
+            oldShapes = cmds.listRelatives(ctrl, shapes=True, type='nurbsCurve')
+            if oldShapes:
+                oldIsRgb = cmds.getAttr('{}.overrideRGBColors'.format(oldShapes[0]))
+                oldIndexColor = cmds.getAttr('{}.overrideColor'.format(oldShapes[0]))
+                oldRgbColor = cmds.getAttr('{}.overrideColorRGB'.format(oldShapes[0]),)[0]
+                cmds.delete(oldShapes)
 
             for shape, shapeData in shapesData.get('shapes', dict()).items():
                 periodic = shapeData.get('periodic', False)
@@ -80,10 +88,16 @@ class CtrlShapeFile(JsonFile):
                 s = cmds.listRelatives(curve, shapes=True)[0]
                 s = cmds.rename(s, shape)
 
-                cmds.setAttr('{}.overrideEnabled'.format(s), True)
-                cmds.setAttr('{}.overrideRGBColors'.format(s), isRgb)
-                cmds.setAttr('{}.overrideColor'.format(s), indexColor)
-                cmds.setAttr('{}.overrideColorRGB'.format(s), *rgbColor)
+                if useColor:
+                    cmds.setAttr('{}.overrideEnabled'.format(s), True)
+                    cmds.setAttr('{}.overrideRGBColors'.format(s), isRgb)
+                    cmds.setAttr('{}.overrideColor'.format(s), indexColor)
+                    cmds.setAttr('{}.overrideColorRGB'.format(s), *rgbColor)
+                else:
+                    cmds.setAttr('{}.overrideEnabled'.format(s), True)
+                    cmds.setAttr('{}.overrideRGBColors'.format(s), oldIsRgb)
+                    cmds.setAttr('{}.overrideColor'.format(s), oldIndexColor)
+                    cmds.setAttr('{}.overrideColorRGB'.format(s), *oldRgbColor)
 
                 cmds.parent(s, ctrl, r=True, s=True)
                 cmds.delete(curve)
