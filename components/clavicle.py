@@ -27,7 +27,8 @@ class Clavicle(Component):
         self.controllers.append(fkCtrl)
 
         ikBfr, ikCtrl = controller(
-            'ik_{}_ctl'.format(self), size=self.clavicleGuide.size, color=self.color, matrix=shoulderMatrix, shape='cube')
+            'ik_{}_ctl'.format(self), size=self.clavicleGuide.size, color=self.color, matrix=shoulderMatrix,
+            shape='cube', ctrlParent=fkCtrl)
         for axis in ('x', 'y', 'z'):
             cmds.setAttr('{}.r{}'.format(ikCtrl, axis), lock=True, keyable=False)
             cmds.setAttr('{}.s{}'.format(ikCtrl, axis), lock=True, keyable=False)

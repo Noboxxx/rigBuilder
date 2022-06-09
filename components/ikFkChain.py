@@ -26,28 +26,31 @@ class IkFkChain(Component):
 
         # fk ctrls
         lastCtrl = None
+        previousCtrl = None
         for index, guide in enumerate(self.guides[1:-1], 1):
             fkBfr, fkCtrl = controller('fk{}_{}_ctl'.format(index, self), size=guide.size, color=self.color,
-                                       matrix=guide.matrix)
+                                       matrix=guide.matrix, ctrlParent=previousCtrl or rootCtrl)
             if lastCtrl:
                 cmds.parent(fkBfr, lastCtrl)
             else:
                 cmds.parent(fkBfr, rootCtrl)
 
             lastCtrl = fkCtrl
+            previousCtrl = fkCtrl
             self.controllers.append(fkCtrl)
+
+        # end ctrl
+        endBfr, endCtrl = controller('endIk_{}_ctl'.format(self), size=self.guides[-1].size, color=self.color - 100,
+                                     matrix=self.guides[-1].matrix, shape='square', ctrlParent=lastCtrl)
 
         # last fk
         lastFkBfr, lastFkCtrl = controller(
             'fk{}_{}_ctl'.format(len(self.guides), self),
-            size=self.guides[-1].size, color=self.color, matrix=self.guides[-1].matrix)
+            size=self.guides[-1].size, color=self.color, matrix=self.guides[-1].matrix, ctrlParent=endCtrl)
         self.controllers.append(lastFkCtrl)
         for attr in ('tx', 'ty', 'tz', 'sx', 'sy', 'sz'):
             cmds.setAttr('{}.{}'.format(lastFkCtrl, attr), lock=True, keyable=False)
 
-        # end ctrl
-        endBfr, endCtrl = controller('endIk_{}_ctl'.format(self), size=self.guides[-1].size, color=self.color - 100,
-                                     matrix=self.guides[-1].matrix, shape='square')
         cmds.parent(endBfr, lastCtrl)
         self.controllers.append(endCtrl)
 

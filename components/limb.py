@@ -237,14 +237,15 @@ class Limb(Component):
 
         return ctrls, reverseNode
 
-    def resultSetup(self, fkCtrls, ikJoints, switchPlug):
+    def resultSetup(self, mainCtrl, fkCtrls, ikJoints, switchPlug):
         freeBBfr, freeBCtrl = controller(
             'free{}_{}_ctl'.format(self.bName.title(), self),
             size=self.bGuide.size * .9,
             matrix=self.bGuide.matrix,
             color=self.color + 100,
             shape='sphere',
-            lockAttrs=('ry', 'rz', 'sx', 'sy', 'sz')
+            lockAttrs=('ry', 'rz', 'sx', 'sy', 'sz'),
+            ctrlParent=mainCtrl,
         )
         self.controllers.append(freeBCtrl)
         self.children.append(freeBBfr)
@@ -298,7 +299,7 @@ class Limb(Component):
 
         # Bender ctrl / joint
         bendBfr, bendCtrl = controller(name='{}Bend_{}_ctl'.format(name, self), shape='sphere',
-                                       color=self.color + 100, size=self.bGuide.size)
+                                       color=self.color + 100, size=self.bGuide.size, ctrlParent=mainCtrl)
         bendJoint = cmds.joint(name='{}Bend_{}_jnt'.format(name, self))
         self.controllers.append(bendCtrl)
         self.children.append(bendBfr)
@@ -383,7 +384,7 @@ class Limb(Component):
         fkCtrls = self.fkSetup(mainCtrl, switchPlug)[0]
 
         # Result Matrices and switch
-        resultPlugMatrices = self.resultSetup(fkCtrls, ikJoints, switchPlug)
+        resultPlugMatrices = self.resultSetup(mainCtrl, fkCtrls, ikJoints, switchPlug)
 
         # skin joints
         self.skinSetup(mainCtrl, resultPlugMatrices)
