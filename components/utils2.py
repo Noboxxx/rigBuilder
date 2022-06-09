@@ -247,6 +247,8 @@ def controller(name, normal=(1, 0, 0), size=1.0, matrix=None, color=(255, 255, 0
     for attr in lockAttrs:
         cmds.setAttr('{}.{}'.format(ctrl, attr), lock=True, keyable=False)
 
+    cmds.select(ctrl)
+
     return bfr, ctrl
 
 
