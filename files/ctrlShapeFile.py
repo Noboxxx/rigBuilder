@@ -11,7 +11,7 @@ class CtrlShapeFile(JsonFile):
             ctrls = cmds.ls(sl=True, type='transform')
 
         for ctrl in ctrls:
-            shapes = cmds.listRelatives(ctrl, shapes=True, type='nurbsCurve')
+            shapes = cmds.listRelatives(ctrl, shapes=True, type='nurbsCurve', fullPath=True)
 
             if not shapes:
                 continue
@@ -58,7 +58,7 @@ class CtrlShapeFile(JsonFile):
             oldRgbColor = (0, 0, 0)
             oldIndexColor = 0
             oldIsRgb = False
-            oldShapes = cmds.listRelatives(ctrl, shapes=True, type='nurbsCurve')
+            oldShapes = cmds.listRelatives(ctrl, shapes=True, type='nurbsCurve', fullPath=True)
             if oldShapes:
                 oldIsRgb = cmds.getAttr('{}.overrideRGBColors'.format(oldShapes[0]))
                 oldIndexColor = cmds.getAttr('{}.overrideColor'.format(oldShapes[0]))
@@ -86,7 +86,7 @@ class CtrlShapeFile(JsonFile):
 
                 curve = cmds.curve(point=points, degree=degree, knot=knots, periodic=periodic)
                 s = cmds.listRelatives(curve, shapes=True)[0]
-                s = cmds.rename(s, shape)
+                s = cmds.rename(s, '{}Shape#'.format(ctrl))
 
                 if useColor:
                     cmds.setAttr('{}.overrideEnabled'.format(s), True)
