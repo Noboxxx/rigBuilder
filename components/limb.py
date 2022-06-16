@@ -268,7 +268,7 @@ class Limb(Component):
 
         return resultPlugMatrices
 
-    def ribbonSetup(self, mainCtrl, startMatrixPlug, endMatrixPlug, sections, name):
+    def ribbonSetup(self, mainCtrl, startMatrixPlug, endMatrixPlug, sections, name, squashStrengthPlug, benderPlug):
         startMatrix = cmds.getAttr(startMatrixPlug)
         endMatrix = cmds.getAttr(endMatrixPlug)
 
@@ -278,14 +278,56 @@ class Limb(Component):
         cmds.setAttr('{}.inheritsTransform'.format(surface), False)
         self.children.append(surface)
 
+        # curveFromSurfaceIso
+        curveFromSurface = cmds.createNode('curveFromSurfaceIso')
+        cmds.setAttr('{}.isoparmDirection'.format(curveFromSurface), 1)
+        cmds.connectAttr('{}.local'.format(surface), '{}.inputSurface'.format(curveFromSurface))
+
+        # curveInfo
+        curveInfo = cmds.createNode('curveInfo')
+        cmds.connectAttr('{}.outputCurve'.format(curveFromSurface), '{}.inputCurve'.format(curveInfo))
+
+        # ratio
+        lengthRatio = cmds.createNode('multiplyDivide')
+        cmds.connectAttr('{}.arcLength'.format(curveInfo), '{}.input1X'.format(lengthRatio))
+        cmds.setAttr('{}.input2X'.format(lengthRatio), cmds.getAttr('{}.arcLength'.format(curveInfo)))
+        cmds.setAttr('{}.operation'.format(lengthRatio), 2)
+
         # Create skin joints
-        skinJoints = jointChain(startMatrix, endMatrix, nJoints=sections + 1, name='{}<i>_{}_skn'.format(name, self))
+        skinJoints = jointChain(
+            startMatrix, endMatrix, nJoints=sections + 1, name='{}<i>_{}_skn'.format(name, self), scaleCompensate=True)
         self.children.append(skinJoints[0])
         self.influencers += skinJoints
 
-        for output, joint in zip(matrixPlugs, skinJoints):
+        for index, (output, joint) in enumerate(zip(matrixPlugs, skinJoints)):
+            pwr = index / (len(skinJoints) - 1)
+            if pwr > .5:
+                pwr = 1.0 - pwr
+
+            # blender
+            blender = cmds.createNode('blendColors')
+            cmds.setAttr('{}.color1R'.format(blender), pwr)
+            cmds.setAttr('{}.color2R'.format(blender), 0.0)
+            cmds.connectAttr(squashStrengthPlug, '{}.blender'.format(blender))
+
+            # power
+            powerValue = cmds.createNode('multiplyDivide')
+            cmds.setAttr('{}.operation'.format(powerValue), 3)
+            cmds.connectAttr('{}.outputR'.format(blender), '{}.input2X'.format(powerValue))
+            cmds.connectAttr('{}.outputX'.format(lengthRatio), '{}.input1X'.format(powerValue))
+
+            # div
+            divideValue = cmds.createNode('multiplyDivide')
+            cmds.setAttr('{}.input1X'.format(divideValue), 1.0)
+            cmds.setAttr('{}.operation'.format(divideValue), 2)
+            cmds.connectAttr('{}.outputX'.format(powerValue), '{}.input2X'.format(divideValue))
+
+            # cmds.connectAttr('{}.outputX'.format(lengthRatio), '{}.sx'.format(joint))
+            cmds.connectAttr('{}.outputX'.format(divideValue), '{}.sy'.format(joint))
+            cmds.connectAttr('{}.outputX'.format(divideValue), '{}.sz'.format(joint))
+
             matrixConstraint((output,), joint, scale=False)
-            matrixConstraint((mainCtrl,), joint, translate=False, rotate=False, shear=False)
+            # matrixConstraint((mainCtrl,), joint, translate=False, rotate=False, shear=False)
 
         # Driver joints
         driverJoints = list()
@@ -308,10 +350,6 @@ class Limb(Component):
         cmds.setAttr('{}.blender'.format(constraint), .5)
 
         # benders
-        benderAttr = 'benders'
-        benderPlug = '{}.{}'.format(self.interfaces[0], benderAttr)
-        if not cmds.objExists(benderPlug):
-            cmds.addAttr(self.interfaces[0], longName=benderAttr, attributeType='bool', defaultValue=False, k=True)
         cmds.connectAttr(benderPlug, '{}.v'.format(bendBfr))
 
         # Skin Surface
@@ -346,8 +384,20 @@ class Limb(Component):
             '{}.worldMatrix'.format(mainCtrl), resultPlugMatrices[0], resultPlugMatrices[1])
         bEndDriverMPlug = self.buildSecondSegmentSkinJointsSetup(resultPlugMatrices[1], resultPlugMatrices[2])
 
-        self.ribbonSetup(mainCtrl, aDriverMPlug, aEndDriverMPlug, self.firstSection, self.abName)
-        self.ribbonSetup(mainCtrl, resultPlugMatrices[1], bEndDriverMPlug, self.secondSection, self.bcName)
+        squashStretchPlugs = list()
+        for n in (self.abName, self.bcName):
+            squashStretchAttr = 'squashStrength{}'.format(n.title())
+            squashStretchPlug = '{}.{}'.format(self.interfaces[0], squashStretchAttr)
+            cmds.addAttr(self.interfaces[0], longName=squashStretchAttr, keyable=True, min=0.0)
+            squashStretchPlugs.append(squashStretchPlug)
+
+        benderAttr = 'benders'
+        benderPlug = '{}.{}'.format(self.interfaces[0], benderAttr)
+        if not cmds.objExists(benderPlug):
+            cmds.addAttr(self.interfaces[0], longName=benderAttr, attributeType='bool', defaultValue=False, k=True)
+
+        self.ribbonSetup(mainCtrl, aDriverMPlug, aEndDriverMPlug, self.firstSection, self.abName, squashStretchPlugs[0], benderPlug)
+        self.ribbonSetup(mainCtrl, resultPlugMatrices[1], bEndDriverMPlug, self.secondSection, self.bcName, squashStretchPlugs[1], benderPlug)
 
     def build(self):
         # main ctrl
